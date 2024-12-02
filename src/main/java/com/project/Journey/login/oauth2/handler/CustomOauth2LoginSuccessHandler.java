@@ -1,8 +1,8 @@
 package com.project.Journey.login.oauth2.handler;
 
-import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.project.Journey.login.jwt.constants.JwtConstants;
 import com.project.Journey.login.jwt.constants.JwtUtils;
+import com.project.Journey.login.jwt.domain.RefreshToken;
 import com.project.Journey.login.jwt.service.JwtService;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberRole;
@@ -42,12 +42,13 @@ public class CustomOauth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
             getRedirectStrategy().sendRedirect(request,response,redirectURL);
         } else {
             String refreshToken = JwtUtils.generateRefreshToken(member);
-            JwtService.save(new RefreshToken(refreshToken, member.getId()));
+            jwtService.save(new RefreshToken(refreshToken, member.getId()));
 
             response.addHeader(JwtConstants.ACCESS, JwtConstants.JWT_TYPE + accessToken);
             response.addHeader(JwtConstants.REFRESH, JwtConstants.JWT_TYPE + refreshToken);
 
             // 최초 로그인인 아닌 경우에는 로그인 성공 페이지로 이동
+            // loginSuccess 로 임시로 리다이렉트
             String redirectURL = UriComponentsBuilder.fromUriString("\"http://localhost:8080/loginSuccess")
                     .build()
                     .encode(StandardCharsets.UTF_8)
@@ -55,6 +56,4 @@ public class CustomOauth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
             getRedirectStrategy().sendRedirect(request, response, redirectURL);
         }
     }
-
-
 }
