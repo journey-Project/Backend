@@ -1,5 +1,6 @@
 package com.project.Journey.login.member.domain;
 
+import com.project.Journey.login.oauth2.utils.Oauth2Utils;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
