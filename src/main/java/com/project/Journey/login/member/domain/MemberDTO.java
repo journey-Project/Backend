@@ -1,5 +1,7 @@
 package com.project.Journey.login.member.domain;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
