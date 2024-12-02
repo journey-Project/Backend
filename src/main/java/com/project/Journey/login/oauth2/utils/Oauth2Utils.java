@@ -1,6 +1,9 @@
 package com.project.Journey.login.oauth2.utils;
 
 import com.project.Journey.login.member.domain.SocialType;
+import com.project.Journey.login.oauth2.userInfo.GoogleOauth2UserInfo;
+import com.project.Journey.login.oauth2.userInfo.KakaoOauth2UserInfo;
+import com.project.Journey.login.oauth2.userInfo.NaverOauth2UserInfo;
 import com.project.Journey.login.oauth2.userInfo.Oauth2UserInfo;
 
 import java.util.Map;
