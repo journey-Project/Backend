@@ -25,17 +25,18 @@ public class MemberController {
     @PostMapping("/signUp")
     @ResponseBody
     public ResponseEntity<?> signUp(@Valid @RequestBody MemberDTO memberDTO, BindingResult bindingResult) {
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             Map<String, String> errorMap = new HashMap<>();
-            for(FieldError fieldError : bindingResult.getFieldErrors()) {
+            for (FieldError fieldError : bindingResult.getFieldErrors()) {
                 errorMap.put("error-" + fieldError.getField(), fieldError.getDefaultMessage());
             }
             return ResponseEntity.badRequest().body(errorMap);
         }
-        if (memberService.findById(memberDTO.getId()).isPresent()){
-            ResponseEntity.status(HttpStatus.CONFLICT).body("이미 존재하는 아이디입니다");
-        } else if (memberService.findByEmail(memberDTO.getEmail()).isPresent()){
-            ResponseEntity.status(HttpStatus.CONFLICT).body("이미 존재하는 이메일입니다");
+        if (memberService.findById(memberDTO.getId()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 존재하는 아이디입니다");
+        }
+        if (memberService.findByEmail(memberDTO.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 존재하는 이메일입니다");
         }
         return ResponseEntity.ok(memberService.save(memberDTO));
     }
