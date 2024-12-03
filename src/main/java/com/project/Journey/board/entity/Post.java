@@ -52,4 +52,36 @@ public class Post {
 
     @Column(nullable = false)
     private LocalDateTime updated_at;
+
+
+    public void updateTitle(String title){
+        this.title=title;
+    }
+
+    public void updateContent(String content){
+        this.content=content;
+    }
+
+    public void updateDestination(String destination){
+        this.destination=destination;
+    }
+
+
+    public void updateStartDate(LocalDate start_date){
+        this.start_date=start_date;
+    }
+
+    public void updateEndDate(LocalDate end_date){
+        this.end_date=end_date;
+    }
+
+    public void updateMaxParticipants(int max_participants){
+        this.max_participants=max_participants;
+    }
+
+    //글을 업데이트한 시각
+    public void updateUpdateTime(LocalDateTime localDateTime){
+        this.updated_at = LocalDateTime.now();
+    }
+
 }

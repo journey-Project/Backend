@@ -6,11 +6,13 @@ import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +20,9 @@ public class PostService {
 
     private final PostRepository postRepository;
 
+    //게시글 저장
     @Transactional
     public Long savePost(PostDTO postDTO) {
-
 
         Post post = Post.builder()
                 .title(postDTO.getTitle())
@@ -37,7 +39,7 @@ public class PostService {
                 .build();
 
         return postRepository.save(post).getPost_id();
-    }
+    };
 
 
     // 모든 게시글 조회
@@ -66,6 +68,21 @@ public class PostService {
         return postDtoList;
     }
 
+    //게시글 수정
+    @Transactional
+    public void updatePostById(Long postId, PostDTO postDTO){
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
+        post.updateTitle(postDTO.getTitle());
+        post.updateContent(postDTO.getContent());
+        post.updateDestination(postDTO.getDestination());
+        post.updateMaxParticipants(postDTO.getMax_participants());
+        post.updateStartDate(postDTO.getStart_date());
+        post.updateEndDate(postDTO.getEnd_date());
+        post.updateUpdateTime(postDTO.getUpdated_at());
+
+    }
+
     // post_id로 게시글 조회
     public PostDTO getPostById(Long postId) {
         Post post = postRepository.findById(postId)
@@ -90,4 +107,6 @@ public class PostService {
     public void deletePost(Long postId) {
         postRepository.deleteById(postId);
     }
+
+
 }

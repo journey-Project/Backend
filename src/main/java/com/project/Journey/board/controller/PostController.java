@@ -2,6 +2,7 @@ package com.project.Journey.board.controller;
 
 
 import com.project.Journey.board.dto.PostDTO;
+import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,12 @@ public class PostController {
     public ResponseEntity<Void> deletePost(@PathVariable Long post_id) {
         postService.deletePost(post_id);
         return ResponseEntity.noContent().build();
+    }
+
+    //게시글 수정
+    @PutMapping("api/posts/update/{post_id}")
+    public  void updatePost(@PathVariable Long post_id,@RequestBody PostDTO postDTO){
+       postService.updatePostById(post_id, postDTO);
     }
 
 
