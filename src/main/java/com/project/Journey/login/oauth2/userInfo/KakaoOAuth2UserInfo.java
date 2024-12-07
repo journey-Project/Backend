@@ -2,7 +2,7 @@ package com.project.Journey.login.oauth2.userInfo;
 
 import java.util.Map;
 
-public class KakaoOauth2UserInfo extends Oauth2UserInfo{
+public class KakaoOauth2UserInfo extends OAuth2UserInfo {
 
     // 소셜로부터 받은 유저 정보( attributes ) 에서 필요한 정보들이 담긴 JSON 추출
     public static Map<String, Object> account;
