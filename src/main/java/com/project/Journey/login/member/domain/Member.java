@@ -1,6 +1,6 @@
 package com.project.Journey.login.member.domain;
 
-import com.project.Journey.login.oauth2.utils.Oauth2Utils;
+import com.project.Journey.login.oauth2.utils.OAuth2Utils;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
@@ -50,7 +50,7 @@ public class Member {
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(MemberRole.USER) // 역할지정
-                .socialType(Oauth2Utils.getSocialType(dto.getSocialType()))
+                .socialType(OAuth2Utils.getSocialType(dto.getSocialType()))
                 .socialId(dto.getSocialId())
                 .build();
         return member;

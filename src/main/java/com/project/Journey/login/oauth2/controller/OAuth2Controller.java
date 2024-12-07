@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class Oauth2Controller {
+public class OAuth2Controller {
 
     // Oauth2 로그인 시 최초 로그인인 경우 회원가입 진행, 필요한 정보를 쿼리 파라미터로 받음
     @GetMapping("/oauth2/signUp")
@@ -16,5 +16,4 @@ public class Oauth2Controller {
         model.addAttribute("socialId", socialId);
         return "member/signUp";
     }
-
 }

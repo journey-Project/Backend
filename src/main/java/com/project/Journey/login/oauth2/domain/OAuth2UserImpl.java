@@ -9,11 +9,11 @@ import java.util.Collection;
 import java.util.Map;
 
 @Getter
-public class Oauth2UserImpl extends DefaultOAuth2User {
+public class OAuth2UserImpl extends DefaultOAuth2User {
 
     Member member;
 
-    public Oauth2UserImpl(Collection<? extends GrantedAuthority> authorities,
+    public OAuth2UserImpl(Collection<? extends GrantedAuthority> authorities,
                           Map<String, Object> attributes, String nameAttributeKey,
                           Member member){
         super(authorities, attributes, nameAttributeKey);

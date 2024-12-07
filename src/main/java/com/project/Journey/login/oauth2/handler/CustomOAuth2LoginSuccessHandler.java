@@ -6,7 +6,7 @@ import com.project.Journey.login.jwt.domain.RefreshToken;
 import com.project.Journey.login.jwt.service.JwtService;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberRole;
-import com.project.Journey.login.oauth2.domain.Oauth2UserImpl;
+import com.project.Journey.login.oauth2.domain.OAuth2UserImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @RequiredArgsConstructor
-public class CustomOauth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtService jwtService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        Member member = ((Oauth2UserImpl) authentication.getPrincipal()).getMember();
+        Member member = ((OAuth2UserImpl) authentication.getPrincipal()).getMember();
         String accessToken = JwtUtils.generateAccessToken(member);
 
         //최초 로그인한 경우 추가 정보 입력을 위한 회원가입 페이지로 리다이렉트

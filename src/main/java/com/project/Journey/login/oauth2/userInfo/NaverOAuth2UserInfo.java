@@ -2,10 +2,10 @@ package com.project.Journey.login.oauth2.userInfo;
 
 import java.util.Map;
 
-public class NaverOauth2UserInfo extends Oauth2UserInfo {
+public class NaverOAuth2UserInfo extends OAuth2UserInfo {
 
     public static Map<String, Object> responseMap; // 소셜로부터 받은 정보( attributes ) 에서 필요한 정보들이 담긴 JSON 추출
-    public NaverOauth2UserInfo(Map<String, Object> attributes) {
+    public NaverOAuth2UserInfo(Map<String, Object> attributes) {
         super(attributes);
         responseMap = (Map<String, Object>) attributes.get("response");
     }

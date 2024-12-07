@@ -11,7 +11,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.io.IOException;
 
 @Slf4j
-public class CustomOauth2LoginFailureHandler implements AuthenticationFailureHandler {
+public class CustomOAuth2LoginFailureHandler implements AuthenticationFailureHandler {
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
         log.info("로그인 실패={}", exception.getMessage());
