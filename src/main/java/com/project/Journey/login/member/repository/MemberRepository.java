@@ -35,7 +35,7 @@ public class MemberRepository {
     }
 
     public Optional<Member> findByEmail(String email) {
-        String jpql = "select u frome Member u where u.email:=email";
+        String jpql = "select u from Member u where u.email=:email";
         TypedQuery<Member> query = em.createQuery(jpql, Member.class).setParameter("email", email);
         List<Member> MemberList = query.getResultList();
         if(MemberList.size() == 0){
@@ -48,9 +48,9 @@ public class MemberRepository {
         String jpql = "select u from Member u where u.socialType=:socialType and u.socialId=:socialId";
         TypedQuery<Member> query = em.createQuery(jpql, Member.class)
                 .setParameter("socialType", socialType)
-                .setParameter("socialType", socialId);
+                .setParameter("socialId", socialId);
         List<Member> MemberList = query.getResultList();
-        if(MemberList.size() == 0) {
+        if (MemberList.size() == 0) {
             return Optional.empty();
         }
         return Optional.ofNullable(MemberList.get(0));
