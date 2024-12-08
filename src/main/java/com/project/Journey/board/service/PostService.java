@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,5 +109,16 @@ public class PostService {
         postRepository.deleteById(postId);
     }
 
+    //조회 수가 높은 순서대로 조회(핫 게시글)
+    public List<Post> getPostsByViewCount(){
+        List<Post> hotPosts = postRepository.findAll();
+        hotPosts.sort(new Comparator<Post>() {
+            @Override
+            public int compare(Post o1, Post o2) {
+                return o2.getView_count() - o1.getView_count();
+            }
+        });
+        return hotPosts;
+    }
 
 }

@@ -50,5 +50,10 @@ public class PostController {
        postService.updatePostById(post_id, postDTO);
     }
 
+    //조회수가 높은 순서대로 게시물 조회
+    @GetMapping("api/posts/top-views")
+    public List<Post> getTopViewedPosts(){
+        return postService.getPostsByViewCount();
+    }
 
 }
