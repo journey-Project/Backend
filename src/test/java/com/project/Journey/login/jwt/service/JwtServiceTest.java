@@ -37,7 +37,7 @@ class JwtServiceTest {
     @DisplayName("Refresh Token 저장 테스트")
     void testSaveRefreshToken() {
         // Given
-        RefreshToken refreshToken = new RefreshToken("sampleToken", "member");
+        RefreshToken refreshToken = new RefreshToken("sampleToken", "templates/member");
         when(jwtRepository.save(refreshToken)).thenReturn(refreshToken);
 
         // When
