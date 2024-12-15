@@ -49,7 +49,7 @@ public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
 
             // 최초 로그인인 아닌 경우에는 로그인 성공 페이지로 이동
             // loginSuccess 로 임시로 리다이렉트
-            String redirectURL = UriComponentsBuilder.fromUriString("\"http://localhost:8080/loginSuccess")
+            String redirectURL = UriComponentsBuilder.fromUriString("http://localhost:8080/loginSuccess")
                     .build()
                     .encode(StandardCharsets.UTF_8)
                     .toUriString();

@@ -14,6 +14,6 @@ public class OAuth2Controller {
         model.addAttribute("email", email);
         model.addAttribute("socialType", socialType);
         model.addAttribute("socialId", socialId);
-        return "templates/member/signUp";
+        return "member/signUp";
     }
 }
