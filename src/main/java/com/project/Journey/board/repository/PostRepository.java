@@ -18,6 +18,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("UPDATE Post p SET p.view_count = :increment WHERE p.post_id = :post_id")
     void incrementViewCount(@Param("post_id") Long postId, @Param("increment") int increment);
 
-
+    @Query("SELECT p FROM Post p WHERE p.user_id = :user_id")
+    List<Post> findPostsByUserId(@Param("user_id") String user_id);
 
 }
