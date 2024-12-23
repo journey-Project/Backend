@@ -107,5 +107,16 @@ public class PostController {
 
     }
 
+    //user_id로 게시글 조회
+    @GetMapping("api/posts/get/user_id/{user_id}")
+    public List<PostDTO> getPostsByUser_id(@PathVariable String user_id){
+        try{
+            List<PostDTO> posts = postService.getPostsByUserId(user_id);
+            return posts;
+        } catch (Exception e){
+            throw new PostException("해당 user_id의 게시글이 존재하지 않습니다.",HttpStatus.NOT_FOUND);
+        }
+    }
+
 
 }
