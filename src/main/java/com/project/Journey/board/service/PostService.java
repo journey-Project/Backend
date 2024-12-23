@@ -174,7 +174,32 @@ public class PostService {
     }
 
 
+    //게시글 조회수 Redis와 MySQL 동기화 기능 구현
+    @Transactional
+    @Scheduled(fixedRate = 10000)
+    public void syncViewCountToDatabase() {
+        Set<String> keys = redisTemplate.keys(VIEW_COUNT_KEY + "*");
 
+        if(keys == null || keys.isEmpty()) return;
+
+        for (String key : keys) {
+            Long postId = Long.parseLong(key.replace(VIEW_COUNT_KEY, ""));
+
+            try {
+                //Redis에서 조회수 가져오기
+                Integer viewCount = (Integer) redisTemplate.opsForValue().get(key); // JSON 문자열을 정수로 변환
+
+                if (viewCount != null) {
+                    //MySQL에 반영
+                    postRepository.incrementViewCount(postId,viewCount); // MySQL 동기화
+                    redisTemplate.delete(key); // Redis에서 데이터(키) 삭제
+                }
+            } catch (Exception e) {
+                System.err.println("게시글 ID " + postId + "의 조회수를 동기화하는 중 오류가 발생했습니다. 키: " + key);
+                e.printStackTrace();
+            }
+        }
+    }
 
 
 
