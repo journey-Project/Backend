@@ -201,6 +201,29 @@ public class PostService {
         }
     }
 
+    // user_id로 게시글 조회
+    public List<PostDTO> getPostsByUserId(String user_id) {
+        List<Post> list =  postRepository.findPostsByUserId(user_id);
+        List<PostDTO> postDtoListByUserId = new ArrayList<>();
+
+        for(Post post : list){
+            PostDTO postDto = PostDTO.builder()
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .destination(post.getDestination())
+                    .start_date(post.getStart_date())
+                    .end_date(post.getEnd_date())
+                    .max_participants(post.getMax_participants())
+                    .view_count(post.getView_count())
+                    .comment_count(post.getComment_count())
+                    .created_at(post.getCreated_at())
+                    .updated_at(post.getUpdated_at())
+                    .user_id(post.getUser_id())
+                    .build();
+            postDtoListByUserId.add(postDto);
+        }
+        return postDtoListByUserId;
+    }
 
 
 
