@@ -22,6 +22,13 @@ public class AccessPermissionCheckInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+
+        // post 권한 체크를 제외할 경로 설정
+        if (request.getRequestURI().startsWith("/api/posts")) {
+            return true; // 권한 검사 없이 통과
+        }
+
+
         if (request.getRequestURI().startsWith("/admin")) {
             if (authentication.getAuthorities().contains(new SimpleGrantedAuthority(MemberRole.ADMIN.getValue()))) {
                 return true;
