@@ -6,20 +6,32 @@ import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class PostService {
 
     private final PostRepository postRepository;
+
+    @Autowired
+    private final RedisTemplate<String, Object> redisTemplate;
+
+
+    public PostService(PostRepository postRepository, @Qualifier("jsonRedisTemplate") RedisTemplate<String, Object> redisTemplate) {
+        this.postRepository = postRepository;
+        this.redisTemplate = redisTemplate;
+    }
+
+    private static final String VIEW_COUNT_KEY = "view_count:";
 
     //게시글 저장
     @Transactional
@@ -120,5 +132,52 @@ public class PostService {
         });
         return hotPosts;
     }
+
+    //게시글 조회 시 조회 수 증가
+    @Transactional
+    public PostDTO getPostByIdAndIncrementView(Long postId) {
+        String redisKey = VIEW_COUNT_KEY + postId;
+
+        // 1. Redis에서 조회수 증가
+        Long updatedViewCount = redisTemplate.opsForValue().increment(redisKey, 1);
+
+        // 2. Redis 키가 없거나 데이터가 초기화되지 않았을 경우 MySQL에서 초기화
+        if (updatedViewCount == 1) { // Redis에 키가 없었던 경우
+            Optional<Post> postOptional = postRepository.findById(postId);
+
+            if (postOptional.isPresent()) {
+                Post post = postOptional.get();
+                redisTemplate.opsForValue().set(redisKey, post.getView_count()+1); // Redis 초기화 및 증가
+                updatedViewCount = (long) (post.getView_count() + 1); // 증가된 값 업데이트
+            } else {
+                throw new IllegalArgumentException("해당 postId의 게시글이 없습니다.");
+            }
+        }
+
+        // 4. 게시글 데이터 반환
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 postId의 게시글이 없습니다."));
+
+        return PostDTO.builder()
+                .title(post.getTitle())
+                .content(post.getContent())
+                .destination(post.getDestination())
+                .start_date(post.getStart_date())
+                .end_date(post.getEnd_date())
+                .max_participants(post.getMax_participants())
+                .view_count(updatedViewCount.intValue()) // Redis 업데이트된 조회수 반환
+                .comment_count(post.getComment_count())
+                .created_at(post.getCreated_at())
+                .updated_at(post.getUpdated_at())
+                .user_id(post.getUser_id())
+                .build();
+    }
+
+
+
+
+
+
+
 
 }
