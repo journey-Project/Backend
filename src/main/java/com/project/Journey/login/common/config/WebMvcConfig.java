@@ -13,7 +13,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new AccessPermissionCheckInterceptor())
                 .order(1)
                 .excludePathPatterns("/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
-                        "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**");
+                        "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", "/swagger-ui", "/v3/api-docs","/swagger-ui/index.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html");
     }
 
 }

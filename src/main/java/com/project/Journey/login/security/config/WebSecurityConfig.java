@@ -29,6 +29,11 @@ public class WebSecurityConfig {
     private final OAuth2UserServiceImpl oAuth2UserService;
     private final JwtService jwtService;
 
+    private static final String[] SWAGGER_WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
+            "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
+            "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"};
+
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -81,9 +86,12 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll())
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll() // Swagger 경로 허용
+                        .anyRequest().authenticated() // 나머지 경로는 인증 요구
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/swagger-ui", "/v3/api-docs", "/swagger-ui/**", "/v3/api-docs/**").disable())
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .logout(logout -> logout.logoutSuccessUrl("/"))
