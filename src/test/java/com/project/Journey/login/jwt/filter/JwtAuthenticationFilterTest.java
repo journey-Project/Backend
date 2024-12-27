@@ -126,4 +126,24 @@ class JwtAuthenticationFilterTest {
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(chain, never()).doFilter(request, response);
     }
+
+//    @Test
+//    @DisplayName("유효한 토큰일 때 필터 체인 진행")
+//    void testValidTokenFilterChainProgress() throws Exception {
+//        // Mock HttpServletRequest
+//        when(request.getRequestURI()).thenReturn("/secure");
+//        when(request.getHeader(JwtConstants.JWT_HEADER)).thenReturn("Bearer validToken");
+//
+//        // Mock JwtUtils
+//        try (var mockedUtils = Mockito.mockStatic(JwtUtils.class)) {
+//            mockedUtils.when(() -> JwtUtils.getTokenFromHeader("Bearer validToken")).thenReturn("validToken");
+//            mockedUtils.when(() -> JwtUtils.verifyToken("validToken")).thenReturn(mock(DecodedJWT.class));
+//
+//            // when
+//            filter.doFilterInternal(request, response, chain);
+//        }
+//
+//        // Verify the chain continues
+//        verify(chain).doFilter(request, response);
+//    }
 }
