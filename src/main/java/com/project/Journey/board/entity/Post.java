@@ -20,7 +20,8 @@ public class Post {
     private Long post_id;
 
     //@ManyToOne
-   // @JoinColumn(name = "id", nullable = false)
+    //@JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private String user_id;
 
     @Column(nullable = false, length = 100)
