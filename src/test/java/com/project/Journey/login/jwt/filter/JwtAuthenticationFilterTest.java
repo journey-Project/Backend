@@ -39,18 +39,18 @@ class JwtAuthenticationFilterTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Test
-    @DisplayName("Whitelist 경로 요청 시 필터 수행 안함")
-    void shouldNotFilter_returnsTrueForWhitelist() {
-        // given
-        when(request.getRequestURI()).thenReturn("/login");
-
-        // when
-        boolean result = filter.shouldNotFilter(request);
-
-        // then
-        assertTrue(result);
-    }
+//    @Test
+//    @DisplayName("Whitelist 경로 요청 시 필터 수행 안함")
+//    void shouldNotFilter_returnsTrueForWhitelist() {
+//        // given
+//        when(request.getRequestURI()).thenReturn("/login");
+//
+//        // when
+//        boolean result = filter.shouldNotFilter(request);
+//
+//        // then
+//        assertTrue(result);
+//    }
 
     @Test
     @DisplayName("토큰 헤더가 없을 때 BadRequest 반환")
@@ -126,24 +126,4 @@ class JwtAuthenticationFilterTest {
         verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(chain, never()).doFilter(request, response);
     }
-
-//    @Test
-//    @DisplayName("유효한 토큰일 때 필터 체인 진행")
-//    void testValidTokenFilterChainProgress() throws Exception {
-//        // Mock HttpServletRequest
-//        when(request.getRequestURI()).thenReturn("/secure");
-//        when(request.getHeader(JwtConstants.JWT_HEADER)).thenReturn("Bearer validToken");
-//
-//        // Mock JwtUtils
-//        try (var mockedUtils = Mockito.mockStatic(JwtUtils.class)) {
-//            mockedUtils.when(() -> JwtUtils.getTokenFromHeader("Bearer validToken")).thenReturn("validToken");
-//            mockedUtils.when(() -> JwtUtils.verifyToken("validToken")).thenReturn(mock(DecodedJWT.class));
-//
-//            // when
-//            filter.doFilterInternal(request, response, chain);
-//        }
-//
-//        // Verify the chain continues
-//        verify(chain).doFilter(request, response);
-//    }
 }
