@@ -31,7 +31,8 @@ public class WebSecurityConfig {
 
     private static final String[] SWAGGER_WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
             "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
-            "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"};
+            "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
+            ,"/api/**", "/WebSocketTest.html","/ws/**"};
 
 
     @Bean

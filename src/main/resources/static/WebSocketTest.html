@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 실시간 알림 테스트</title>
+    <!-- Stomp.js와 SockJS 라이브러리 추가 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #notifications {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+<h1>WebSocket 실시간 알림 테스트</h1>
+<button onclick="connect()">Connect</button>
+<button onclick="disconnect()">Disconnect</button>
+<div id="status" style="margin-top: 10px; color: green;"></div>
+<h2>수신된 알림:</h2>
+<div id="notifications"></div>
+
+<script>
+    let stompClient;
+    const statusDiv = document.getElementById("status");
+    const notificationsDiv = document.getElementById("notifications");
+
+    // WebSocket 연결
+    function connect() {
+        const socket = new SockJS("http://localhost:8080/ws"); // WebSocket 엔드포인트
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log("Connected: " + frame);
+            statusDiv.innerText = "WebSocket Connected";
+
+            // 특정 사용자 알림 구독
+            stompClient.subscribe("/topic/users/test_user/notifications", function (message) {
+                const notification = message.body;
+                console.log("알림 수신: ", notification);
+
+                // 화면에 알림 표시
+                const notificationElement = document.createElement("p");
+                notificationElement.innerText = "새로운 알림: " + notification;
+                notificationsDiv.appendChild(notificationElement);
+            });
+        }, function (error) {
+            console.error("WebSocket 연결 실패: ", error);
+            statusDiv.innerText = "WebSocket Connection Failed";
+            statusDiv.style.color = "red";
+        });
+    }
+
+    // WebSocket 연결 해제
+    function disconnect() {
+        if (stompClient) {
+            stompClient.disconnect(() => {
+                console.log("Disconnected");
+                statusDiv.innerText = "WebSocket Disconnected";
+                statusDiv.style.color = "black";
+            });
+        }
+    }
+</script>
+</body>
+</html>

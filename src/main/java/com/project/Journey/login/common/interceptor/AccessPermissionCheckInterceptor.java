@@ -24,7 +24,8 @@ public class AccessPermissionCheckInterceptor implements HandlerInterceptor {
 
 
         // post 권한 체크를 제외할 경로 설정
-        if (request.getRequestURI().startsWith("/api/posts")) {
+        if (request.getRequestURI().startsWith("/api/posts") || request.getRequestURI().startsWith("/api/notification")
+        ||request.getRequestURI().startsWith("/ws") ||request.getRequestURI().startsWith("/WebSocketTest.html") || request.getRequestURI().startsWith("/sendMessage")) {
             return true; // 권한 검사 없이 통과
         }
 
