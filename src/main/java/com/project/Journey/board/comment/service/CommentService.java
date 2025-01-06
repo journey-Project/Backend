@@ -49,7 +49,7 @@ public class CommentService {
 
     // 게시글별 모든 댯굴 조회
     public List<CommentDTO> getCommentsByPostId(Long postId) {
-        List<Comment> comments = commentRepository.findByPost_Post_id(postId);
+        List<Comment> comments = commentRepository.findByPost_PostId(postId);
         List<CommentDTO> result = new ArrayList<>();
 
         for (Comment comment : comments) {
@@ -59,7 +59,7 @@ public class CommentService {
                     .content(comment.getContent())
                     .created_at(comment.getCreated_at())
                     .updated_at(comment.getUpdated_at())
-                    .post_id(comment.getPost().getPost_id())
+                    .post_id(comment.getPost().getPostId())
                     .build();
             result.add(dto);
         }

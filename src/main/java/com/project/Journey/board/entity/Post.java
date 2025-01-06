@@ -17,7 +17,8 @@ import java.util.UUID;
 public class Post {
     @Id
     @GeneratedValue
-    private Long post_id;
+    @Column(name = "post_id")
+    private Long postId;
 
     //@ManyToOne
     //@JoinColumn(name = "user_id", nullable = false)

@@ -51,7 +51,7 @@ public class PostService {
                 .user_id(postDTO.getUser_id())
                 .build();
 
-        return postRepository.save(post).getPost_id();
+        return postRepository.save(post).getPostId();
     };
 
 
