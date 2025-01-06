@@ -17,7 +17,7 @@ public class WebSocketSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 // 요청에 대한 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/ws/**","/topic/**", "/app/**","/WebSocketTest.html").permitAll() // WebSocket 엔드포인트는 인증 없이 접근 허용
+                        .requestMatchers("/ws/**","/topic/**", "/app/**","/WebSocketTest.html","/api/notification/**").permitAll() // WebSocket 엔드포인트는 인증 없이 접근 허용
                         .anyRequest().authenticated()        // 그 외 요청은 인증 필요
                 );
         return http.build();
