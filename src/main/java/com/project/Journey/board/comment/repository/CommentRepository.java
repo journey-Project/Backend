@@ -8,7 +8,9 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // 특정 post_id에 대한 댓글 목록 조회
-    List<Comment> findByPost_PostId(Long postId);
+    // (1) 특정 게시글 + 부모가 없는(최상위) 댓글 조회
+    List<Comment> findByPost_PostIdAndParentCommentIsNull(Long postId);
 
+    // 필요하다면, 특정 부모 댓글의 자식 조회
+    List<Comment> findByParentComment_CommentId(Long parentId);
 }

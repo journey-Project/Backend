@@ -15,24 +15,24 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    // 댓글 생성
+    // 댓글(대댓글) 생성
     @PostMapping("/create")
-    public ResponseEntity<Long> createComment(@RequestBody CommentDTO commentDTO) {
-        Long commentId = commentService.createComment(commentDTO);
+    public ResponseEntity<Long> createComment(@RequestBody CommentDTO dto) {
+        Long commentId = commentService.createComment(dto);
         return ResponseEntity.ok(commentId);
     }
 
-    // 특정 게시글에 대한 댓글 목록 조회
+    // 게시글 전체 댓글(대댓글 포함) 조회
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<CommentDTO>> getCommentsByPostId(@PathVariable Long postId) {
-        List<CommentDTO> commentList = commentService.getCommentsByPostId(postId);
+    public ResponseEntity<List<CommentDTO>> getAllComments(@PathVariable Long postId) {
+        List<CommentDTO> commentList = commentService.getAllCommentsByPostId(postId);
         return ResponseEntity.ok(commentList);
     }
 
     // 댓글 수정
     @PutMapping("/update/{commentId}")
-    public ResponseEntity<Void> updateComment(@PathVariable Long commentId, @RequestBody CommentDTO commentDTO) {
-        commentService.updateComment(commentId, commentDTO.getContent());
+    public ResponseEntity<Void> updateComment(@PathVariable Long commentId, @RequestBody CommentDTO dto) {
+        commentService.updateComment(commentId, dto.getContent());
         return ResponseEntity.noContent().build();
     }
 

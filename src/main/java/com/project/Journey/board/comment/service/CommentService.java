@@ -21,78 +21,118 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
 
-    // 댓글 생성
+    /**
+     * 댓글(대댓글) 생성
+     * - parentCommentId가 null이면 최상위 댓글, 아니면 대댓글.
+     */
     @Transactional
-    public Long createComment(CommentDTO commentDTO) {
-        // 댓글 달릴 대상 게시글(post) 찾기
-        Post post = postRepository.findById(commentDTO.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
+    public Long createComment(CommentDTO dto) {
+        // 1) 게시글 찾기
+        Post post = postRepository.findById(dto.getPostId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 postId의 게시글이 없습니다"));
 
-        // Comment Entity 생성
+        // 2) 부모 댓글 찾기 (대댓글일 경우)
+        Comment parent = null;
+        int depthLevel = 0;
+        if (dto.getParentCommentId() != null) {
+            parent = commentRepository.findById(dto.getParentCommentId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 parentCommentId의 댓글이 없습니다"));
+            depthLevel = parent.getDepth() + 1; // 부모의 depth +1
+        }
+
+        // 3) 새 댓글 엔티티 생성
         Comment comment = Comment.builder()
-                .userId(commentDTO.getUserId())
-                .content(commentDTO.getContent())
+                .userId(dto.getUserId())
+                .content(dto.getContent())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .post(post)
+                .parentComment(parent)
+                .depth(depthLevel)
                 .build();
 
-        // 댓글 저장
         Comment savedComment = commentRepository.save(comment);
 
-        // 게시글의 comment_count wmdrk
+        // 4) 게시글 commentCount 증가 (원한다면)
         post.setComment_count(post.getComment_count() + 1);
-        // postRepository.save(post); // 영속성 컨텍스트 내에서 post가 변경되면 @Transactional 커밋 시점에 반영됨
+
+        // 5) 부모가 있다면 양방향 연관관계 설정
+        if (parent != null) {
+            parent.addChildComment(savedComment);
+        }
 
         return savedComment.getCommentId();
     }
 
-    // 게시글별 모든 댯굴 조회
-    public List<CommentDTO> getCommentsByPostId(Long postId) {
-        List<Comment> comments = commentRepository.findByPost_PostId(postId);
-        List<CommentDTO> result = new ArrayList<>();
+    /**
+     * 게시글의 모든 댓글(대댓글 포함) 조회
+     * - 최상위 댓글만 조회 → 각 댓글의 자식 목록(childComments)을 재귀적으로 DTO 변환
+     */
+    public List<CommentDTO> getAllCommentsByPostId(Long postId) {
+        // 1) 최상위 댓글들 (parentComment = null)
+        List<Comment> topComments = commentRepository.findByPost_PostIdAndParentCommentIsNull(postId);
 
-        for (Comment comment : comments) {
-            CommentDTO dto = CommentDTO.builder()
-                    .commentId(comment.getCommentId())
-                    .userId(comment.getUserId())
-                    .content(comment.getContent())
-                    .createdAt(comment.getCreatedAt())
-                    .updatedAt(comment.getUpdatedAt())
-                    .postId(comment.getPost().getPostId())
-                    .build();
+        // 2) 재귀적으로 childComments까지 DTO로 변환
+        List<CommentDTO> result = new ArrayList<>();
+        for (Comment comment : topComments) {
+            CommentDTO dto = convertToDTOWithChildren(comment);
             result.add(dto);
         }
         return result;
     }
 
-    // 댓글 수정
+    // 자식 댓글까지 재귀 변환
+    private CommentDTO convertToDTOWithChildren(Comment comment) {
+        CommentDTO dto = CommentDTO.builder()
+                .commentId(comment.getCommentId())
+                .userId(comment.getUserId())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .postId(comment.getPost().getPostId())
+                .depth(comment.getDepth())
+                .parentCommentId(comment.getParentComment() == null
+                        ? null : comment.getParentComment().getCommentId())
+                .build();
+
+        // childComments
+        List<CommentDTO> childDtos = new ArrayList<>();
+        for (Comment child : comment.getChildComments()) {
+            childDtos.add(convertToDTOWithChildren(child));
+        }
+        dto.setChildComments(childDtos);
+
+        return dto;
+    }
+
+    /**
+     * 댓글 수정
+     */
     @Transactional
     public void updateComment(Long commentId, String newContent) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 comment_id의 댓글이 없습니다"));
-
+                .orElseThrow(() -> new IllegalArgumentException("해당 commentId의 댓글이 없습니다"));
         comment.updateComment(newContent);
-        // commentRepository.save(comment); // @Transactional로 인해 변경사항 자동 반영
     }
 
-    // 댓글 삭제
+    /**
+     * 댓글 삭제
+     * (대댓글 포함 삭제 시에도 cascade + orphanRemoval = true라면 자식도 자동 삭제)
+     */
     @Transactional
     public void deleteComment(Long commentId) {
-        // 삭제 대상 댓글 찾기
+        // 1) 댓글 찾기
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 comment_id의 댓글이 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 commentId의 댓글이 없습니다"));
 
-        // 연관된 Post 가져오기 (댓글 수 감소를 위해)
+        // 2) 연관된 게시글
         Post post = comment.getPost();
-
-        // 댓글 삭제
+        // 3) 댓글 삭제
         commentRepository.delete(comment);
 
-        // 게시글의 comment_count 감소
+        // 4) 게시글의 commentCount 감소 (필요하면)
         if (post.getComment_count() > 0) {
             post.setComment_count(post.getComment_count() - 1);
         }
-        // postRepository.save(post);
     }
 }
