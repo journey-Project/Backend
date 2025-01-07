@@ -6,6 +6,10 @@ import com.project.Journey.board.comment.domain.CommentDTO;
 import com.project.Journey.board.comment.repository.CommentRepository;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.repository.PostRepository;
+import com.project.Journey.notification.dto.NotificationDTO;
+import com.project.Journey.notification.entity.Notification;
+import com.project.Journey.notification.repository.NotificationRepository;
+import com.project.Journey.notification.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +24,8 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
     /**
      * 댓글(대댓글) 생성
      * - parentCommentId가 null이면 최상위 댓글, 아니면 대댓글.
@@ -60,6 +65,23 @@ public class CommentService {
         if (parent != null) {
             parent.addChildComment(savedComment);
         }
+
+        //댓글 알림
+
+        Notification notification = new Notification();
+        notification.setUser_id(dto.getUserId());
+        notification.setRecipient(post.getUser_id());
+        notification.setPost_id(dto.getPostId());
+        notification.setMessage(dto.getContent());
+        notification.setCreated_at(LocalDateTime.now());
+        notification.set_read(false);
+
+        NotificationDTO notificationDTO = NotificationDTO.fromEntity(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+
+
+        notificationService.sendNotificationToRecipient(notificationDTO, savedNotification);
+
 
         return savedComment.getCommentId();
     }

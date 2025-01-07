@@ -51,6 +51,15 @@ public class NotificationService {
     }
 
 
+    public void sendNotificationToRecipient(NotificationDTO notificationDTO, Notification savedNotification){
+        simpMessagingTemplate.convertAndSend("/topic/users/"+notificationDTO.getRecipient() + "/notifications",
+                NotificationDTO.fromEntity(savedNotification));
+        System.out.println("게시글 작성자 :"+notificationDTO.getRecipient()+"에게 알림을 성공적으로 보냈습니다!");
+    }
+
+
+
+
     //수신자(게시글 작성자)가 받은 댓글 알림 리스트 반환
     public List<NotificationDTO> getNotificationsForRecipient(String recipient){
         List<Notification> notifications = notificationRepository.findByRecipient(recipient);
