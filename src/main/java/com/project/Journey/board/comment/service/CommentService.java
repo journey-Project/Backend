@@ -25,15 +25,15 @@ public class CommentService {
     @Transactional
     public Long createComment(CommentDTO commentDTO) {
         // 댓글 달릴 대상 게시글(post) 찾기
-        Post post = postRepository.findById(commentDTO.getPost_id())
+        Post post = postRepository.findById(commentDTO.getPostId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
 
         // Comment Entity 생성
         Comment comment = Comment.builder()
-                .user_id(commentDTO.getUser_id())
+                .userId(commentDTO.getUserId())
                 .content(commentDTO.getContent())
-                .created_at(LocalDateTime.now())
-                .updated_at(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .post(post)
                 .build();
 
@@ -44,7 +44,7 @@ public class CommentService {
         post.setComment_count(post.getComment_count() + 1);
         // postRepository.save(post); // 영속성 컨텍스트 내에서 post가 변경되면 @Transactional 커밋 시점에 반영됨
 
-        return savedComment.getComment_id();
+        return savedComment.getCommentId();
     }
 
     // 게시글별 모든 댯굴 조회
@@ -54,12 +54,12 @@ public class CommentService {
 
         for (Comment comment : comments) {
             CommentDTO dto = CommentDTO.builder()
-                    .comment_id(comment.getComment_id())
-                    .user_id(comment.getUser_id())
+                    .commentId(comment.getCommentId())
+                    .userId(comment.getUserId())
                     .content(comment.getContent())
-                    .created_at(comment.getCreated_at())
-                    .updated_at(comment.getUpdated_at())
-                    .post_id(comment.getPost().getPostId())
+                    .createdAt(comment.getCreatedAt())
+                    .updatedAt(comment.getUpdatedAt())
+                    .postId(comment.getPost().getPostId())
                     .build();
             result.add(dto);
         }

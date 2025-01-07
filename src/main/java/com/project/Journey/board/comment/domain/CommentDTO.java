@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CommentDTO {
 
-    private Long comment_id;
-    private String user_id;
+    private Long commentId;
+    private String userId;
     private String content;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
-    private Long post_id;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Long postId;
 }
