@@ -54,7 +54,7 @@ public class PostServiceTest {
         Post post = postRepository.findById(saved_id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
 
-        Assertions.assertEquals(saved_id, post.getPost_id());
+        Assertions.assertEquals(saved_id, post.getPostId());
         Assertions.assertEquals("test title",post.getTitle());
         Assertions.assertEquals("test content", post.getContent());
         Assertions.assertEquals("test user", post.getUser_id());
