@@ -9,6 +9,8 @@ import com.project.Journey.login.jwt.constants.JwtConstants;
 import com.project.Journey.login.jwt.constants.JwtUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,10 @@ public class PostController {
 
     // 게시글 저장
     @Operation(summary = "게시글 저장", description = "새로운 게시글을 저장합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글이 성공적으로 저장되었습니다."),
+            @ApiResponse(responseCode = "400", description = "입력값이 잘못되었습니다.")
+    })
     @PostMapping("api/posts/save")
     public ResponseEntity<Long> createPost(@RequestBody @Parameter(description = "게시글 저장에 필요한 정보", required = true) PostDTO postDTO) {
         try{
@@ -42,6 +48,10 @@ public class PostController {
 
     // 모든 게시글 조회
     @Operation(summary = "모든 게시글 조회", description = "모든 게시글을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 목록이 성공적으로 반환되었습니다."),
+            @ApiResponse(responseCode = "500", description = "서버에서 오류가 발생했습니다.")
+    })
     @GetMapping("api/posts/getAll")
     public List<PostDTO> getAllPosts(HttpServletRequest request) {
         try {
@@ -68,6 +78,10 @@ public class PostController {
 
     // 게시글 삭제
     @Operation(summary = "게시글 삭제", description = "특정 게시글을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "게시글이 성공적으로 삭제되었습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.")
+    })
     @DeleteMapping("api/posts/delete/{post_id}")
     public ResponseEntity<Void> deletePost( @Parameter(description = "삭제할 게시글의 post_id", required = true, example = "1") @PathVariable Long post_id) {
         try{
@@ -81,6 +95,11 @@ public class PostController {
 
     //게시글 수정
     @Operation(summary = "게시글 수정", description = "특정 게시글을 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글이 성공적으로 수정되었습니다."),
+            @ApiResponse(responseCode = "400", description = "수정 요청값이 잘못되었습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.")
+    })
     @PutMapping("api/posts/update/{post_id}")
     public ResponseEntity<String> updatePost( @Parameter(description = "수정할 게시글의 ID", required = true, example = "1") @PathVariable Long post_id,
                                               @RequestBody @Parameter(description = "게시글 수정에 필요한 정보", required = true) PostDTO postDTO){
@@ -96,6 +115,10 @@ public class PostController {
     //조회수가 높은 순서대로 게시물 조회
 
     @Operation(summary = "조회수가 높은 게시글 조회", description = "조회수가 높은 순서대로 게시글을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회수가 높은 게시글 목록이 성공적으로 반환되었습니다."),
+            @ApiResponse(responseCode = "500", description = "서버에서 오류가 발생했습니다.")
+    })
     @GetMapping("api/posts/top-views")
     public List<Post> getTopViewedPosts(){
         try{
@@ -109,6 +132,10 @@ public class PostController {
 
     // post_id로 게시글 조회 + 조회 수 증가시키기
     @Operation(summary = "게시글 조회 및 조회수 증가", description = "특정 게시글을 조회하고 조회수를 증가시킵니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글이 성공적으로 조회되고 조회수가 증가되었습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.")
+    })
     @GetMapping("api/posts/getIncrementView/{post_id}")
     public PostDTO incrementPostView(@Parameter(description = "조회할 게시글의 ID", required = true, example = "1") @PathVariable Long post_id) {
         try{
@@ -121,6 +148,10 @@ public class PostController {
 
     //user_id로 게시글 조회
     @Operation(summary = "사용자 게시글 조회", description = "특정 사용자의 user_id로 게시글을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "해당 사용자의 게시글 목록이 성공적으로 반환되었습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 사용자의 게시글을 찾을 수 없습니다.")
+    })
     @GetMapping("api/posts/get/user_id/{user_id}")
     public List<PostDTO> getPostsByUser_id( @Parameter(description = "게시글을 조회할 사용자의 user_id", required = true, example = "user123") @PathVariable String user_id){
         try{
