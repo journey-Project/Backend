@@ -11,5 +11,4 @@ class JourneyApplicationTests {
 	@Disabled("테스트 임시 비활성화")
 	void contextLoads() {
 	}
-
 }
