@@ -35,7 +35,3 @@ out/
 
 ### VS Code ###
 .vscode/
-
-#민감 파일 추가
-application.properties
-application.ouath2.yml
