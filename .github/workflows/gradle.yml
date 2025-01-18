@@ -3,8 +3,7 @@ name: Journey-core dev CI/CD Pipeline
 on:
   push:
     branches:
-      - feature/comment
-
+      - main
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
