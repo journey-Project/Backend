@@ -31,6 +31,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        env:
+          DEBUG: 1
 
       # 5. Docker 이미지 빌드 및 푸시
       - name: Build and Push Docker image
