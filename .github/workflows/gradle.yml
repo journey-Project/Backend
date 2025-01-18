@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 코드 체크아웃
+      # 1. 코드 체크아웃 --
       - name: Checkout repository
         uses: actions/checkout@v4
 
