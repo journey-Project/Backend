@@ -28,14 +28,14 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build
 
-      # 임시. Debug Secrets
-      - name: Debug Secrets
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKER_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-        run: |
-          echo "Username: $DOCKER_USERNAME"
-          echo "Token: $DOCKER_TOKEN"     
+#      # 임시. Debug Secrets
+#      - name: Debug Secrets
+#        env:
+#          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+#          DOCKER_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+#        run: |
+#          echo "Username: $DOCKER_USERNAME"
+#          echo "Token: $DOCKER_TOKEN"
 
       # 4. docker hub 로그인
       - name: Login to DockerHub
