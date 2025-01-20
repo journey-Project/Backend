@@ -1,14 +1,11 @@
-# 1. 베이스 이미지 설정 (Java 21)
-FROM openjdk:21-jdk
+# Base 이미지로 톰캣 사용
+FROM tomcat:9.0
 
-# 2. 작업 디렉토리 설정
-WORKDIR /app
+# 톰캣의 웹앱 디렉토리 설정
+WORKDIR /usr/local/tomcat/webapps
 
-# 3. WAR 파일 복사
+# WAR 파일 복사
 COPY build/libs/Journey-0.0.1-SNAPSHOT.war Journey.war
 
-# 4. 포트 노출
-EXPOSE 8080
-
-# 5. 애플리케이션 실행
-ENTRYPOINT ["java", "-jar", "Journey.war"]
+# 톰캣 서버 실행
+CMD ["catalina.sh", "run"]
