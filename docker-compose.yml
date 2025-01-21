@@ -6,17 +6,15 @@ services:
       - "8080:8080"
     image: ashtonsw/mydockerrepo:latest
     container_name: spring-app
-    env_file:
-      - .env
     network_mode: host  # EC2의 Redis(127.0.0.1)와 통신
     environment:
       # MySQL RDS 연결 정보
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mydb.cdmkas62q1dg.ap-northeast-2.rds.amazonaws.com:3306/mydb
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
       # Redis 정보 (EC2 내부 설치)
-      SPRING_REDIS_HOST: 127.0.0.1
-      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
+      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
 
     restart: unless-stopped  # 컨테이너 재시작 정책
