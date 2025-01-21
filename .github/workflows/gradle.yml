@@ -93,5 +93,5 @@ jobs:
             fi
   
             sudo docker rmi ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo:latest || true
-            sudo docker-compose pull 
+            sudo docker-compose pull ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo:latest
             sudo docker run -it -d -p 8080:8080 --name mydockerrepo ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
