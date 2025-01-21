@@ -83,5 +83,5 @@ jobs:
             sudo docker-compose stop
             sudo docker-compose rm -f
             sudo docker rmi ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo:latest || true
-            sudo docker-compose pull ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
-            sudo docker run -it -d -p 8080:8080 --name mydockerrepo ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
+            sudo docker-compose pull
+            sudo docker run -it -d -p 8080:8080 --name spring-app ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
