@@ -4,6 +4,8 @@ services:
   spring-app:
     image: ashtonsw/mydockerrepo:latest
     container_name: spring-app
+    env_file:
+      - .env
     network_mode: host  # EC2의 Redis(127.0.0.1)와 통신
     environment:
       # MySQL RDS 연결 정보
