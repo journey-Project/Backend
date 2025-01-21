@@ -39,6 +39,12 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+      # 임시. secret 값 확인
+      - name: Debug Secrets
+        run: echo "SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL"
+        env:
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+
       # docker-compose.yml 업로드 단계 추가
       - name: Upload docker-compose.yml to EC2
         uses: appleboy/scp-action@v0.1.3
