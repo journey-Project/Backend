@@ -2,6 +2,8 @@ version: '3.8'
 
 services:
   spring-app:
+    ports:
+      - "8080:8080"
     image: ashtonsw/mydockerrepo:latest
     container_name: spring-app
     env_file:
