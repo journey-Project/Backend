@@ -80,8 +80,8 @@ jobs:
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
             EOF
 
-            sudo docker-compose stop mydockerrepo || true
-            sudo docker-compose rm mydockerrepo || true
+            sudo docker-compose stop
+            sudo docker-compose rm 
             sudo docker rmi ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo:latest || true
             sudo docker-compose pull ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
             sudo docker run -it -d -p 8080:8080 --name mydockerrepo ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
