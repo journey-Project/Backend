@@ -81,7 +81,11 @@ jobs:
             EOF
 
             sudo docker-compose stop
-            sudo docker-compose rm 
+            if [ $(sudo docker ps -aq -f name=mydockerrepo) ]; then
+              sudo docker stop mydockerrepo
+              sudo docker rm mydockerrepo
+            fi
+  
             sudo docker rmi ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo:latest || true
             sudo docker-compose pull 
             sudo docker run -it -d -p 8080:8080 --name mydockerrepo ${{ secrets.DOCKER_HUB_USERNAME }}/mydockerrepo
