@@ -8,12 +8,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//        registry.addInterceptor(new AccessPermissionCheckInterceptor())
+//                .order(1)
+//                .excludePathPatterns("/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
+//                        "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", "/swagger-ui", "/v3/api-docs","/swagger-ui/index.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html");
+//    }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AccessPermissionCheckInterceptor())
                 .order(1)
-                .excludePathPatterns("/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
-                        "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", "/swagger-ui", "/v3/api-docs","/swagger-ui/index.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html");
+                .excludePathPatterns("/**"); // 모든 요청 허용 (테스트용)
     }
-
 }
