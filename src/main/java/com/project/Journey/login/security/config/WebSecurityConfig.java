@@ -90,7 +90,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(SWAGGER_WHITELIST).permitAll() // Swagger 경로 허용
+                        .requestMatchers("/**").permitAll() // Swagger 경로 허용
                         .anyRequest().authenticated() // 나머지 경로는 인증 요구
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
