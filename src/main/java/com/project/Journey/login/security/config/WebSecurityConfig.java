@@ -28,14 +28,11 @@ public class WebSecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
     private final OAuth2UserServiceImpl oAuth2UserService;
     private final JwtService jwtService;
-//
-//    private static final String[] SWAGGER_WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
-//            "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
-//            "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
-//            ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui"};
 
-    private static final String[] SWAGGER_WHITELIST = {"/", "/swagger-ui/**", "/v3/api-docs/**", "/api/**"};
-
+    private static final String[] SWAGGER_WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
+            "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
+            "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
+            ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui"};
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -91,6 +88,7 @@ public class WebSecurityConfig {
         http
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/**").permitAll() // Swagger 경로 허용
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated() // 나머지 경로는 인증 요구
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
