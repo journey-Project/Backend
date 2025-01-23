@@ -19,6 +19,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @RequiredArgsConstructor
 @Configuration
@@ -72,11 +73,16 @@ public class WebSecurityConfig {
                 .build();
     }
 
+
+
     // CustomAuthenticationFilter 에 AuthenticationManager 주입
     @Bean
     public CustomAuthenticationFilter customAuthenticationFilter(HttpSecurity http) throws Exception {
         CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManager(http));
-        customAuthenticationFilter.setFilterProcessesUrl("/login");
+
+        // 오직 POST /login 일 때만 필터 작동
+        customAuthenticationFilter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher("/login", "POST"));
+
         customAuthenticationFilter.setAuthenticationSuccessHandler(customLoginSuccessHandler());
         customAuthenticationFilter.setAuthenticationFailureHandler(customLoginFailureHandler());
         customAuthenticationFilter.afterPropertiesSet();
