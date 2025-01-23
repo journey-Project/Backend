@@ -86,6 +86,8 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.disable()) // CORS 설정: 필요에 따라 enable()로 변경
+                .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/**").permitAll() // Swagger 경로 허용
                         .requestMatchers("/error").permitAll()
@@ -93,7 +95,7 @@ public class WebSecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 //                .csrf(csrf -> csrf.ignoringRequestMatchers("/swagger-ui", "/v3/api-docs", "/swagger-ui/**", "/v3/api-docs/**").disable())
-                .csrf(csrf -> csrf.disable()) // CSRF 비활성화
+
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .logout(logout -> logout.logoutSuccessUrl("/"))
