@@ -29,7 +29,7 @@ public class WebSecurityConfig {
     private final OAuth2UserServiceImpl oAuth2UserService;
     private final JwtService jwtService;
 
-    private static final String[] SWAGGER_WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
+    private static final String[] WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
             "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
             "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
             ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui"};
@@ -89,8 +89,7 @@ public class WebSecurityConfig {
                 .cors(cors -> cors.disable()) // CORS 설정: 필요에 따라 enable()로 변경
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/**").permitAll() // Swagger 경로 허용
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(WHITELIST).permitAll()
                         .anyRequest().authenticated() // 나머지 경로는 인증 요구
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -110,4 +109,6 @@ public class WebSecurityConfig {
 
         return http.build();
     }
+
+
 }
