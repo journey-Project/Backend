@@ -7,31 +7,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "공통 페이지 컨트롤러", description = "메인 홈/회원가입/로그인 페이지 반환")
-@Controller
+@Tag(name = "공통 페이지 API", description = "홈, 회원가입, 로그인 관련 엔드포인트")
+@RestController
+@RequestMapping("/api/pages")
 public class HomeController {
 
-    @Operation(summary = "홈 화면", description = "메인 페이지 리턴 (View/JSP/HTML)")
-    @GetMapping("/")
-    public String home() {
-        return "home";
+    @Operation(summary = "홈 화면 데이터", description = "홈 화면 내용을 반환합니다.")
+    @GetMapping("/home")
+    public String getHome() {
+        return "{\"message\": \"Welcome to the Home Page!\"}";
     }
 
-    @Operation(summary = "회원가입 페이지", description = "회원가입 폼 (View)")
+    @Operation(summary = "회원가입 페이지 데이터", description = "회원가입 페이지 내용을 반환합니다.")
     @GetMapping("/signUp")
-    public String loadSignUp() {
-        return "member/signUp";
+    public String getSignUpPage() {
+        return "{\"message\": \"Sign-Up Page\"}";
     }
 
-    @Operation(summary = "로그인 홈", description = "로그인 폼 (View)")
+    @Operation(summary = "로그인 페이지 데이터", description = "로그인 페이지 내용을 반환합니다.")
     @GetMapping("/loginHome")
-    public String loginHome() {
-        return "member/loginHome";
-    }
-
-    @Operation(summary = "로그인 성공 페이지", description = "로그인 성공 시 이동하는 페이지")
-    @GetMapping("/loginSuccess")
-    public String loginSuccess() {
-        return "member/loginSuccess";
+    public String getLoginPage() {
+        return "{\"message\": \"Login Page\"}";
     }
 }
