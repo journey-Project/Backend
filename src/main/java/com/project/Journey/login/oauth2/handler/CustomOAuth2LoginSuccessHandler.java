@@ -32,7 +32,7 @@ public class CustomOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
             response.addHeader(JwtConstants.ACCESS, JwtConstants.JWT_TYPE + accessToken);
 
             Map<String, String> responseBody = new HashMap<>();
-            responseBody.put("redirectUrl", "/oauth2/signUp");
+            responseBody.put("redirectUrl", "/api/auth/sign-up");
             responseBody.put("email", member.getEmail());
             responseBody.put("socialType", member.getSocialType().toString());
             responseBody.put("socialId", member.getSocialId());
