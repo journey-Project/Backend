@@ -27,7 +27,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String[] whitelist ={"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
-                                            "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", "/api/posts/**","/ws/**","/topic/**", "/app/**", "/api/notification/**","/sendMessage/**","/WebSocketTest.html","/api/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**","/swagger-ui","/v3/api-docs"};
+                                            "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", "/api/posts/**","/ws/**","/ws","/topic/**", "/app/**", "/api/notification/**","/sendMessage/**","/WebSocketTest.html","/api/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**","/swagger-ui","/v3/api-docs"};
 
     // 필터를 거치지 않을 URL 을 설정하고, true 를 return 하면 바로 다음 필터를 진행하도록 함
     @Override
