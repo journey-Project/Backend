@@ -1,5 +1,7 @@
 package com.project.Journey.board.comment.domain;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,9 +19,13 @@ public class CommentDTO {
 
     private Long commentId;
     private String userId;
+
+    @NotBlank
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @NotNull
     private Long postId;
 
     // 대댓글용

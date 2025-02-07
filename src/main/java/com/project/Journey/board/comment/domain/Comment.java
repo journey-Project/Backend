@@ -20,7 +20,7 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentId;
 
-    @Column(nullable = false)
+    @Column(name = "user_id", nullable = false) // 데이터베이스 컬럼명 명시
     private String userId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
