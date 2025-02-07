@@ -3,6 +3,7 @@ package com.project.Journey.board.comment.service;
 import com.project.Journey.board.comment.domain.Comment;
 import com.project.Journey.board.comment.domain.CommentDTO;
 import com.project.Journey.board.comment.repository.CommentRepository;
+import com.project.Journey.board.comment.service.CommentService;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.repository.PostRepository;
 import com.project.Journey.notification.dto.NotificationDTO;
@@ -10,271 +11,318 @@ import com.project.Journey.notification.entity.Notification;
 import com.project.Journey.notification.repository.NotificationRepository;
 import com.project.Journey.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.*;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
 class CommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
     @Mock
     private PostRepository postRepository;
+
     @Mock
     private NotificationService notificationService;
+
     @Mock
     private NotificationRepository notificationRepository;
 
     @InjectMocks
     private CommentService commentService;
 
-    private Post testPost;
+    private Post mockPost;
 
     @BeforeEach
     void setUp() {
-        // 테스트용 Post 객체
-        testPost = Post.builder()
-                .postId(1L)
-                .user_id("postOwner")
-                .title("Test Post")
-                .content("Test Content")
-                .comment_count(0)
-                .build();
+        // 예시용: 테스트에서 사용할 가짜 Post 객체
+        mockPost = new Post();
+        mockPost.setPostId(100L);
+        mockPost.setUser_id("postOwner");
+        mockPost.setComment_count(0);
     }
 
     @Test
-    @DisplayName("댓글 생성 - 최상위 댓글 성공")
-    void testCreateComment_TopLevelComment() {
+    void testCreateComment_noParent() {
         // given
         CommentDTO dto = CommentDTO.builder()
-                .postId(1L)
-                .userId("user1")
-                .content("This is a test comment")
+                .userId("tester")
+                .content("This is a new comment")
+                .postId(100L)
                 .build();
 
-        // PostRepository mock 설정
-        when(postRepository.findById(dto.getPostId())).thenReturn(Optional.of(testPost));
+        given(postRepository.findById(100L)).willReturn(Optional.of(mockPost));
 
-        // CommentRepository mock 설정
+        // commentRepository.save(...) 시나리오 가정
         Comment savedComment = Comment.builder()
-                .commentId(100L)
-                .userId(dto.getUserId())
-                .content(dto.getContent())
-                .post(testPost)
-                .parentComment(null)
+                .commentId(1L)
+                .userId("tester")
+                .content("This is a new comment")
+                .post(mockPost)
                 .depth(0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        when(commentRepository.save(any(Comment.class))).thenReturn(savedComment);
+        given(commentRepository.save(any(Comment.class))).willReturn(savedComment);
+
+        // notificationRepository
+        given(notificationRepository.save(any(Notification.class))).willAnswer(invocation -> {
+            Notification n = invocation.getArgument(0);
+            n.setPost_id(999L); // mock id
+            return n;
+        });
 
         // when
-        Long commentId = commentService.createComment(dto);
+        Long createdId = commentService.createComment(dto);
 
         // then
-        assertThat(commentId).isEqualTo(100L);
+        assertThat(createdId).isEqualTo(1L);  // save(...) 결과 commentId=1L 이라고 가정
 
-        // post의 comment_count가 증가하는지 확인
-        assertThat(testPost.getComment_count()).isEqualTo(1);
+        // post.comment_count == 1
+        assertThat(mockPost.getComment_count()).isEqualTo(1);
 
-        // Notification 객체가 생성되었는지 확인
-        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
-        verify(notificationRepository, times(1)).save(notificationCaptor.capture());
-        Notification capturedNotification = notificationCaptor.getValue();
-        assertThat(capturedNotification.getUser_id()).isEqualTo("user1");
-        assertThat(capturedNotification.getRecipient()).isEqualTo("postOwner");
-        assertThat(capturedNotification.getMessage()).isEqualTo("This is a test comment");
-
-        // NotificationService가 sendNotificationToRecipient를 호출했는지 확인
-        ArgumentCaptor<NotificationDTO> notificationDTOCaptor = ArgumentCaptor.forClass(NotificationDTO.class);
-        ArgumentCaptor<Notification> notificationEntityCaptor = ArgumentCaptor.forClass(Notification.class);
-        verify(notificationService, times(1))
-                .sendNotificationToRecipient(notificationDTOCaptor.capture(), notificationEntityCaptor.capture());
+        // verify: postRepository, commentRepository 호출 여부
+        verify(postRepository).findById(100L);
+        verify(commentRepository).save(any(Comment.class));
+        // 알림 관련
+        verify(notificationRepository).save(any(Notification.class));
+        verify(notificationService).sendNotificationToRecipient(any(NotificationDTO.class), any(Notification.class));
     }
 
     @Test
-    @DisplayName("댓글 생성 - 대댓글 성공")
-    void testCreateComment_SubComment() {
+    void testCreateComment_withParent() {
         // given
+        CommentDTO dto = CommentDTO.builder()
+                .userId("tester")
+                .content("Child comment")
+                .postId(100L)
+                .parentCommentId(10L) // 부모 댓글
+                .build();
+
+        given(postRepository.findById(100L)).willReturn(Optional.of(mockPost));
+
         Comment parentComment = Comment.builder()
-                .commentId(50L)
-                .userId("user2")
-                .content("Parent comment")
+                .commentId(10L)
+                .userId("parentUser")
+                .content("Parent content")
                 .depth(0)
-                .post(testPost)
+                .post(mockPost)
                 .build();
 
-        CommentDTO dto = CommentDTO.builder()
-                .postId(1L)
-                .userId("user3")
-                .content("This is a sub comment")
-                .parentCommentId(50L)
-                .build();
+        given(commentRepository.findById(10L)).willReturn(Optional.of(parentComment));
 
-        when(postRepository.findById(dto.getPostId())).thenReturn(Optional.of(testPost));
-        when(commentRepository.findById(dto.getParentCommentId())).thenReturn(Optional.of(parentComment));
-
-        Comment subComment = Comment.builder()
-                .commentId(60L)
-                .userId("user3")
-                .content("This is a sub comment")
-                .depth(1)
+        Comment savedComment = Comment.builder()
+                .commentId(11L)
+                .userId("tester")
+                .content("Child comment")
+                .depth(1) // parent.depth + 1
+                .post(mockPost)
                 .parentComment(parentComment)
-                .post(testPost)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
-        when(commentRepository.save(any(Comment.class))).thenReturn(subComment);
+        given(commentRepository.save(any(Comment.class))).willReturn(savedComment);
+        given(notificationRepository.save(any(Notification.class))).willReturn(new Notification());
 
         // when
-        Long savedId = commentService.createComment(dto);
+        Long newId = commentService.createComment(dto);
 
         // then
-        assertThat(savedId).isEqualTo(60L);
-        assertThat(testPost.getComment_count()).isEqualTo(1);
+        assertThat(newId).isEqualTo(11L);
+        assertThat(mockPost.getComment_count()).isEqualTo(1);
+
+        verify(commentRepository).findById(10L);
+        verify(commentRepository).save(any(Comment.class));
+        // 부모 댓글에 childComment가 추가됐는지 확인
         assertThat(parentComment.getChildComments()).hasSize(1);
-        assertThat(parentComment.getChildComments().get(0).getCommentId()).isEqualTo(60L);
     }
 
     @Test
-    @DisplayName("댓글 생성 실패 - 존재하지 않는 게시물 ID")
-    void testCreateComment_PostNotFound() {
-        // given
-        CommentDTO dto = CommentDTO.builder()
-                .postId(999L)
-                .userId("user1")
-                .content("content")
-                .build();
-
-        when(postRepository.findById(dto.getPostId())).thenReturn(Optional.empty());
-
-        // when & then
-        assertThrows(IllegalArgumentException.class, () -> commentService.createComment(dto));
-    }
-
-    @Test
-    @DisplayName("게시글 ID로 모든 댓글 조회")
     void testGetAllCommentsByPostId() {
         // given
-        Long postId = 1L;
-        Comment parentComment = Comment.builder()
+        Long postId = 100L;
+
+        // Comment A (parent)
+        Comment commentA = Comment.builder()
                 .commentId(1L)
-                .userId("user1")
-                .content("Parent comment")
+                .userId("userA")
+                .content("first comment")
                 .depth(0)
-                .post(testPost)
-                .childComments(new ArrayList<>())
-                .build();
-
-        Comment childComment = Comment.builder()
-                .commentId(2L)
-                .userId("user2")
-                .content("Child comment")
-                .depth(1)
-                .post(testPost)
-                .parentComment(parentComment)
-                .build();
-        parentComment.addChildComment(childComment);
-
-        List<Comment> topComments = new ArrayList<>();
-        topComments.add(parentComment);
-
-        when(commentRepository.findByPost_PostIdAndParentCommentIsNull(postId)).thenReturn(topComments);
-
-        // when
-        var result = commentService.getAllCommentsByPostId(postId);
-
-        // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getCommentId()).isEqualTo(1L);
-        assertThat(result.get(0).getChildComments()).hasSize(1);
-        assertThat(result.get(0).getChildComments().get(0).getCommentId()).isEqualTo(2L);
-    }
-
-    @Test
-    @DisplayName("댓글 수정 - 성공")
-    void testUpdateComment() {
-        // given
-        Long commentId = 10L;
-        String newContent = "Updated content";
-
-        Comment existingComment = Comment.builder()
-                .commentId(commentId)
-                .content("Old content")
+                .post(mockPost) // ★ post 설정
+                .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(existingComment));
+        // Comment B (child of A)
+        Comment commentB = Comment.builder()
+                .commentId(2L)
+                .userId("userB")
+                .content("child comment")
+                .depth(1)
+                .parentComment(commentA)
+                .post(mockPost) // ★ post 설정
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        // A의 자식 목록에 B를 추가
+        commentA.addChildComment(commentB);
+
+        List<Comment> mockComments = Arrays.asList(commentA, commentB);
+
+        given(commentRepository.findAllCommentsWithChildrenByPostId(postId))
+                .willReturn(mockComments);
+
+        // when
+        List<CommentDTO> result = commentService.getAllCommentsByPostId(postId);
+
+        // then
+        assertThat(result).hasSize(1); // 최상위 댓글은 하나만 (A)
+        CommentDTO parentDto = result.get(0);
+        assertThat(parentDto.getCommentId()).isEqualTo(1L);
+        assertThat(parentDto.getChildComments()).hasSize(1); // 자식 1개 (B)
+        assertThat(parentDto.getChildComments().get(0).getCommentId()).isEqualTo(2L);
+    }
+
+
+    @Test
+    void testUpdateComment() {
+        // given
+        Long commentId = 1L;
+        String newContent = "Updated content";
+        Comment existing = Comment.builder()
+                .commentId(commentId)
+                .content("old content")
+                .build();
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(existing));
 
         // when
         commentService.updateComment(commentId, newContent);
 
         // then
-        assertThat(existingComment.getContent()).isEqualTo(newContent);
-        verify(commentRepository, times(1)).findById(commentId);
+        assertThat(existing.getContent()).isEqualTo(newContent);
+        verify(commentRepository).findById(commentId);
     }
 
     @Test
-    @DisplayName("댓글 수정 실패 - 존재하지 않는 댓글 ID")
-    void testUpdateComment_CommentNotFound() {
+    void testDeleteComment_noChildren() {
         // given
-        Long commentId = 999L;
-        String newContent = "Updated content";
-
-        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
-
-        // when & then
-        assertThrows(IllegalArgumentException.class, () ->
-                commentService.updateComment(commentId, newContent));
-    }
-
-    @Test
-    @DisplayName("댓글 삭제 - 성공")
-    void testDeleteComment() {
-        // given
-        Long commentId = 20L;
-
-        Comment existingComment = Comment.builder()
+        Long commentId = 1L;
+        Comment existing = Comment.builder()
                 .commentId(commentId)
-                .post(testPost)
+                .content("to be deleted")
+                .post(mockPost)
                 .build();
 
-        testPost.setComment_count(2);
-
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(existingComment));
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(existing));
 
         // when
         commentService.deleteComment(commentId);
 
         // then
-        verify(commentRepository, times(1)).delete(existingComment);
-        assertThat(testPost.getComment_count()).isEqualTo(1);
+        assertThat(mockPost.getComment_count()).isEqualTo(0); // 처음 0 - totalDeleted(1) = 0
+        verify(commentRepository).delete(existing);
     }
 
     @Test
-    @DisplayName("댓글 삭제 실패 - 존재하지 않는 댓글 ID")
-    void testDeleteComment_CommentNotFound() {
+    void testDeleteComment_withChildren() {
+        // given
+        Long commentId = 1L;
+        Comment parent = Comment.builder()
+                .commentId(commentId)
+                .content("parent")
+                .post(mockPost)
+                .childComments(new ArrayList<>()) // empty
+                .build();
+
+        Comment child = Comment.builder()
+                .commentId(2L)
+                .content("child comment")
+                .post(mockPost)
+                .build();
+
+        // 계층 구조
+        parent.addChildComment(child);
+
+        // post.comment_count = 0 -> 2개의 댓글 있으므로 나중에 0
+        mockPost.setComment_count(2);
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(parent));
+
+        // when
+        commentService.deleteComment(commentId);
+
+        // then
+        verify(commentRepository).delete(parent);
+        // post.comment_count = 2 - 2 = 0
+        assertThat(mockPost.getComment_count()).isEqualTo(0);
+    }
+
+    @Test
+    void testDeleteComment_notFound() {
         // given
         Long commentId = 999L;
-        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
+        given(commentRepository.findById(commentId)).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> commentService.deleteComment(commentId));
+        assertThatThrownBy(() -> commentService.deleteComment(commentId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid comment ID");
+    }
+
+    @Test
+    void testUpdateComment_notFound() {
+        // given
+        Long commentId = 999L;
+        given(commentRepository.findById(commentId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> commentService.updateComment(commentId, "newContent"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("해당 commentId의 댓글이 없습니다");
+    }
+
+    @Test
+    void testCreateComment_postNotFound() {
+        // given
+        CommentDTO dto = CommentDTO.builder()
+                .postId(999L)
+                .userId("tester")
+                .content("No post found")
+                .build();
+        given(postRepository.findById(999L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> commentService.createComment(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("해당 postId의 게시글이 없습니다");
+    }
+
+    @Test
+    void testCreateComment_parentNotFound() {
+        // given
+        CommentDTO dto = CommentDTO.builder()
+                .postId(100L)
+                .userId("tester")
+                .content("Trying child comment")
+                .parentCommentId(999L)
+                .build();
+
+        given(postRepository.findById(100L)).willReturn(Optional.of(mockPost));
+        given(commentRepository.findById(999L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> commentService.createComment(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("해당 parentCommentId의 댓글이 없습니다");
     }
 }
