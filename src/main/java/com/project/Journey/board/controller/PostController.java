@@ -162,5 +162,14 @@ public class PostController {
         }
     }
 
+    //페이지네이션 적용
+    //http://localhost:8080/posts?page=0&size=5 -> 첫 페이지의 첫 페이지의 5개 게시글 반환
+    @GetMapping("api/posts/getPostByPage")
+    public List<PostDTO> getPostByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size){
+        return postService.getPosts(page,size);
+    }
+
 
 }

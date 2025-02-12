@@ -26,7 +26,7 @@ public class PostDTO {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-
+    private String imageUrl;
 
     public PostDTO() {
         // Default constructor
