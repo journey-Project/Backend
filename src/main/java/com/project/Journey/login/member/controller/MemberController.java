@@ -31,7 +31,7 @@ public class MemberController {
 
     @Operation(
             summary = "회원가입 API",
-            description = "새로운 사용자를 등록합니다. socialId와 SocialType는 소셜 로그 사용자만 사용하며, NULL 가능합니다. 그 외에 id, name, password, email 필드는 필수값입니다.",
+            description = "새로운 사용자를 등록합니다. socialId와 SocialType는ㅋ 소셜 로그 사용자만 사용하며, NULL 가능합니다. 그 외에 id, name, password, email 필드는 필수값입니다.",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "회원가입 성공",

@@ -20,17 +20,33 @@ import java.util.Map;
 @RequestMapping("/api/oauth2")
 public class OAuth2Controller {
 
-    // Oauth2 로그인 시 최초 로그인인 경우 회원가입 진행, 필요한 정보를 쿼리 파라미터로 받음
     @Operation(
             summary = "소셜 회원가입 - 추가 정보 입력 페이지",
-            description = "최초 소셜 로그인 시, 아직 회원 정보가 DB에 없는 경우 추가 정보 입력이 필요합니다. " +
-                    "이때 email, socialType, socialId를 쿼리 파라미터로 받아서 클라이언트가 추가 정보를 요청하거나 표시할 수 있습니다.",
+            description = """
+                    [최초 소셜 로그인 = GUEST]인 경우, 
+                    프론트에서 이 API(/api/oauth2/sign-up)를 호출하여 이메일 / 소셜타입 / 소셜ID를 표시하고 
+                    일반 회원가입(/api/auth/sign-up) 로직으로 이어가도록 했습니다.
+                    
+                    - 'email' 필드는 자동으로 입력(수정 불가), 나머지 id/name/password 등을 추가 입력받아야합니다.
+                    - 회원가입 성공하면 ROLE_USER로 전환
+                    
+                    ⚠ 주의: 
+                    이 API는 단순 예시. 실제 가입 폼은 프론트에서 구현하고,
+                    /api/auth/sign-up 호출로 DB에 등록합니다.
+                    """,
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "추가 정보 페이지 로드 성공",
+                            description = "소셜 회원가입 입력 페이지(데이터) 로드 성공",
                             content = @Content(mediaType = "application/json",
                                     examples = @ExampleObject(name = "성공 예시",
-                                            value = "{\n  \"email\": \"john.doe@example.com\",\n  \"socialType\": \"GOOGLE\",\n  \"socialId\": \"123456789\"\n}"))),
+                                            value = """
+                                                    {
+                                                      "email": "john.doe@example.com",
+                                                      "socialType": "GOOGLE",
+                                                      "socialId": "123456789",
+                                                      "note": "status=GUEST 시 가입 필요"
+                                                    }
+                                                    """))),
             }
     )
     @GetMapping("/sign-up")
@@ -39,12 +55,13 @@ public class OAuth2Controller {
             @RequestParam String socialType,
             @RequestParam String socialId
     ) {
-        // 실제로는 email, socialType, socialId를 받아서
-        // 추가 회원가입 로직을 진행하거나, 프론트엔드로 전달하는 역할
+        // 실제로는 email, socialType, socialId를 받아
+        // 프론트엔드가 '회원가입 폼'에서 자동 입력 시키거나 추가 정보를 입력하도록 안내함.
         Map<String, String> response = new HashMap<>();
         response.put("email", email);
         response.put("socialType", socialType);
         response.put("socialId", socialId);
+        response.put("note", "status=GUEST 시 이 값으로 회원가입 진행");
 
         return ResponseEntity.ok(response);
     }
