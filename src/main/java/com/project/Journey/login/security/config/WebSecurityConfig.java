@@ -1,8 +1,6 @@
 package com.project.Journey.login.security.config;
 
 import com.project.Journey.login.jwt.service.JwtService;
-import com.project.Journey.login.oauth2.handler.CustomOAuth2LoginFailureHandler;
-import com.project.Journey.login.oauth2.handler.CustomOAuth2LoginSuccessHandler;
 import com.project.Journey.login.oauth2.service.OAuth2UserServiceImpl;
 import com.project.Journey.login.security.filter.CustomAuthenticationFilter;
 import com.project.Journey.login.security.handler.CustomLoginFailureHandler;
@@ -57,15 +55,15 @@ public class WebSecurityConfig {
         return new CustomLoginFailureHandler();
     }
 
-    @Bean
-    public CustomOAuth2LoginSuccessHandler customOAuth2LoginSuccessHandler(){
-        return new CustomOAuth2LoginSuccessHandler(jwtService);
-    }
-
-    @Bean
-    public CustomOAuth2LoginFailureHandler customOAuth2LoginFailureHandler() {
-        return new CustomOAuth2LoginFailureHandler();
-    }
+//    @Bean
+//    public CustomOAuth2LoginSuccessHandler customOAuth2LoginSuccessHandler(){
+//        return new CustomOAuth2LoginSuccessHandler(jwtService);
+//    }
+//
+//    @Bean
+//    public CustomOAuth2LoginFailureHandler customOAuth2LoginFailureHandler() {
+//        return new CustomOAuth2LoginFailureHandler();
+//    }
 
     // AuthenticationManager 를 HttpSecurity 로부터 빌드하여 Bean 으로 등록
     @Bean
@@ -106,11 +104,12 @@ public class WebSecurityConfig {
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .logout(logout -> logout.logoutSuccessUrl("/"))
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
-                        .successHandler(customOAuth2LoginSuccessHandler())
-                        .failureHandler(customOAuth2LoginFailureHandler())
-                );
+//                .oauth2Login(oauth2 -> oauth2
+//                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+//                        .successHandler(customOAuth2LoginSuccessHandler())
+//                        .failureHandler(customOAuth2LoginFailureHandler())
+//                )
+                ;
 
         // CustomAuthenticationFilter 등록
         http.addFilterBefore(customAuthenticationFilter(http), UsernamePasswordAuthenticationFilter.class);
