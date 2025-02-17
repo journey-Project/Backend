@@ -34,8 +34,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberService memberService;
-
     @Operation(
             summary = "회원가입 API",
             description = """
@@ -57,12 +55,14 @@ public class MemberController {
                 2) 소셜 회원가입 (GUEST → 정식 회원 전환):
                    - DTO 필드: email, socialId, socialType (필요)
                    - id/password/name도 받아서 일반회원처럼 관리할 수도 있음
+                   - profileImage 는 마이페이지에서 추후에 추가(추가 정보)
                    - 예:
                      {
                        "id": "kakaoUser",
                        "name": "카카오닉네임",
                        "password": "optionalIfYouWant",
                        "email": "kakao@example.com",
+                       "profileImage": "https://k.kakaocdn.net/dn/kakaoProfile.jpg",
                        "socialId": "1234567890",
                        "socialType": "KAKAO"
                      }
@@ -162,4 +162,6 @@ public class MemberController {
         response.put("message", "회원가입이 완료되었습니다.");
         return ResponseEntity.ok(response); // 200
     }
+
+    private final MemberService memberService;
 }
