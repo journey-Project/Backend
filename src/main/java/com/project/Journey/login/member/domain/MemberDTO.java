@@ -31,4 +31,7 @@ public class MemberDTO {
     @Schema(description = "소셜 로그인 ID", example = "1234567890")
     private String socialId;
 
+    @Schema(description = "프로필 이미지 URL", example = "https://example.com/path/to/profile.jpg")
+    private String profileImage;  // 새로 추가: 프로필 이미지(소셜 제공 or 직접 업로드)
+
 }

@@ -24,6 +24,8 @@ public class Member {
 
     private String socialId;
 
+    private String profileImage;
+
     public Member(){
 
     }
@@ -38,6 +40,7 @@ public class Member {
         this.role = role;
         this.socialType = socialType;
         this.socialId = socialId;
+        this.profileImage = profileImage;
     }
 
     // Member가 생성되기 전 DTO로 User를 생성할 때 사용하는 코드
@@ -51,6 +54,7 @@ public class Member {
                 .role(MemberRole.USER)
                 .socialType(parseSocialType(dto.getSocialType()))  // 새 메서드로 분리 or inline
                 .socialId(dto.getSocialId())
+                .profileImage(dto.getProfileImage())
                 .build();
         return member;
     }
