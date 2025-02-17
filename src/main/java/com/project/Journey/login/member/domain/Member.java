@@ -31,7 +31,7 @@ public class Member {
     }
 
     @Builder
-    public Member(Long no, String id, String name, String password, String email, MemberRole role, SocialType socialType, String socialId) {
+    public Member(Long no, String id, String name, String password, String email, MemberRole role, SocialType socialType, String socialId, String profileImage) {
         this.no = no;
         this.id = id;
         this.name = name;
