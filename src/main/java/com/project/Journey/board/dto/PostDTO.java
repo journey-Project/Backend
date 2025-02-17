@@ -28,6 +28,8 @@ public class PostDTO {
 
     private String imageUrl;
 
+    private String country; // 국가별 게시판 조회를 위한 국가
+
     public PostDTO() {
         // Default constructor
     }

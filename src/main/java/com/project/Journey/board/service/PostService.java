@@ -52,7 +52,8 @@ public class PostService {
                 .created_at(LocalDateTime.now())
                 .updated_at(LocalDateTime.now())
                 .user_id(postDTO.getUser_id())
-                .imageUrl("") //image url
+                .imageUrl(postDTO.getImageUrl()) //image url
+                .country(postDTO.getCountry())
                 .build();
 
         return postRepository.save(post).getPostId();
@@ -79,6 +80,7 @@ public class PostService {
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .imageUrl(post.getImageUrl()) // image url
+                    .country(post.getCountry()) //국가
                     .build();
             postDtoList.add(postDto);
         }
@@ -99,6 +101,7 @@ public class PostService {
         post.updateEndDate(postDTO.getEnd_date());
         post.updateUpdateTime(postDTO.getUpdated_at());
         post.updateImageUrl(postDTO.getImageUrl()); //image url
+        post.updateCountry(postDTO.getCountry());
 
     }
 
@@ -120,6 +123,7 @@ public class PostService {
                 .updated_at(post.getUpdated_at())
                 .user_id(post.getUser_id())
                 .imageUrl(post.getImageUrl())
+                .country(post.getCountry())
                 .build();
     }
     // 게시글 삭제
@@ -178,6 +182,7 @@ public class PostService {
                 .updated_at(post.getUpdated_at())
                 .user_id(post.getUser_id())
                 .imageUrl(post.getImageUrl())
+                .country(post.getCountry())
                 .build();
     }
 
@@ -228,6 +233,7 @@ public class PostService {
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .imageUrl(post.getImageUrl())
+                    .country(post.getCountry())
                     .build();
             postDtoListByUserId.add(postDto);
         }
@@ -257,6 +263,33 @@ public class PostService {
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .imageUrl(post.getImageUrl())
+                    .country(post.getCountry())
+                    .build();
+            postDTOList.add(postDTO);
+        }
+        return postDTOList;
+    }
+
+    public List<PostDTO> getPostsByCountry(String country, int page, int size){
+        Page<Post> postPage = postRepository.findByCountry(country, PageRequest.of(page, size));
+
+        List<PostDTO> postDTOList = new ArrayList<>();
+        List<Post> posts = postPage.getContent();
+        for(Post post: posts){
+            PostDTO postDTO = PostDTO.builder()
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .destination(post.getDestination())
+                    .start_date(post.getStart_date())
+                    .end_date(post.getEnd_date())
+                    .max_participants(post.getMax_participants())
+                    .view_count(post.getView_count())
+                    .comment_count(post.getComment_count())
+                    .created_at(post.getCreated_at())
+                    .updated_at(post.getUpdated_at())
+                    .user_id(post.getUser_id())
+                    .imageUrl(post.getImageUrl())
+                    .country(post.getCountry())
                     .build();
             postDTOList.add(postDTO);
         }

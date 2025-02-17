@@ -59,6 +59,11 @@ public class Post {
     @Column(nullable = true)
     private String imageUrl;
 
+    //국가 컬럼
+    //@Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private String country;
+
 
     public void updateTitle(String title){
         this.title=title;
@@ -93,6 +98,11 @@ public class Post {
     //이미지를 업데이트
     public void updateImageUrl(String imageUrl){
         this.imageUrl=imageUrl;
+    }
+
+    //국가이름 업데이트
+    public void updateCountry(String country){
+        this.country=country;
     }
 
 }
