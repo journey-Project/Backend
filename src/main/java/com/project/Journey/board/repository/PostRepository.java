@@ -26,4 +26,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     //페이지네이션 기능 개발
     Page<Post> findAll(Pageable pageable);
 
+    //나라별 게시글 조회
+    Page<Post> findByCountry(String country, Pageable pageable);
 }
