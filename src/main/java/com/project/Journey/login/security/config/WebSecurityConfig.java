@@ -97,7 +97,7 @@ public class WebSecurityConfig {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
                     config.addAllowedOriginPattern("http://localhost:5173");
-                    config.addAllowedOriginPattern("https://dxkiwmo9p9ise.cloudfront.net/");
+                    config.addAllowedOriginPattern("https://dxkiwmo9p9ise.cloudfront.net");
                     // or "*", or your domain
                     config.addAllowedHeader("*");
                     config.addAllowedMethod("*");
