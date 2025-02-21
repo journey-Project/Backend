@@ -3,6 +3,8 @@ package com.project.Journey.board.repository;
 
 import com.project.Journey.board.entity.Post;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +23,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.user_id = :user_id")
     List<Post> findPostsByUserId(@Param("user_id") String user_id);
 
+    //페이지네이션 기능 개발
+    Page<Post> findAll(Pageable pageable);
+
+    //나라별 게시글 조회
+    Page<Post> findByCountry(String country, Pageable pageable);
 }

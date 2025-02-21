@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,8 @@ public class PostService {
                 .created_at(LocalDateTime.now())
                 .updated_at(LocalDateTime.now())
                 .user_id(postDTO.getUser_id())
+                .imageUrl(postDTO.getImageUrl()) //image url
+                .country(postDTO.getCountry())
                 .build();
 
         return postRepository.save(post).getPostId();
@@ -74,6 +79,8 @@ public class PostService {
                     .created_at(post.getCreated_at())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
+                    .imageUrl(post.getImageUrl()) // image url
+                    .country(post.getCountry()) //국가
                     .build();
             postDtoList.add(postDto);
         }
@@ -93,6 +100,8 @@ public class PostService {
         post.updateStartDate(postDTO.getStart_date());
         post.updateEndDate(postDTO.getEnd_date());
         post.updateUpdateTime(postDTO.getUpdated_at());
+        post.updateImageUrl(postDTO.getImageUrl()); //image url
+        post.updateCountry(postDTO.getCountry());
 
     }
 
@@ -113,6 +122,8 @@ public class PostService {
                 .created_at(post.getCreated_at())
                 .updated_at(post.getUpdated_at())
                 .user_id(post.getUser_id())
+                .imageUrl(post.getImageUrl())
+                .country(post.getCountry())
                 .build();
     }
     // 게시글 삭제
@@ -170,6 +181,8 @@ public class PostService {
                 .created_at(post.getCreated_at())
                 .updated_at(post.getUpdated_at())
                 .user_id(post.getUser_id())
+                .imageUrl(post.getImageUrl())
+                .country(post.getCountry())
                 .build();
     }
 
@@ -219,6 +232,8 @@ public class PostService {
                     .created_at(post.getCreated_at())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
+                    .imageUrl(post.getImageUrl())
+                    .country(post.getCountry())
                     .build();
             postDtoListByUserId.add(postDto);
         }
@@ -226,6 +241,59 @@ public class PostService {
     }
 
 
+    //페이지네이션 적용
+    public List<PostDTO> getPosts(int page, int size){
+        Pageable pageable = PageRequest.of(page,size);
+        Page<Post> postPage = postRepository.findAll(pageable);
+        //1.postPage에서 Post 객체들을 추출
+        List<Post> posts = postPage.getContent();
+        //2.Post 객체 리스트에서 PostResponseDto 객체 리스트로 변환
+        List<PostDTO> postDTOList = new ArrayList<>();
+        for(Post post: posts){
+            PostDTO postDTO = PostDTO.builder()
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .destination(post.getDestination())
+                    .start_date(post.getStart_date())
+                    .end_date(post.getEnd_date())
+                    .max_participants(post.getMax_participants())
+                    .view_count(post.getView_count())
+                    .comment_count(post.getComment_count())
+                    .created_at(post.getCreated_at())
+                    .updated_at(post.getUpdated_at())
+                    .user_id(post.getUser_id())
+                    .imageUrl(post.getImageUrl())
+                    .country(post.getCountry())
+                    .build();
+            postDTOList.add(postDTO);
+        }
+        return postDTOList;
+    }
 
+    public List<PostDTO> getPostsByCountry(String country, int page, int size){
+        Page<Post> postPage = postRepository.findByCountry(country, PageRequest.of(page, size));
+
+        List<PostDTO> postDTOList = new ArrayList<>();
+        List<Post> posts = postPage.getContent();
+        for(Post post: posts){
+            PostDTO postDTO = PostDTO.builder()
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .destination(post.getDestination())
+                    .start_date(post.getStart_date())
+                    .end_date(post.getEnd_date())
+                    .max_participants(post.getMax_participants())
+                    .view_count(post.getView_count())
+                    .comment_count(post.getComment_count())
+                    .created_at(post.getCreated_at())
+                    .updated_at(post.getUpdated_at())
+                    .user_id(post.getUser_id())
+                    .imageUrl(post.getImageUrl())
+                    .country(post.getCountry())
+                    .build();
+            postDTOList.add(postDTO);
+        }
+        return postDTOList;
+    }
 
 }

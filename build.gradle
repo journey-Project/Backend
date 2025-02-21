@@ -45,10 +45,13 @@ dependencies {
 	implementation 'org.springframework.data:spring-data-redis' // 12.02 추가
 	implementation 'com.auth0:java-jwt:4.4.0' // 12.02 추가
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0' // swagger 12.23
+	implementation 'org.springframework.boot:spring-boot-starter-webflux' // 2월 8일 추가
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.h2database:h2'
-	runtimeOnly 'com.mysql:mysql-connector-j'
+	//runtimeOnly 'com.mysql:mysql-connector-j'
+	// 01.21 runtimeOnly 대신 implementation 을 사용하여 MySQL 드라이버를 포함함
+	implementation 'com.mysql:mysql-connector-j:8.0.33'
 	annotationProcessor 'org.projectlombok:lombok'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

@@ -55,6 +55,15 @@ public class Post {
     @Column(nullable = false)
     private LocalDateTime updated_at;
 
+    //이미지 url
+    @Column(nullable = true)
+    private String imageUrl;
+
+    //국가 컬럼
+    //@Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private String country;
+
 
     public void updateTitle(String title){
         this.title=title;
@@ -84,6 +93,16 @@ public class Post {
     //글을 업데이트한 시각
     public void updateUpdateTime(LocalDateTime localDateTime){
         this.updated_at = LocalDateTime.now();
+    }
+
+    //이미지를 업데이트
+    public void updateImageUrl(String imageUrl){
+        this.imageUrl=imageUrl;
+    }
+
+    //국가이름 업데이트
+    public void updateCountry(String country){
+        this.country=country;
     }
 
 }

@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -86,26 +88,35 @@ public class CommentService {
         return savedComment.getCommentId();
     }
 
-    /**
-     * 게시글의 모든 댓글(대댓글 포함) 조회
-     * - 최상위 댓글만 조회 → 각 댓글의 자식 목록(childComments)을 재귀적으로 DTO 변환
-     */
-    public List<CommentDTO> getAllCommentsByPostId(Long postId) {
-        // 1) 최상위 댓글들 (parentComment = null)
-        List<Comment> topComments = commentRepository.findByPost_PostIdAndParentCommentIsNull(postId);
 
-        // 2) 재귀적으로 childComments까지 DTO로 변환
+
+    public List<CommentDTO> getAllCommentsByPostId(Long postId) {
+        List<Comment> allComments = commentRepository.findAllCommentsWithChildrenByPostId(postId);
+        Map<Long, CommentDTO> dtoMap = new HashMap<>();
+
+        // 1차 변환
+        allComments.forEach(comment -> {
+            CommentDTO dto = convertToDTO(comment);
+            dtoMap.put(dto.getCommentId(), dto);
+        });
+
+        // 계층 구조 구성
         List<CommentDTO> result = new ArrayList<>();
-        for (Comment comment : topComments) {
-            CommentDTO dto = convertToDTOWithChildren(comment);
-            result.add(dto);
-        }
+        dtoMap.values().forEach(dto -> {
+            if (dto.getParentCommentId() == null) {
+                result.add(dto);
+            } else {
+                CommentDTO parent = dtoMap.get(dto.getParentCommentId());
+                parent.getChildComments().add(dto);
+            }
+        });
+
         return result;
     }
 
-    // 자식 댓글까지 재귀 변환
-    private CommentDTO convertToDTOWithChildren(Comment comment) {
-        CommentDTO dto = CommentDTO.builder()
+    // convertToDTO 추가 (기존 convertToDTOWithChildren 대체)
+    private CommentDTO convertToDTO(Comment comment) {
+        return CommentDTO.builder()
                 .commentId(comment.getCommentId())
                 .userId(comment.getUserId())
                 .content(comment.getContent())
@@ -113,18 +124,10 @@ public class CommentService {
                 .updatedAt(comment.getUpdatedAt())
                 .postId(comment.getPost().getPostId())
                 .depth(comment.getDepth())
-                .parentCommentId(comment.getParentComment() == null
-                        ? null : comment.getParentComment().getCommentId())
+                .parentCommentId(comment.getParentComment() != null ?
+                        comment.getParentComment().getCommentId() : null)
+                .childComments(new ArrayList<>()) // 초기화 추가
                 .build();
-
-        // childComments
-        List<CommentDTO> childDtos = new ArrayList<>();
-        for (Comment child : comment.getChildComments()) {
-            childDtos.add(convertToDTOWithChildren(child));
-        }
-        dto.setChildComments(childDtos);
-
-        return dto;
     }
 
     /**
@@ -141,20 +144,26 @@ public class CommentService {
      * 댓글 삭제
      * (대댓글 포함 삭제 시에도 cascade + orphanRemoval = true라면 자식도 자동 삭제)
      */
+    // 수정 후 (중복 코드 제거)
     @Transactional
     public void deleteComment(Long commentId) {
-        // 1) 댓글 찾기
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 commentId의 댓글이 없습니다"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid comment ID"));
 
-        // 2) 연관된 게시글
+        int totalDeleted = countTotalCommentsInHierarchy(comment);
+
         Post post = comment.getPost();
-        // 3) 댓글 삭제
-        commentRepository.delete(comment);
+        post.setComment_count(Math.max(post.getComment_count() - totalDeleted, 0)); // 음수 방지
+        postRepository.save(post);
 
-        // 4) 게시글의 commentCount 감소 (필요하면)
-        if (post.getComment_count() > 0) {
-            post.setComment_count(post.getComment_count() - 1);
+        commentRepository.delete(comment);
+    }
+
+    private int countTotalCommentsInHierarchy(Comment comment) {
+        int count = 1; // 자기 자신
+        for (Comment child : comment.getChildComments()) {
+            count += countTotalCommentsInHierarchy(child);
         }
+        return count;
     }
 }

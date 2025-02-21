@@ -4,14 +4,18 @@ import java.util.Map;
 
 public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
 
-    // 소셜로부터 받은 유저 정보( attributes ) 에서 필요한 정보들이 담긴 JSON 추출
-    public static Map<String, Object> account;
-    public static Map<String, Object> profile;
+    // ★ 인스턴스 필드로 변경
+    private final Map<String, Object> account;
+    private final Map<String, Object> profile;
 
     public KakaoOAuth2UserInfo(Map<String, Object> attributes) {
         super(attributes);
-        account = (Map<String, Object>) attributes.get("kakao_account");
-        profile = (Map<String, Object>) account.get("profile");
+        this.account = (Map<String, Object>) attributes.get("kakao_account");
+        if (account != null) {
+            this.profile = (Map<String, Object>) account.get("profile");
+        } else {
+            this.profile = null;
+        }
     }
 
     @Override
@@ -21,7 +25,10 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public String getEmail() {
-        return (String) account.get("email");
-    }   // 카카오는 이메일 없음 ( 필수 항목 X )
-
+        if (account != null) {
+            return (String) account.get("email");
+        }
+        return null;
+    }
 }
+
