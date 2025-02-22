@@ -34,7 +34,7 @@ public class WebSecurityConfig {
     private static final String[] WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
             "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
             "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
-            ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui", "/api/auth/sign-up", "/api/oauth2/sign-up"};
+            ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui", "/api/auth/sign-up", "/api/oauth2/sign-up", "/oauth2/**"};
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
