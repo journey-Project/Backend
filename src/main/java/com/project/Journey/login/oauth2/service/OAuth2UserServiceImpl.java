@@ -103,23 +103,54 @@ public class OAuth2UserServiceImpl {
         // RefreshToken DB 저장
         jwtService.save(new RefreshToken(refreshToken, member.getId()));
 
+        /*
         // 쿠키 생성
         Cookie accessCookie = new Cookie("accessToken", accessToken);
         accessCookie.setSecure(false);
         accessCookie.setHttpOnly(false);
         accessCookie.setPath("/");
         accessCookie.setMaxAge(60 * 30);
+        */
+        // -----------------------------------------------------------
+        // (수정) 직접 Set-Cookie 헤더로 SameSite=None 추가
+        // -----------------------------------------------------------
+        boolean isLocal = true; // 로컬환경이면 true, 운영환경(HTTPS)이면 false
 
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-        refreshCookie.setSecure(false);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(60 * 60 * 24 * 7);
+        int accessMaxAge = 60 * 30;  // 30분
+        int refreshMaxAge = 60 * 60 * 24 * 7;  // 7일
 
-        response.addCookie(accessCookie);
-        response.addCookie(refreshCookie);
+        // Access Token 쿠키
+        StringBuilder accessCookieVal = new StringBuilder();
+        accessCookieVal.append("accessToken=").append(accessToken)
+                .append("; Max-Age=").append(accessMaxAge)
+                .append("; Path=/")
+                .append("; HttpOnly") // 엑세스 토큰도 httpOnly로 할지 여부 선택
+                .append("; SameSite=None"); // 크로스도메인 허용
 
+        // 로컬(HTTP)에서는 Secure가 있으면 쿠키 무시될 수 있어 주석,
+        // 운영(HTTPS)이라면 Secure 추가 권장
+        // if (!isLocal) {
+        //     accessCookieVal.append("; Secure");
+        // }
+
+        response.addHeader("Set-Cookie", accessCookieVal.toString());
+
+        // Refresh Token 쿠키
+        StringBuilder refreshCookieVal = new StringBuilder();
+        refreshCookieVal.append("refreshToken=").append(refreshToken)
+                .append("; Max-Age=").append(refreshMaxAge)
+                .append("; Path=/")
+                .append("; HttpOnly")
+                .append("; SameSite=None");
+        // if (!isLocal) {
+        //     refreshCookieVal.append("; Secure");
+        // }
+
+        response.addHeader("Set-Cookie", refreshCookieVal.toString());
+
+        // -----------------------------
         // 응답 JSON
+        // -----------------------------
         String status = optionalMember.isEmpty() ? "NEW_USER" : "EXIST";
 
         return Map.of(
