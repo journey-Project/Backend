@@ -67,53 +67,59 @@ public class OAuth2UserServiceImpl {
         log.info("[oauthLogin] provider={}, socialId={}, email={}", provider, socialId, email);
 
         Optional<Member> optionalMember = memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+
+        Member member;
         if (optionalMember.isEmpty()) {
-            // GUEST
-            Member newMember = Member.builder()
+            member = Member.builder()
                     .email(email)
                     .socialId(socialId)
                     .socialType(socialType)
-                    .role(MemberRole.GUEST)
+                    .role(MemberRole.USER)
                     .build();
-            memberRepository.save(newMember);
 
-            return Map.of(
-                    "status", "GUEST",
-                    "message", "소셜 최초 로그인",
-                    "email", email,
-                    "socialType", socialType.toString(),
-                    "socialId", socialId
-            );
+            //DB저장
+            memberRepository.save(member);
+
+            log.info("새 소셜사용자 가입: socialId={}, email={}", socialId, email);
         } else {
-            // EXIST
-            Member member = optionalMember.get();
-            String accessToken = JwtUtils.generateAccessToken(member);
-            String refreshToken = JwtUtils.generateRefreshToken(member);
-
-            jwtService.save(new RefreshToken(refreshToken, member.getId()));
-
-            Cookie accessCookie = new Cookie("accessToken", JwtConstants.JWT_TYPE + accessToken);
-            accessCookie.setSecure(false);
-            accessCookie.setHttpOnly(false);
-            accessCookie.setPath("/");
-            accessCookie.setMaxAge(60 * 30);
-
-            Cookie refreshCookie = new Cookie("refreshToken", JwtConstants.JWT_TYPE + refreshToken);
-            refreshCookie.setSecure(false);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(60 * 60 * 24 * 7);
-
-            response.addCookie(accessCookie);
-            response.addCookie(refreshCookie);
-
-            return Map.of(
-                    "status", "EXIST",
-                    "message", "소셜 로그인 성공",
-                    "email", member.getEmail(),
-                    "role", member.getRole().name()
-            );
+            member = optionalMember.get();
+            log.info("기존 소셜사용자 로그인: socialId={}, email={}", socialId, email);
         }
+
+
+        // member는 role=USER 상태
+        // JWT 발급 + 쿠키 설정 바로 하기
+        String accessToken = JwtUtils.generateAccessToken(member);
+        String refreshToken = JwtUtils.generateRefreshToken(member);
+
+        // RefreshToken DB 저장
+        jwtService.save(new RefreshToken(refreshToken, member.getId()));
+
+        // 쿠키 생성
+        Cookie accessCookie = new Cookie("accessToken", accessToken);
+        accessCookie.setSecure(false);
+        accessCookie.setHttpOnly(false);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(60 * 30);
+
+        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
+        refreshCookie.setSecure(false);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(60 * 60 * 24 * 7);
+
+        response.addCookie(accessCookie);
+        response.addCookie(refreshCookie);
+
+        // 응답 JSON
+        String status = optionalMember.isEmpty() ? "NEW_USER" : "EXIST";
+
+        return Map.of(
+                "status", status,
+                "message", "소셜 로그인 성공",
+                "email", member.getEmail(),
+                "role", member.getRole().name()
+        );
     }
 
     private OAuth2UserInfo getUserInfoByProvider(SocialType provider, String code) {
