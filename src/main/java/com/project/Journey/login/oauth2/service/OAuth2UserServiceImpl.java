@@ -60,6 +60,14 @@ public class OAuth2UserServiceImpl {
 
 
     public Map<String, Object> oauthLogin(String provider, String code, HttpServletResponse response) {
+        log.info("OAuth 요청 시작: provider={}, code={}", provider, code);
+
+        // 중복 요청 방지 (이미 응답을 보냈다면 return)
+        if (response.isCommitted()) {
+            log.warn("이미 응답이 완료된 요청입니다. 중복 요청 방지.");
+            return null;
+        }
+
         SocialType socialType = SocialType.valueOf(provider.toUpperCase());
         OAuth2UserInfo userInfo = getUserInfoByProvider(socialType, code);
         String socialId = userInfo.getSocialId();
