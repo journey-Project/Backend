@@ -120,12 +120,24 @@ public class OAuth2UserServiceImpl {
         int refreshMaxAge = 60 * 60 * 24 * 7;  // 7일
 
         // Access Token 쿠키
+        // ----- Access Token 쿠키 -----
         StringBuilder accessCookieVal = new StringBuilder();
         accessCookieVal.append("accessToken=").append(accessToken)
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
-                .append("; HttpOnly") // 엑세스 토큰도 httpOnly로 할지 여부 선택
-                .append("; SameSite=None"); // 크로스도메인 허용
+                .append("; HttpOnly");
+
+        // **[수정1] 로컬환경에서는 SameSite=Lax로 잠시 조정**
+        // (크로스 도메인 테스트 필요시, 프론트에서 credentials: 'include' 해야하며, 브라우저에 따라 SameSite=None+Secure 없이는 쿠키가 막힐 수 있음)
+        if (isLocal) {
+            accessCookieVal.append("; SameSite=Lax");
+            // 로컬환경 http라면 ;Secure 생략
+        } else {
+            // 운영환경(HTTPS)에서 크로스도메인 허용을 원한다면
+            accessCookieVal.append("; SameSite=None; Secure");
+        }
+
+        response.addHeader("Set-Cookie", accessCookieVal.toString());
 
         // 로컬(HTTP)에서는 Secure가 있으면 쿠키 무시될 수 있어 주석,
         // 운영(HTTPS)이라면 Secure 추가 권장
@@ -135,16 +147,19 @@ public class OAuth2UserServiceImpl {
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
 
-        // Refresh Token 쿠키
+        // ----- Refresh Token 쿠키 -----
         StringBuilder refreshCookieVal = new StringBuilder();
         refreshCookieVal.append("refreshToken=").append(refreshToken)
                 .append("; Max-Age=").append(refreshMaxAge)
                 .append("; Path=/")
-                .append("; HttpOnly")
-                .append("; SameSite=None");
-        // if (!isLocal) {
-        //     refreshCookieVal.append("; Secure");
-        // }
+                .append("; HttpOnly");
+
+        // **[수정2] 위와 동일한 로직**
+        if (isLocal) {
+            refreshCookieVal.append("; SameSite=Lax");
+        } else {
+            refreshCookieVal.append("; SameSite=None; Secure");
+        }
 
         response.addHeader("Set-Cookie", refreshCookieVal.toString());
 
