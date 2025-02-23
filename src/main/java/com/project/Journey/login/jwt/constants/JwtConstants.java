@@ -10,7 +10,7 @@ public class JwtConstants {
     public static final long REFRESH_EXP_TIME = 60000 * 5; // 5분 설정
 
     public static final String JWT_HEADER = "Authorization";
-    public static final String JWT_TYPE = "BEARER";
+    public static final String JWT_TYPE = "Bearer";
 
     public static final String ACCESS = "AccessToken";
     public static final String REFRESH = "RefreshToken";
