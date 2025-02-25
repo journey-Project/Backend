@@ -23,6 +23,10 @@ public class Community {
     @Column(name = "user_id")
     private String user_id;
 
+    //커뮤니티 국가
+    @Column(name = "country")
+    private String country;
+
     //제목 : 사용자 입력
     @Column(nullable = false, length = 100)
     private String title;
@@ -49,4 +53,8 @@ public class Community {
     //프로필 이미지 url
     @Column(nullable = true)
     private String profileImageUrl;
+
+    //첨부파일 이미지 url
+    @Column(nullable = true)
+    private String ImageUrl;
 }
