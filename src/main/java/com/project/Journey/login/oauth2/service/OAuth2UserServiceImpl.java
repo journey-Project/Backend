@@ -127,23 +127,11 @@ public class OAuth2UserServiceImpl {
                 .append("; Path=/")
                 .append("; HttpOnly");
 
-        // **[수정1] 로컬환경에서는 SameSite=Lax로 잠시 조정**
-        // (크로스 도메인 테스트 필요시, 프론트에서 credentials: 'include' 해야하며, 브라우저에 따라 SameSite=None+Secure 없이는 쿠키가 막힐 수 있음)
         if (isLocal) {
             accessCookieVal.append("; SameSite=Lax");
-            // 로컬환경 http라면 ;Secure 생략
         } else {
-            // 운영환경(HTTPS)에서 크로스도메인 허용을 원한다면
             accessCookieVal.append("; SameSite=None; Secure");
         }
-
-        response.addHeader("Set-Cookie", accessCookieVal.toString());
-
-        // 로컬(HTTP)에서는 Secure가 있으면 쿠키 무시될 수 있어 주석,
-        // 운영(HTTPS)이라면 Secure 추가 권장
-        // if (!isLocal) {
-        //     accessCookieVal.append("; Secure");
-        // }
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
 
@@ -154,7 +142,6 @@ public class OAuth2UserServiceImpl {
                 .append("; Path=/")
                 .append("; HttpOnly");
 
-        // **[수정2] 위와 동일한 로직**
         if (isLocal) {
             refreshCookieVal.append("; SameSite=Lax");
         } else {
