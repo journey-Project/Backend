@@ -39,6 +39,11 @@ public class CommunityController {
         return communityService.getPostsByCountry(country, pageable);
     }
 
+    // 특정 게시글 조회 (조회수 증가 반영)
+    @GetMapping("/api/community/getPostByPostId/{communityPostId}")
+    public CommunityDTO getCommunityPost(@PathVariable Long communityPostId) {
+        return communityService.getPostByCommunityPostId(communityPostId);
+    }
 
 
 }

@@ -57,4 +57,27 @@ public class CommunityService {
                         community.getImageUrl()
                 ));
     }
+
+
+    public CommunityDTO getPostByCommunityPostId(Long communitypostid) {
+        return communityRepository.findById(communitypostid)
+                .map(community -> {
+                    community.setView_count(community.getView_count()+1);
+                    communityRepository.save(community);
+                    return new CommunityDTO(
+                            community.getUser_id(),
+                            community.getCountry(),
+                            community.getTitle(),
+                            community.getContent(),
+                            community.getView_count(),
+                            community.getComment_count(),
+                            community.getCreated_at(),
+                            community.getUpdated_at(),
+                            community.getProfileImageUrl(),
+                            community.getImageUrl()
+                    );
+                }).orElseThrow(() -> new RuntimeException("Post not found"));
+    }
+
+
 }
