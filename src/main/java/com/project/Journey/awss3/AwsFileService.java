@@ -29,7 +29,7 @@ public class AwsFileService implements FileService {
      * application.yml (또는 .properties)에 다음과 같이 설정한다 가정:
      * cloud.aws.s3.bucket=journeybucket0
      */
-    @Value("${cloud.aws.s3.bucket}")
+    @Value("${AWS_S3_BUCKET}")
     private String bucket;
 
     // 필요하다면, S3에 저장할 폴더명을 상수로 관리
