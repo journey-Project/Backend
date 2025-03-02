@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -20,11 +21,11 @@ public class Community {
     private Long CommunityPostId;
 
     //커뮤니티 글 작성자
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private String user_id;
 
     //커뮤니티 국가
-    @Column(name = "country")
+    @Column(name = "country", nullable = false)
     private String country;
 
     //제목 : 사용자 입력
@@ -44,17 +45,17 @@ public class Community {
     private int comment_count;
 
     //커뮤니티 글 작성일
-    @Column(nullable = false)
-    private LocalDateTime created_at;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private LocalDateTime updated_at;
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     //프로필 이미지 url
     @Column(nullable = true)
     private String profileImageUrl;
 
-    //첨부파일 이미지 url
-    @Column(nullable = true)
-    private String ImageUrl;
+    //첨부파일 이미지 (여러 개)
+    @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommunityImage> images;
 }
