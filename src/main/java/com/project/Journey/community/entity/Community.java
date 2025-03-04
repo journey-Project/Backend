@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -58,4 +59,21 @@ public class Community {
     //첨부파일 이미지 (여러 개)
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommunityImage> images;
+
+    public void updateCountry(String country){
+        this.country=country;
+    }
+
+    public void updateTitle(String title){
+        this.title=title;
+    }
+
+    public void updateContent(String content){
+        this.content=content;
+    }
+
+    public void updateUpdatedAt(LocalDateTime updatedAt){
+        this.updatedAt=updatedAt;
+    }
+
 }

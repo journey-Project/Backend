@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class CommunityController {
     private final CommunityService communityService;
 
-    @PostMapping("api/community/save")
+    @PostMapping("/api/community/save")
     public ResponseEntity<Long> createPost(@RequestBody @Parameter(description = "게시글 저장에 필요한 정보", required = true) CommunityRequestDTO communityRequestDTO) {
         try{
             Long savedPostId = communityService.saveCommunityPost(communityRequestDTO);
@@ -59,5 +59,19 @@ public class CommunityController {
         return communityService.getPostsByDateRange(startDate, endDate,country, pageable);
     };
 
+    //게시글 수정
+    @PutMapping("/api/community/update/{CommunityPostId}")
+    public ResponseEntity<String> updateCommunityPost(@PathVariable Long CommunityPostId,
+                                                      @RequestBody CommunityResponseDTO communityResponseDTO){
+        communityService.updateCommunityPostById(CommunityPostId, communityResponseDTO);
+        return ResponseEntity.ok("커뮤니티 게시글이 성공적으로 수정되었습니다");
+    }
+
+    //게시글 삭제
+    @DeleteMapping("/api/community/DeletePosts/{CommunityPostId}")
+    public ResponseEntity<Void> deleteCommunityPost(@PathVariable Long CommunityPostId){
+        communityService.deleteCommunityPost(CommunityPostId);
+        return ResponseEntity.noContent().build();
+    }
 }
 
