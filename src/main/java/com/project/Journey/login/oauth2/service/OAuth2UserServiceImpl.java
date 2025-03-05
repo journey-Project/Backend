@@ -128,9 +128,10 @@ public class OAuth2UserServiceImpl {
                 .append("; HttpOnly");
 
         if (isLocal) {
-            accessCookieVal.append("; SameSite=Lax");
+            accessCookieVal.append("; SameSite=None");
         } else {
-            accessCookieVal.append("; SameSite=None; Secure");
+            accessCookieVal.append("; SameSite=None");
+            //accessCookieVal.append("; SameSite=None; Secure");
         }
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
@@ -143,7 +144,7 @@ public class OAuth2UserServiceImpl {
                 .append("; HttpOnly");
 
         if (isLocal) {
-            refreshCookieVal.append("; SameSite=Lax");
+            refreshCookieVal.append("; SameSite=None");
         } else {
             refreshCookieVal.append("; SameSite=None; Secure");
         }
