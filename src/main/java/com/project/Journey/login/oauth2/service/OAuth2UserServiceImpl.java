@@ -21,6 +21,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -31,6 +32,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class OAuth2UserServiceImpl {
 
@@ -103,6 +105,7 @@ public class OAuth2UserServiceImpl {
         // RefreshToken DB 저장
         jwtService.save(new RefreshToken(refreshToken, member.getId()));
 
+
         /*
         // 쿠키 생성
         Cookie accessCookie = new Cookie("accessToken", accessToken);
@@ -125,14 +128,12 @@ public class OAuth2UserServiceImpl {
         accessCookieVal.append("accessToken=").append(accessToken)
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
-                .append("; HttpOnly");
+                .append("; SameSite=None");
 
-        if (isLocal) {
-            accessCookieVal.append("; SameSite=None");
-        } else {
-            accessCookieVal.append("; SameSite=None");
-            //accessCookieVal.append("; SameSite=None; Secure");
-        }
+
+//                .append("; HttpOnly");
+
+
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
 
@@ -141,13 +142,9 @@ public class OAuth2UserServiceImpl {
         refreshCookieVal.append("refreshToken=").append(refreshToken)
                 .append("; Max-Age=").append(refreshMaxAge)
                 .append("; Path=/")
-                .append("; HttpOnly");
+                .append("; SameSite=None");
+//                .append("; HttpOnly");
 
-        if (isLocal) {
-            refreshCookieVal.append("; SameSite=None");
-        } else {
-            refreshCookieVal.append("; SameSite=None; Secure");
-        }
 
         response.addHeader("Set-Cookie", refreshCookieVal.toString());
 
