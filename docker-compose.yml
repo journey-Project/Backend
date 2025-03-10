@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+
+  redis:
+    image: redis:latest
+    container_name: journey-redis
+
+    expose:
+      - "6379"
+    restart: unless-stopped
+
   spring-app:
     ports:
       - "8080:8080"
@@ -19,8 +28,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
       # Redis 정보 (EC2 내부 설치)
-      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
-      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - redis
 
     restart: unless-stopped  # 컨테이너 재시작 정책
 
