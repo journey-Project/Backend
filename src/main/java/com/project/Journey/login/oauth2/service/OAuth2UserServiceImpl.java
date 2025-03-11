@@ -122,18 +122,19 @@ public class OAuth2UserServiceImpl {
         int accessMaxAge = 60 * 30;  // 30분
         int refreshMaxAge = 60 * 60 * 24 * 7;  // 7일
 
-        // Access Token 쿠키
+
         // ----- Access Token 쿠키 -----
         StringBuilder accessCookieVal = new StringBuilder();
         accessCookieVal.append("accessToken=").append(accessToken)
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
                 .append("; SameSite=None");
-
-
 //                .append("; HttpOnly");
 
-
+        if (!isLocal) {
+            accessCookieVal.append("; Secure");
+            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+        }
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
 
@@ -144,6 +145,12 @@ public class OAuth2UserServiceImpl {
                 .append("; Path=/")
                 .append("; SameSite=None");
 //                .append("; HttpOnly");
+
+        if (!isLocal) {
+            refreshCookieVal.append("; Secure");
+            refreshCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+        }
+
 
 
         response.addHeader("Set-Cookie", refreshCookieVal.toString());
