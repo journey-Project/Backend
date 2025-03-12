@@ -10,14 +10,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 소셜 로그인 (프론트에서 code를 먼저 받고, 백엔드로 전달하는 방식)
+ * 소셜 로그인 (OAuth2) 전용 Controller
+ *
+ * - 프론트에서 이미 각 소셜 로그인 과정을 거쳐 인가 코드(code)를 받은 뒤,
+ *   그 code를 백엔드로 전달해 JWT 쿠키를 발급받는 구조입니다.
+ * - 추가적인 일반 회원가입(아이디/비번)을 별도로 하지 않고,
+ *   소셜 사용자라면 바로 DB 등록(MemberRole=USER) 후 로그인 토큰을 발급합니다.
  */
-@Tag(name = "소셜 로그인 (OAuth2)", description = "소셜 로그인 시, 인가 코드를 백엔드로 전달받아 토큰 교환 후 JWT 발급")
+@Tag(name = "소셜 로그인 (OAuth2)", description = "소셜 로그인: 인가 코드를 백엔드에 전달하여 JWT 발급")
 @RestController
 @RequestMapping("/api/oauth2")
 @RequiredArgsConstructor
@@ -26,67 +29,64 @@ public class OAuth2Controller {
     private final OAuth2UserServiceImpl oAuth2UserService;
 
     /**
-     * 소셜 로그인: 프론트가 인가 코드를 받아, 백엔드에 전달
-     * (provider 예: "kakao", "naver", "google")
+     * 소셜 로그인: 프론트가 소셜에서 받은 인가 코드를 이 엔드포인트로 전달합니다.
+     *
+     * (provider) : "kakao", "naver", "google"
+     * (code)     : 소셜 로그인 콜백에서 받은 인가 코드
+     *
+     * 이 API 호출 시:
+     *  1) 백엔드가 소셜 서버에 code 교환 → access_token 획득
+     *  2) 소셜 회원 정보(이메일, 프로필 등) 조회
+     *  3) DB에 등록되어 있지 않다면 새로 생성(회원가입 대체)
+     *     - role=USER 상태로 가입
+     *  4) JWT(AccessToken, RefreshToken) 발급 → 쿠키로 내려줌
+     *  5) JSON Response로 status("NEW_USER" or "EXIST"), email, role 등 반환
+     *
+     * [쿠키 설정]
+     * - AccessToken: (로컬테스트 시 HttpOnly=false), SameSite=None
+     * - RefreshToken: (로컬테스트 시 HttpOnly=false 권장 or 선택), SameSite=None
+     * - 운영 배포 시 Secure + HttpOnly 설정
+     *
+     * 프론트:
+     * - 이 API 응답 후, 쿠키에 JWT가 저장되므로 향후 API 요청 시 자동으로 인증됨
+     * - status가 "NEW_USER"라면 즉시 로그인된 상태이긴 하지만, 추가 정보가 필요할 수 있음
      */
     @Operation(
-            summary = "소셜 로그인 코드 수신",
+            summary = "소셜 로그인 (인가 코드 수신)",
             description = """
-                    이 엔드포인트는 프론트가 소셜 로그인 완료 후 받은 인가 코드를 백엔드로 전달할 때 사용합니다.
+                    소셜(카카오/네이버/구글) 로그인 완료 후 받은 인가코드를 백엔드로 전달해주시면,
+                    백엔드가 소셜 서버와 토큰 교환 후 JWT 쿠키(Access/Refresh)를 발급하도록 되어있습니다.
                     
-                    1) 프론트:
-                       - 소셜(카카오/네이버/구글) 로그인 성공 → redirect_uri(프론트 콜백)로 code 수신
-                       - code를 추출 후, POST(/api/oauth2/{provider}?code=xxx) 로 백엔드에 전송
+                    - provider: "kakao", "naver", "google"
+                    - code: 소셜에서 받은 인가코드
+                    - 응답: JSON(body) + JWT 쿠키(Set-Cookie 헤더)
                     
-                    2) 백엔드:
-                       - WebClient로 소셜 서버에 토큰 교환 요청 → access_token, refresh_token 획득
-                       - 사용자 정보 조회 → DB 확인 (GUEST/EXIST)
-                       - EXIST면 JWT(쿠키) 발급 + JSON 응답(status=EXIST)
-                       - GUEST면 DB 임시등록 + JSON 응답(status=GUEST, email, socialId)
+                    status 값 설명:
+                    1) "NEW_USER": 기존에 없던 소셜 사용자 → 새로 DB 저장
+                    2) "EXIST": 이미 등록된 소셜 사용자
                     
-                    응답 예시:
+                    응답 시 Set-Cookie로 accessToken, refreshToken이 발급. 프론트 쪽에서 withCredentials 또는 credentials:'include' 설정 필수입니다!
+                   
                     
-                    - GUEST:
-                      {
-                        "status": "GUEST",
-                        "message": "소셜 최초 로그인",
-                        "email": "user@example.com",
-                        "socialType": "KAKAO",
-                        "socialId": "1234567890"
-                      }
-                    
-                    - EXIST (쿠키에 accessToken, refreshToken 발급됨):
-                      {
-                        "status": "EXIST",
-                        "message": "소셜 로그인 성공",
-                        "email": "user@example.com",
-                        "role": "USER"
-                      }
-                    
-                    ⚠ 쿠키 설정:
-                       - accessCookie: HttpOnly=false
-                       - refreshCookie: HttpOnly=true
-                       - path="/" 로 전역 쿠키
                     """,
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "로그인 결과 JSON 반환 (status=GUEST or EXIST)",
+                            description = "소셜 로그인 결과 (JWT 쿠키 + JSON)",
                             content = @Content(mediaType = "application/json",
                                     examples = {
                                             @ExampleObject(
-                                                    name = "최초로그인(GUEST) 예시",
+                                                    name = "NEW_USER 예시",
                                                     value = """
                                                         {
-                                                          "status": "GUEST",
-                                                          "message": "소셜 최초 로그인",
+                                                          "status": "NEW_USER",
+                                                          "message": "소셜 로그인 성공",
                                                           "email": "newuser@domain.com",
-                                                          "socialType": "KAKAO",
-                                                          "socialId": "123456789"
+                                                          "role": "USER"
                                                         }
                                                         """
                                             ),
                                             @ExampleObject(
-                                                    name = "기존회원(EXIST) 예시",
+                                                    name = "EXIST 예시",
                                                     value = """
                                                         {
                                                           "status": "EXIST",
@@ -109,49 +109,5 @@ public class OAuth2Controller {
     ) {
         Map<String, Object> result = oAuth2UserService.oauthLogin(provider, code, response);
         return ResponseEntity.ok(result);
-    }
-
-
-    /**
-     * (기존) 소셜 회원가입 - 추가 정보 입력 페이지
-     * [최초 소셜 로그인 = GUEST]인 경우, 프론트에서 이 API(/api/oauth2/sign-up) 호출하여
-     * 이메일 / 소셜타입 / 소셜ID를 표시, 일반 회원가입(/api/auth/sign-up)으로 진행.
-     */
-    @Operation(
-            summary = "소셜 회원가입 - 추가 정보 입력 (GUEST)",
-            description = """
-                GUEST 상태에서 프론트가 email, socialType, socialId를
-                쿼리 파라미터로 받아와서 회원가입 폼 자동 입력에 사용.
-                
-                - email은 수정 불가(소셜 정보로부터 받은 것이므로)
-                - 일반 회원가입(/api/auth/sign-up) 호출 시, 해당 email을 사용
-            """,
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "추가 정보 페이지 로드 성공",
-                            content = @Content(mediaType = "application/json",
-                                    examples = @ExampleObject(name = "성공 예시",
-                                            value = """
-                                                    {
-                                                      "email": "john.doe@example.com",
-                                                      "socialType": "GOOGLE",
-                                                      "socialId": "123456789",
-                                                      "note": "status=GUEST 시 가입 필요"
-                                                    }
-                                                    """)))
-            }
-    )
-    @GetMapping("/sign-up")
-    public ResponseEntity<Map<String, String>> loadOauthSignup(
-            @RequestParam String email,
-            @RequestParam String socialType,
-            @RequestParam String socialId
-    ) {
-        Map<String, String> response = new HashMap<>();
-        response.put("email", email);
-        response.put("socialType", socialType);
-        response.put("socialId", socialId);
-        response.put("note", "status=GUEST 시 이 값으로 회원가입 진행");
-        return ResponseEntity.ok(response);
     }
 }
