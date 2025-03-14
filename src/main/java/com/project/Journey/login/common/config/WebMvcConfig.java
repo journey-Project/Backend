@@ -20,12 +20,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     }
 
     // CORS 설정 추가
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns("https://*.journeysite.site") // 와일드카드
-                .allowedOrigins("http://localhost:5173", "https://dxkiwmo9p9ise.cloudfront.net")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowCredentials(true);
-    }
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//        registry.addMapping("/**")
+//                .allowedOriginPatterns("https://*.journeysite.site") // 와일드카드
+//                .allowedOrigins("http://localhost:5173", "https://dxkiwmo9p9ise.cloudfront.net")
+//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+//                .allowCredentials(true);
+//    }
 }
