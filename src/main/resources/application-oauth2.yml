@@ -2,7 +2,7 @@ social:
   kakao:
     client-id: "${KAKAO_CLIENT_ID}"
     client-secret: "${KAKAO_CLIENT_SECRET}"
-    redirect-uri: "http://localhost:5173/login/callback/kakao"
+    redirect-uri: "https://dxkiwmo9p9ise.cloudfront.net/login/callback/kakao"
 
   naver:
     client-id: "${NAVER_CLIENT_ID}"
