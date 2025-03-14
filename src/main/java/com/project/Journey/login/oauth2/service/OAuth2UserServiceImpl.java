@@ -105,15 +105,6 @@ public class OAuth2UserServiceImpl {
         // RefreshToken DB 저장
         jwtService.save(new RefreshToken(refreshToken, member.getId()));
 
-
-        /*
-        // 쿠키 생성
-        Cookie accessCookie = new Cookie("accessToken", accessToken);
-        accessCookie.setSecure(false);
-        accessCookie.setHttpOnly(false);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge(60 * 30);
-        */
         // -----------------------------------------------------------
         // (수정) 직접 Set-Cookie 헤더로 SameSite=None 추가
         // -----------------------------------------------------------
@@ -128,12 +119,13 @@ public class OAuth2UserServiceImpl {
         accessCookieVal.append("accessToken=").append(accessToken)
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
-                .append("; SameSite=None");
+                .append("; SameSite=None")
+                .append("; secure");
 //                .append("; HttpOnly");
 
         if (!isLocal) {
             accessCookieVal.append("; Secure");
-            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+//            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
         }
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
@@ -143,13 +135,15 @@ public class OAuth2UserServiceImpl {
         refreshCookieVal.append("refreshToken=").append(refreshToken)
                 .append("; Max-Age=").append(refreshMaxAge)
                 .append("; Path=/")
-                .append("; SameSite=None");
-//                .append("; HttpOnly");
+                .append("; SameSite=None")
+                .append("; secure");
 
-        if (!isLocal) {
-            refreshCookieVal.append("; Secure");
-            refreshCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
-        }
+
+
+//        if (!isLocal) {
+//            refreshCookieVal.append("; Secure");
+//            refreshCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+//        }
 
 
 
