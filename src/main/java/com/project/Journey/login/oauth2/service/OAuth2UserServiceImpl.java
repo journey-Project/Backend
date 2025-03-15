@@ -120,13 +120,14 @@ public class OAuth2UserServiceImpl {
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
                 .append("; SameSite=None")
-                .append("; secure");
+                .append("; Domain=localhost")
+                .append("; Secure");
 //                .append("; HttpOnly");
-
-        if (!isLocal) {
-            accessCookieVal.append("; Secure");
-//            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
-        }
+//
+//        if (!isLocal) {
+//            accessCookieVal.append("; Secure");
+////            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+//        }
 
         response.addHeader("Set-Cookie", accessCookieVal.toString());
 
@@ -136,7 +137,8 @@ public class OAuth2UserServiceImpl {
                 .append("; Max-Age=").append(refreshMaxAge)
                 .append("; Path=/")
                 .append("; SameSite=None")
-                .append("; secure");
+                .append("; Domain=localhost")
+                .append("; Secure");
 
 
 
