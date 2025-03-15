@@ -120,8 +120,8 @@ public class OAuth2UserServiceImpl {
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
                 .append("; SameSite=None")
-                .append("; Domain=localhost")
-                .append("; Secure");
+                .append("; Domain=localhost");
+//                .append("; Secure");
 //                .append("; HttpOnly");
 //
 //        if (!isLocal) {
@@ -137,8 +137,8 @@ public class OAuth2UserServiceImpl {
                 .append("; Max-Age=").append(refreshMaxAge)
                 .append("; Path=/")
                 .append("; SameSite=None")
-                .append("; Domain=localhost")
-                .append("; Secure");
+                .append("; Domain=localhost");
+//                .append("; Secure");
 
 
 
