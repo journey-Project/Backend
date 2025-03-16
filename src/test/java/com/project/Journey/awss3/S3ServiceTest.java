@@ -1,6 +1,5 @@
 package com.project.Journey.awss3;
 
-import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.project.Journey.login.member.domain.MemberRole;
@@ -8,11 +7,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +31,7 @@ class S3ServiceTest {
 
     @BeforeEach
     void setUp() {
-        // (필요 시) 각 테스트 시작 전 초기화 작업
+        ReflectionTestUtils.setField(s3Service, "bucket", "journeybucket0");
     }
 
     @Test
@@ -121,3 +120,5 @@ class S3ServiceTest {
         verify(amazonS3).deleteObject("journeybucket0", "APPLICATION/xyz.png");
     }
 }
+
+

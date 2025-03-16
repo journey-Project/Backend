@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -129,7 +128,16 @@ public class S3Service {
      * @return S3 Key 값 (ex: "APPLICATION/uuid.jpg")
      */
     private String getImageUrlToKey(final String imageUrl) {
-        return imageUrl.substring(IMAGE_URL_PREFIX_LENGTH + bucket.length());
+        // 정확한 버킷 URL을 동적으로 생성
+        String bucketUrl = "https://" + bucket + ".s3.amazonaws.com/";
+
+        // 이미지 URL이 버킷 URL로 시작하는지 확인 후, Key만 추출
+        if (imageUrl.startsWith(bucketUrl)) {
+            return imageUrl.substring(bucketUrl.length()); // 정확한 key 추출
+        }
+
+        // URL이 예상한 형식이 아니면 예외 발생
+        throw new IllegalArgumentException("Invalid S3 URL: " + imageUrl);
     }
 
     /**
