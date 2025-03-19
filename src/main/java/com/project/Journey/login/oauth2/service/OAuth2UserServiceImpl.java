@@ -119,8 +119,9 @@ public class OAuth2UserServiceImpl {
         accessCookieVal.append("accessToken=").append(accessToken)
                 .append("; Max-Age=").append(accessMaxAge)
                 .append("; Path=/")
-                .append("; SameSite=None");
-//                .append("; Secure");
+                .append("; SameSite=None")
+                .append("; domain=journeysite.site")
+                .append("; Secure");
 //                .append("; HttpOnly");
 //
 //        if (!isLocal) {
@@ -135,8 +136,9 @@ public class OAuth2UserServiceImpl {
         refreshCookieVal.append("refreshToken=").append(refreshToken)
                 .append("; Max-Age=").append(refreshMaxAge)
                 .append("; Path=/")
-                .append("; SameSite=None");
-//                .append("; Secure");
+                .append("; SameSite=None")
+                .append("; domain=journeysite.site")
+                .append("; Secure");
 
 
 
