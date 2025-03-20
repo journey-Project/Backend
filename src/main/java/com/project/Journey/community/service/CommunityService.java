@@ -1,5 +1,6 @@
 package com.project.Journey.community.service;
 
+import com.project.Journey.awss3.S3Service;
 import com.project.Journey.community.dto.CommunityDTO;
 import com.project.Journey.community.dto.CommunityRequestDTO;
 import com.project.Journey.community.dto.CommunityResponseDTO;
@@ -15,7 +16,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,15 +33,18 @@ public class CommunityService {
 
    private final CommunityImageRepository communityImageRepository;
 
-    public CommunityService(CommunityRepository communityRepository, CommunityImageRepository communityImageRepository) {
+    private final S3Service s3Service;
+
+    public CommunityService(CommunityRepository communityRepository, CommunityImageRepository communityImageRepository, S3Service s3Service) {
         this.communityRepository = communityRepository;
         this.communityImageRepository = communityImageRepository;
+        this.s3Service = s3Service;
     }
 
 
     //게시글 저장
     @Transactional
-    public Long saveCommunityPost(CommunityRequestDTO communityRequestDTO){
+    public Long saveCommunityPost(CommunityRequestDTO communityRequestDTO, List<MultipartFile> images) throws IOException {
         Community community = Community.builder()
                 .user_id(communityRequestDTO.getUser_id())
                 .country(communityRequestDTO.getCountry())
@@ -48,16 +54,28 @@ public class CommunityService {
                 .comment_count(0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
-                //.images(communityRequestDTO.getImageUrls())
                 .build();
 
-        List<CommunityImage> images = new ArrayList<>();
-        for(String url : communityRequestDTO.getImageUrls()){
-            CommunityImage image = new CommunityImage(null, url, community);
-            images.add(image);
+        //1. 게시글을 먼저 저장
+        Community savedCommunity = communityRepository.save(community); // DB에 먼저 저장
+
+        //2. 이미지 저장을 위한 리스트 생성
+        List<CommunityImage> imageEntities = new ArrayList<>();
+
+        //3. 이미지 업로드 및 CommunityImage 엔티티 생성
+        if(images != null && !images.isEmpty()){
+            for (MultipartFile image : images) {
+                // S3에 업로드 후 URL 반환
+                String imageUrl = s3Service.uploadApplicationImage(image);
+                CommunityImage communityImage = new CommunityImage(null, imageUrl, savedCommunity);
+                imageEntities.add(communityImage);
+            }
+
         }
-        community.setImages(images);
-        Community savedCommunity = communityRepository.save(community);
+
+       // community.setImages(imageEntities);
+        //communityRepository.save(savedCommunity);
+        communityImageRepository.saveAll(imageEntities);
         return savedCommunity.getCommunityPostId();
     }
 
