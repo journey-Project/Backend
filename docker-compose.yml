@@ -1,12 +1,22 @@
 version: '3.8'
 
 services:
+
+  redis:
+    image: redis:latest
+    container_name: journey-redis
+
+    expose:
+      - "6379"
+    restart: unless-stopped
+
   spring-app:
     ports:
       - "8080:8080"
     image: ashtonsw/mydockerrepo:latest
     container_name: spring-app
-    network_mode: host  # EC2의 Redis(127.0.0.1)와 통신
+    expose:
+      - "8080"
 
     env_file:
       - .env
@@ -18,7 +28,34 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
       # Redis 정보 (EC2 내부 설치)
-      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
-      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - redis
 
     restart: unless-stopped  # 컨테이너 재시작 정책
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    # Nginx만 호스트로 80,443 노출
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/nginx:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    depends_on:
+      - spring-app
+      - certbot
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+
+    restart: unless-stopped

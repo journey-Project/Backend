@@ -34,7 +34,7 @@ public class WebSecurityConfig {
     private static final String[] WHITELIST = {"/", "/login", "/loginHome", "/signUp", "/renew", "/loginSuccess",
             "/login/oauth2/code/**", "/oauth2/signUp", "/error", "/js/**", // Swagger UI & Docs
             "/swagger-ui", "/v3/api-docs", "/swagger-ui/index.html", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
-            ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui", "/api/auth/sign-up", "/api/oauth2/sign-up"};
+            ,"/api/**", "/WebSocketTest.html","/ws/**","/swagger-ui", "/api/auth/sign-up", "/api/oauth2/sign-up", "/oauth2/**"};
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -96,9 +96,10 @@ public class WebSecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
-                    config.addAllowedOriginPattern("http://localhost:5173");
-                    config.addAllowedOriginPattern("https://dxkiwmo9p9ise.cloudfront.net");
-                    // or "*", or your domain
+                    config.addAllowedOriginPattern("https://*.journeysite.site");
+                    config.addAllowedOrigin("http://localhost:5173");
+                    config.addAllowedOrigin("https://dxkiwmo9p9ise.cloudfront.net");
+
                     config.addAllowedHeader("*");
                     config.addAllowedMethod("*");
                     return config;
@@ -109,19 +110,12 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated() // 나머지 경로는 인증 요구
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .csrf(csrf -> csrf.ignoringRequestMatchers("/swagger-ui", "/v3/api-docs", "/swagger-ui/**", "/v3/api-docs/**").disable())
 
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .logout(logout -> logout.logoutSuccessUrl("/"))
-//                .oauth2Login(oauth2 -> oauth2
-//                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
-//                        .successHandler(customOAuth2LoginSuccessHandler())
-//                        .failureHandler(customOAuth2LoginFailureHandler())
-//                )
                 ;
 
-        // CustomAuthenticationFilter 등록
         http.addFilterBefore(customAuthenticationFilter(http), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

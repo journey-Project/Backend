@@ -84,6 +84,10 @@ jobs:
             NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
+            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
             EOF
 
             # 기존 컨테이너 중지 및 삭제

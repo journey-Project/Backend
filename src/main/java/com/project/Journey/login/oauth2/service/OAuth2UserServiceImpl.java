@@ -21,6 +21,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -31,6 +32,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class OAuth2UserServiceImpl {
 
@@ -60,6 +62,14 @@ public class OAuth2UserServiceImpl {
 
 
     public Map<String, Object> oauthLogin(String provider, String code, HttpServletResponse response) {
+        log.info("OAuth 요청 시작: provider={}, code={}", provider, code);
+
+        // 중복 요청 방지 (이미 응답을 보냈다면 return)
+        if (response.isCommitted()) {
+            log.warn("이미 응답이 완료된 요청입니다. 중복 요청 방지.");
+            return null;
+        }
+
         SocialType socialType = SocialType.valueOf(provider.toUpperCase());
         OAuth2UserInfo userInfo = getUserInfoByProvider(socialType, code);
         String socialId = userInfo.getSocialId();
@@ -67,53 +77,88 @@ public class OAuth2UserServiceImpl {
         log.info("[oauthLogin] provider={}, socialId={}, email={}", provider, socialId, email);
 
         Optional<Member> optionalMember = memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+
+        Member member;
         if (optionalMember.isEmpty()) {
-            // GUEST
-            Member newMember = Member.builder()
+            member = Member.builder()
                     .email(email)
                     .socialId(socialId)
                     .socialType(socialType)
-                    .role(MemberRole.GUEST)
+                    .role(MemberRole.USER)
                     .build();
-            memberRepository.save(newMember);
 
-            return Map.of(
-                    "status", "GUEST",
-                    "message", "소셜 최초 로그인",
-                    "email", email,
-                    "socialType", socialType.toString(),
-                    "socialId", socialId
-            );
+            //DB저장
+            memberRepository.save(member);
+
+            log.info("새 소셜사용자 가입: socialId={}, email={}", socialId, email);
         } else {
-            // EXIST
-            Member member = optionalMember.get();
-            String accessToken = JwtUtils.generateAccessToken(member);
-            String refreshToken = JwtUtils.generateRefreshToken(member);
-
-            jwtService.save(new RefreshToken(refreshToken, member.getId()));
-
-            Cookie accessCookie = new Cookie("accessToken", JwtConstants.JWT_TYPE + accessToken);
-            accessCookie.setSecure(false);
-            accessCookie.setHttpOnly(false);
-            accessCookie.setPath("/");
-            accessCookie.setMaxAge(60 * 30);
-
-            Cookie refreshCookie = new Cookie("refreshToken", JwtConstants.JWT_TYPE + refreshToken);
-            refreshCookie.setSecure(false);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(60 * 60 * 24 * 7);
-
-            response.addCookie(accessCookie);
-            response.addCookie(refreshCookie);
-
-            return Map.of(
-                    "status", "EXIST",
-                    "message", "소셜 로그인 성공",
-                    "email", member.getEmail(),
-                    "role", member.getRole().name()
-            );
+            member = optionalMember.get();
+            log.info("기존 소셜사용자 로그인: socialId={}, email={}", socialId, email);
         }
+
+
+        // member는 role=USER 상태
+        // JWT 발급 + 쿠키 설정 바로 하기
+        String accessToken = JwtUtils.generateAccessToken(member);
+        String refreshToken = JwtUtils.generateRefreshToken(member);
+
+        // RefreshToken DB 저장
+        jwtService.save(new RefreshToken(refreshToken, member.getId()));
+
+        // -----------------------------------------------------------
+        // (수정) 직접 Set-Cookie 헤더로 SameSite=None 추가
+        // -----------------------------------------------------------
+        boolean isLocal = true; // 로컬환경이면 true, 운영환경(HTTPS)이면 false
+
+        int accessMaxAge = 60 * 30;  // 30분
+        int refreshMaxAge = 60 * 60 * 24 * 7;  // 7일
+
+        // ----- Access Token 쿠키 -----
+        StringBuilder accessCookieVal = new StringBuilder();
+        accessCookieVal.append("accessToken=").append(accessToken)
+                .append("; Max-Age=").append(accessMaxAge)
+                .append("; Path=/")
+                .append("; SameSite=None")
+                .append("; Secure");
+//                .append("; HttpOnly");
+//
+//        if (!isLocal) {
+//            accessCookieVal.append("; Secure");
+////            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+//        }
+
+        response.addHeader("Set-Cookie", accessCookieVal.toString());
+
+        // ----- Refresh Token 쿠키 -----
+        StringBuilder refreshCookieVal = new StringBuilder();
+        refreshCookieVal.append("refreshToken=").append(refreshToken)
+                .append("; Max-Age=").append(refreshMaxAge)
+                .append("; Path=/")
+                .append("; SameSite=None")
+                .append("; Secure");
+
+
+
+//        if (!isLocal) {
+//            refreshCookieVal.append("; Secure");
+//            refreshCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
+//        }
+
+
+
+        response.addHeader("Set-Cookie", refreshCookieVal.toString());
+
+        // -----------------------------
+        // 응답 JSON
+        // -----------------------------
+        String status = optionalMember.isEmpty() ? "NEW_USER" : "EXIST";
+
+        return Map.of(
+                "status", status,
+                "message", "소셜 로그인 성공",
+                "email", member.getEmail(),
+                "role", member.getRole().name()
+        );
     }
 
     private OAuth2UserInfo getUserInfoByProvider(SocialType provider, String code) {
