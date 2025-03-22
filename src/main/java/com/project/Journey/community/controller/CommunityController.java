@@ -15,14 +15,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -70,16 +73,21 @@ public class CommunityController {
     }
 
     //국가별 커뮤니티 특정 기간의 게시글 페이징 조회
-    @GetMapping("/api/community/searchPosts")
-    public Page<CommunityResponseDTO> getPostsByDateRangeAndCountry(
-            @RequestParam String startDate,
-            @RequestParam String endDate,
-            @RequestParam String country,
-            Pageable pageable
-    ){
+    @GetMapping("/api/community/posts")
+    public ResponseEntity<Map<String, Object>> getPostsByDateRange(
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "page", defaultValue = "1") int page,  // 기본값 1
+            @RequestParam(value = "size", defaultValue = "10") int size) {
 
-        return communityService.getPostsByDateRange(startDate, endDate,country, pageable);
-    };
+        Map<String, Object> response = communityService.getPostsByDateRange(startDate, endDate, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+
+
 
     //게시글 수정
     @PutMapping("/api/community/update/{CommunityPostId}")

@@ -28,5 +28,6 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
 */
 
     // 특정 기간과 국가별 게시글 페이징 조회
-    Page<Community> findByCreatedAtBetweenAndCountry(LocalDateTime startDateTime, LocalDateTime endDateTime, String country, Pageable pageable);
+    Page<Community> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    // Page<Community> findByCreatedAtBetweenAndCountry(LocalDateTime startDateTime, LocalDateTime endDateTime, String country, Pageable pageable);
 }
