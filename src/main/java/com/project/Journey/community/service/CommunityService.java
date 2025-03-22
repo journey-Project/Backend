@@ -2,6 +2,7 @@ package com.project.Journey.community.service;
 
 import com.project.Journey.awss3.S3Service;
 import com.project.Journey.community.dto.CommunityDTO;
+import com.project.Journey.community.dto.CommunityPageResponseDTO;
 import com.project.Journey.community.dto.CommunityRequestDTO;
 import com.project.Journey.community.dto.CommunityResponseDTO;
 import com.project.Journey.community.entity.Community;
@@ -11,10 +12,9 @@ import com.project.Journey.community.repository.CommunityRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.internal.util.collections.ReadOnlyMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +23,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CommunityService {
@@ -179,39 +182,34 @@ public class CommunityService {
     }
 
     // 국가별 특정 기간의 게시글 페이징 조회
-    public Page<CommunityResponseDTO> getPostsByDateRange(String startDate, String endDate, String country, Pageable pageable){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDateTime startDateTime = LocalDate.parse(startDate, formatter).atStartOfDay();
-        LocalDateTime endDateTime = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
-
-        // 특정 기간과 국가를 기준으로 게시글 조회 (페이징 포함)
-        Page<Community> communityPage =communityRepository.findByCreatedAtBetweenAndCountry(startDateTime, endDateTime, country, pageable);
-
-
-        // Community 엔티티 -> CommunityResponseDto로 변환
-        List<CommunityResponseDTO> communityResponseDTOS = new ArrayList<>();
-        for(Community community : communityPage.getContent()){
-            CommunityResponseDTO responseDTO = new CommunityResponseDTO();
-            responseDTO.setCommunityPostId(community.getCommunityPostId());
-            responseDTO.setUser_id(community.getUser_id());
-            responseDTO.setCountry(community.getCountry());
-            responseDTO.setTitle(community.getTitle());
-            responseDTO.setContent(community.getContent());
-            responseDTO.setView_count(community.getView_count());
-            responseDTO.setComment_count(community.getComment_count());
-            responseDTO.setCreated_at(community.getCreatedAt());
-            responseDTO.setUpdated_at(community.getUpdatedAt());
-            responseDTO.setProfileImageUrl(community.getProfileImageUrl());
-
-            List<String> imageUrls = new ArrayList<>();
-            for(CommunityImage image : community.getImages()){
-                imageUrls.add(image.getImageUrl());
-            }
-            responseDTO.setImageUrls(imageUrls);
-            communityResponseDTOS.add(responseDTO);
+    @Transactional
+    public Map<String, Object> getPostsByDateRange(LocalDate startDate, LocalDate endDate, int page, int size) {
+        int pageIndex = page - 1; // 1부터 시작한 페이지 번호를 0부터 시작하도록 조정
+        if (pageIndex < 0) {
+            pageIndex = 0; // 잘못된 요청 방지
         }
-        // 변환된 데이터를 Page 객체로 감싸서 반환
-        return new PageImpl<>(communityResponseDTOS, pageable, communityPage.getTotalElements());
+
+        //최신순으로 정렬
+        Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Community> communityPage = communityRepository.findByCreatedAtBetween(
+                startDate.atStartOfDay(), endDate.atTime(23, 59, 59), pageable);
+
+        List<CommunityPageResponseDTO> posts = communityPage.getContent().stream()
+                .map(community -> new CommunityPageResponseDTO(
+                        community.getCommunityPostId(),
+                        community.getTitle(),
+                        community.getUser_id(),
+                        community.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalCount", communityPage.getTotalElements()); // 전체 게시글 수
+        result.put("posts", posts); // 게시글 리스트
+        result.put("currentPage", page); // 클라이언트가 요청한 페이지 번호 (1부터 시작)
+
+        return result;
     }
 
 
