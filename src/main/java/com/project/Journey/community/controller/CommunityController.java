@@ -59,13 +59,6 @@ public class CommunityController {
 
     }
 
-
-    //페이지 네이션 적용된
-    //@GetMapping("/api/community/getPostsByPage")
-    //public Page<CommunityDTO> getCommunityPosts(@RequestParam String country, Pageable pageable) {
-   //     return communityService.getPostsByCountry(country, pageable);
-   // }
-
     // 특정 게시글 조회 (조회수 증가 반영)
     @GetMapping("/api/community/getPostByPostId/{communityPostId}")
     public CommunityResponseDTO getCommunityPost(@PathVariable Long communityPostId) {
@@ -85,6 +78,15 @@ public class CommunityController {
     }
 
 
+    //오늘의 핫 게시물 기능 (페이지네이션 추가)
+    @GetMapping("/api/community/hot-posts")
+    public ResponseEntity<Map<String, Object>> getHotPosts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "3") int size) {
+
+        Map<String, Object> response = communityService.getHotPosts(page, size);
+        return ResponseEntity.ok(response);
+    }
 
 
 

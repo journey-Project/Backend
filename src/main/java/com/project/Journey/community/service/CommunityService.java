@@ -1,10 +1,7 @@
 package com.project.Journey.community.service;
 
 import com.project.Journey.awss3.S3Service;
-import com.project.Journey.community.dto.CommunityDTO;
-import com.project.Journey.community.dto.CommunityPageResponseDTO;
-import com.project.Journey.community.dto.CommunityRequestDTO;
-import com.project.Journey.community.dto.CommunityResponseDTO;
+import com.project.Journey.community.dto.*;
 import com.project.Journey.community.entity.Community;
 import com.project.Journey.community.entity.CommunityImage;
 import com.project.Journey.community.repository.CommunityImageRepository;
@@ -53,7 +50,7 @@ public class CommunityService {
                 .country(communityRequestDTO.getCountry())
                 .title(communityRequestDTO.getTitle())
                 .content(communityRequestDTO.getContent())
-                .view_count(0)
+                .viewCount(0)
                 .comment_count(0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -86,7 +83,7 @@ public class CommunityService {
     public CommunityResponseDTO getPostByCommunityPostId(Long communitypostid){
         Community community = communityRepository.findById(communitypostid)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
-        community.setView_count(community.getView_count()+1);
+        community.setViewCount(community.getViewCount()+1);
         communityRepository.save(community);
 
         List<CommunityImage> communityImages = community.getImages();
@@ -102,7 +99,7 @@ public class CommunityService {
                 community.getCountry(),
                 community.getTitle(),
                 community.getContent(),
-                community.getView_count(),
+                community.getViewCount(),
                 community.getComment_count(),
                 community.getCreatedAt(),
                 community.getUpdatedAt(),
@@ -208,6 +205,34 @@ public class CommunityService {
         result.put("totalCount", communityPage.getTotalElements()); // 전체 게시글 수
         result.put("posts", posts); // 게시글 리스트
         result.put("currentPage", page); // 클라이언트가 요청한 페이지 번호 (1부터 시작)
+
+        return result;
+    }
+
+
+    @Transactional
+    public Map<String, Object> getHotPosts(int page, int size) {
+        int pageIndex = page - 1; // 1부터 시작하도록 조정
+        if (pageIndex < 0) {
+            pageIndex = 0; // 잘못된 요청 방지
+        }
+
+        Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "viewCount"));
+        Page<Community> communityPage = communityRepository.findAll(pageable);
+
+        List<HotPostResponseDTO> posts = communityPage.getContent().stream()
+                .map(community -> new HotPostResponseDTO(
+                        community.getCommunityPostId(),
+                        community.getCountry(),
+                        community.getTitle(),
+                        community.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalCount", communityPage.getTotalElements()); // 전체 게시글 수
+        result.put("posts", posts); // 게시글 리스트
+        result.put("currentPage", page); // 요청한 페이지 번호
 
         return result;
     }
