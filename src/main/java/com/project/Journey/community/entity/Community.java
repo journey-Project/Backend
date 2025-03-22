@@ -38,8 +38,8 @@ public class Community {
     private String content;
 
     //커뮤니티 게시글 조회수
-    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
-    private int view_count;
+    @Column(name = "view_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private int viewCount;
 
     //커뮤니티 게시글 댓글 수
     @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
