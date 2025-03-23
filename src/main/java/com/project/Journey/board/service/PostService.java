@@ -1,8 +1,12 @@
 package com.project.Journey.board.service;
 
 
+import com.project.Journey.awss3.S3Service;
 import com.project.Journey.board.dto.PostDTO;
+import com.project.Journey.board.dto.PostRequestDTO;
 import com.project.Journey.board.entity.Post;
+import com.project.Journey.board.entity.PostImage;
+import com.project.Journey.board.repository.PostImageRepository;
 import com.project.Journey.board.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,28 +19,83 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
-//@RequiredArgsConstructor
+
 public class PostService {
 
     private final PostRepository postRepository;
-
+    private final S3Service s3Service;
+    private final PostImageRepository postImageRepository;
     @Autowired
     private final RedisTemplate<String, Object> redisTemplate;
 
 
-    public PostService(PostRepository postRepository, @Qualifier("jsonRedisTemplate") RedisTemplate<String, Object> redisTemplate) {
+    public PostService(PostRepository postRepository, S3Service s3Service, PostImageRepository postImageRepository, @Qualifier("jsonRedisTemplate") RedisTemplate<String, Object> redisTemplate) {
         this.postRepository = postRepository;
+        this.s3Service = s3Service;
+        this.postImageRepository = postImageRepository;
         this.redisTemplate = redisTemplate;
     }
 
     private static final String VIEW_COUNT_KEY = "view_count:";
 
     //게시글 저장
+    public Long savePost(PostRequestDTO postRequestDTO, MultipartFile coverImage, List<MultipartFile> images) {
+        // 1️. S3에 커버 이미지 업로드 후 URL 저장
+        String coverImageUrl = null;
+        if (coverImage != null && !coverImage.isEmpty()) {
+            coverImageUrl = s3Service.uploadApplicationImage(coverImage);
+        }
+
+        // 2. 게시글 객체 생성
+        Post post = Post.builder()
+                .user_id(postRequestDTO.getUserId())
+                .country(postRequestDTO.getCountry())
+                .title(postRequestDTO.getTitle())
+                .startDate(postRequestDTO.getStartDate())
+                .endDate(postRequestDTO.getEndDate())
+                .max_participants(postRequestDTO.getParticipants())
+                .destination(postRequestDTO.getDestination())
+                .view_count(0)
+                .comment_count(0)
+                .coverImageUrl(coverImageUrl)
+                .content(postRequestDTO.getContent())
+                .created_at(LocalDateTime.now())
+                .updated_at(LocalDateTime.now())
+                .profileImageUrl("") //프로필 이미지
+                .build();
+
+        // 3️. 게시글을 먼저 저장 (DB에 저장)
+        Post savedPost = postRepository.save(post);
+
+        // 4️. 이미지 저장을 위한 리스트 생성
+        List<PostImage> imageEntities = new ArrayList<>();
+
+        // 5️. 이미지 업로드 및 PostImage 엔티티 생성
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile image : images) {
+                // S3에 업로드 후 URL 반환
+                String imageUrl = s3Service.uploadApplicationImage(image);
+                PostImage postImage = new PostImage(null, imageUrl, savedPost);
+                imageEntities.add(postImage);
+            }
+        }
+
+        // 6️. 이미지 엔티티 저장
+        postImageRepository.saveAll(imageEntities);
+
+        return savedPost.getPostId();
+    }
+
+
+
+
+    /*
     @Transactional
     public Long savePost(PostDTO postDTO) {
 
@@ -52,13 +111,15 @@ public class PostService {
                 .created_at(LocalDateTime.now())
                 .updated_at(LocalDateTime.now())
                 .user_id(postDTO.getUser_id())
-                .imageUrl(postDTO.getImageUrl()) //image url
+                .coverImageUrl(postDTO.getCoverImageUrl()) //image url
                 .country(postDTO.getCountry())
                 .build();
 
+        
+
         return postRepository.save(post).getPostId();
     };
-
+*/
 
     // 모든 게시글 조회
     public List<PostDTO> getAllPosts() {
@@ -71,15 +132,15 @@ public class PostService {
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
-                    .start_date(post.getStart_date())
-                    .end_date(post.getEnd_date())
+                    .start_date(post.getStartDate())
+                    .end_date(post.getEndDate())
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreated_at())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
-                    .imageUrl(post.getImageUrl()) // image url
+                    .coverImageUrl(post.getCoverImageUrl())// image url
                     .country(post.getCountry()) //국가
                     .build();
             postDtoList.add(postDto);
@@ -100,7 +161,7 @@ public class PostService {
         post.updateStartDate(postDTO.getStart_date());
         post.updateEndDate(postDTO.getEnd_date());
         post.updateUpdateTime(postDTO.getUpdated_at());
-        post.updateImageUrl(postDTO.getImageUrl()); //image url
+        post.updateCoverImageUrl(postDTO.getCoverImageUrl()); //커버 image url
         post.updateCountry(postDTO.getCountry());
 
     }
@@ -114,15 +175,15 @@ public class PostService {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .destination(post.getDestination())
-                .start_date(post.getStart_date())
-                .end_date(post.getEnd_date())
+                .start_date(post.getStartDate())
+                .end_date(post.getEndDate())
                 .max_participants(post.getMax_participants())
                 .view_count(post.getView_count())
                 .comment_count(post.getComment_count())
                 .created_at(post.getCreated_at())
                 .updated_at(post.getUpdated_at())
                 .user_id(post.getUser_id())
-                .imageUrl(post.getImageUrl())
+                .coverImageUrl(post.getCoverImageUrl())
                 .country(post.getCountry())
                 .build();
     }
@@ -173,15 +234,15 @@ public class PostService {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .destination(post.getDestination())
-                .start_date(post.getStart_date())
-                .end_date(post.getEnd_date())
+                .start_date(post.getStartDate())
+                .end_date(post.getEndDate())
                 .max_participants(post.getMax_participants())
                 .view_count(updatedViewCount.intValue()) // Redis 업데이트된 조회수 반환
                 .comment_count(post.getComment_count())
                 .created_at(post.getCreated_at())
                 .updated_at(post.getUpdated_at())
                 .user_id(post.getUser_id())
-                .imageUrl(post.getImageUrl())
+                .coverImageUrl(post.getCoverImageUrl())
                 .country(post.getCountry())
                 .build();
     }
@@ -224,15 +285,15 @@ public class PostService {
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
-                    .start_date(post.getStart_date())
-                    .end_date(post.getEnd_date())
+                    .start_date(post.getStartDate())
+                    .end_date(post.getEndDate())
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreated_at())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
-                    .imageUrl(post.getImageUrl())
+                    .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
             postDtoListByUserId.add(postDto);
@@ -254,15 +315,15 @@ public class PostService {
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
-                    .start_date(post.getStart_date())
-                    .end_date(post.getEnd_date())
+                    .start_date(post.getStartDate())
+                    .end_date(post.getEndDate())
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreated_at())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
-                    .imageUrl(post.getImageUrl())
+                    .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
             postDTOList.add(postDTO);
@@ -280,15 +341,15 @@ public class PostService {
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
-                    .start_date(post.getStart_date())
-                    .end_date(post.getEnd_date())
+                    .start_date(post.getStartDate())
+                    .end_date(post.getEndDate())
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreated_at())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
-                    .imageUrl(post.getImageUrl())
+                    .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
             postDTOList.add(postDTO);
