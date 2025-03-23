@@ -2,6 +2,7 @@ package com.project.Journey.board.controller;
 
 
 import com.project.Journey.board.dto.PostDTO;
+import com.project.Journey.board.dto.PostRequestDTO;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
@@ -14,10 +15,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.JwtBearerOAuth2AuthorizedClientProvider;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -26,27 +29,29 @@ import java.util.List;
 @Tag(name = "게시글 관리", description = "게시판 관련 API")
 public class PostController {
 
+    @Autowired
     private final PostService postService;
 
 
     // 게시글 저장
-    @Operation(summary = "게시글 저장", description = """
-            새로운 게시글을 저장합니다.
+    @Operation(summary = "동행자 모집 게시글 저장", description = """
+            새로운 동행자 모집 게시글을 저장합니다.
             
-            -DTO 필드 : title, content, destination, start_date, end_date,
-            max_participants, user_id, country 필수
+            -PostRequestDTO 필드 : userId, title, content, destination, startDate, endDate,
+            participants, user_id, country 필수
             
-            {
-              "title": "부산 여행",
-              "content": "부산으로 떠나요!",
-              "destination": "한국",
-              "start_date": "2024-12-30",
-              "end_date": "2024-12-31",
-              "max_participants": 7,
-              "user_id" : "user1234",
-              "imageUrl" : "https://s3.amazonaws.com/bucket-name/path/to/image2.jpg",
-              "country" : "한국"
+            "post" : {
+              "userId": "미국여행자",
+              "country": "미국",
+              "title": "미국으로 떠나요",
+              "startDate": "2025-03-23",
+              "endDate": "2024-03-23",
+              "content": "미국 뉴욕여행같이해요~~!!!",
+              "participants" : 5,
+              "destination" : "미국"
             }
+            "coverImage": (커버 이미지 파일),
+            "images": [(파일1), (파일2), (파일3)]
             
             response : post_id 반환
             """)
@@ -55,15 +60,19 @@ public class PostController {
             @ApiResponse(responseCode = "400", description = "입력값이 잘못되었습니다.")
     })
     @PostMapping("api/posts/save")
-    public ResponseEntity<Long> createPost(@RequestBody @Parameter(description = "게시글 저장에 필요한 정보", required = true) PostDTO postDTO) {
-        try{
-            Long savedPostId = postService.savePost(postDTO);
-            return ResponseEntity.ok(savedPostId);
-        } catch (Exception e){
-            throw new PostException("게시글 저장 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<Long> createPost(
+            @RequestPart("post") PostRequestDTO postRequestDTO,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
+        try{
+            Long postId = postService.savePost(postRequestDTO, coverImage, images);
+            return ResponseEntity.ok(postId);
+        }catch (Exception e){
+            throw new PostException("동행자 모집 게시글 저장 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
+        }
     }
+
 
     // 모든 게시글 조회
     @Operation(summary = "모든 게시글 조회", description = """

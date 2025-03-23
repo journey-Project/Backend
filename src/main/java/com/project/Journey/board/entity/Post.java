@@ -1,10 +1,12 @@
 package com.project.Journey.board.entity;
 
+import com.project.Journey.community.entity.CommunityImage;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -35,10 +37,10 @@ public class Post {
     private String destination;
 
     @Column(nullable = false)
-    private LocalDate start_date;
+    private LocalDate startDate;
 
     @Column(nullable = false)
-    private LocalDate end_date;
+    private LocalDate endDate;
 
     @Column(nullable = false, columnDefinition = "INT DEFAULT 1")
     private int max_participants;
@@ -55,14 +57,23 @@ public class Post {
     @Column(nullable = false)
     private LocalDateTime updated_at;
 
-    //이미지 url
+    //커버 이미지 url
     @Column(nullable = true)
-    private String imageUrl;
+    private String coverImageUrl;
 
     //국가 컬럼
     //@Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private String country;
+
+
+    //프로필 이미지 url
+    @Column(nullable = true)
+    private String profileImageUrl;
+
+    //첨부파일 이미지 (여러 개)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> images;
 
 
     public void updateTitle(String title){
@@ -78,12 +89,12 @@ public class Post {
     }
 
 
-    public void updateStartDate(LocalDate start_date){
-        this.start_date=start_date;
+    public void updateStartDate(LocalDate startDate){
+        this.startDate=startDate;
     }
 
-    public void updateEndDate(LocalDate end_date){
-        this.end_date=end_date;
+    public void updateEndDate(LocalDate endDate){
+        this.endDate=endDate;
     }
 
     public void updateMaxParticipants(int max_participants){
@@ -95,9 +106,9 @@ public class Post {
         this.updated_at = LocalDateTime.now();
     }
 
-    //이미지를 업데이트
-    public void updateImageUrl(String imageUrl){
-        this.imageUrl=imageUrl;
+    //커버 이미지를 업데이트
+    public void updateCoverImageUrl(String coverImageUrl){
+        this.coverImageUrl=coverImageUrl;
     }
 
     //국가이름 업데이트

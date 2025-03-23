@@ -26,9 +26,9 @@ public class PostDTO {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    private String imageUrl;
+    private String coverImageUrl;
 
-    private String country; // 국가별 게시판 조회를 위한 국가
+    private String country; // 국가별 게시판
 
     public PostDTO() {
         // Default constructor
