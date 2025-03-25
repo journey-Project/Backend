@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -28,4 +29,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     //나라별 게시글 조회
     Page<Post> findByCountry(String country, Pageable pageable);
+
+    // 특정 기간 + 특정 국가의 게시글 검색 (페이징 적용)
+    Page<Post> findByStartDateBetweenAndCountry(LocalDate startDate, LocalDate endDate, String country, Pageable pageable);
 }
