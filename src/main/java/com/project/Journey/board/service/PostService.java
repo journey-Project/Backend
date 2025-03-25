@@ -376,4 +376,24 @@ public class PostService {
                 .country(post.getCountry()) // 국가 정보 추가
                 .build();
     }
+
+    //동행자 모집 랜덤 게시글 가져오기
+    // 랜덤 게시글 가져오기
+    public List<PostPageResponseDTO> getRandomPosts(int count) {
+        List<Post> posts = postRepository.findRandomPosts(count);
+
+        // Entity → DTO 변환
+        return posts.stream()
+                .map(post -> PostPageResponseDTO.builder()
+                        .postId(post.getPostId())
+                        .destination(post.getDestination())
+                        .startDate(post.getStartDate())
+                        .endDate(post.getEndDate())
+                        .max_participants(post.getMax_participants())
+                        .title(post.getTitle())
+                        .coverImageUrl(post.getCoverImageUrl())
+                        .country(post.getCountry())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }
