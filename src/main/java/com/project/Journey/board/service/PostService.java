@@ -92,35 +92,6 @@ public class PostService {
         return savedPost.getPostId();
     }
 
-
-
-
-    /*
-    @Transactional
-    public Long savePost(PostDTO postDTO) {
-
-        Post post = Post.builder()
-                .title(postDTO.getTitle())
-                .content(postDTO.getContent())
-                .destination(postDTO.getDestination())
-                .start_date(postDTO.getStart_date())
-                .end_date(postDTO.getEnd_date())
-                .max_participants(postDTO.getMax_participants())
-                .view_count(0)
-                .comment_count(0)
-                .created_at(LocalDateTime.now())
-                .updated_at(LocalDateTime.now())
-                .user_id(postDTO.getUser_id())
-                .coverImageUrl(postDTO.getCoverImageUrl()) //image url
-                .country(postDTO.getCountry())
-                .build();
-
-        
-
-        return postRepository.save(post).getPostId();
-    };
-*/
-
     // 모든 게시글 조회
     public List<PostDTO> getAllPosts() {
 
@@ -205,7 +176,7 @@ public class PostService {
         return hotPosts;
     }
 
-    //게시글 조회 시 조회 수 증가
+    //게시글 조회 - 이미지 불러오기 기능 추가
     @Transactional
     public PostDTO getPostByIdAndIncrementView(Long postId) {
         String redisKey = VIEW_COUNT_KEY + postId;
@@ -230,21 +201,33 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 postId의 게시글이 없습니다."));
 
-        return PostDTO.builder()
-                .title(post.getTitle())
-                .content(post.getContent())
-                .destination(post.getDestination())
-                .start_date(post.getStartDate())
-                .end_date(post.getEndDate())
-                .max_participants(post.getMax_participants())
-                .view_count(updatedViewCount.intValue()) // Redis 업데이트된 조회수 반환
-                .comment_count(post.getComment_count())
-                .created_at(post.getCreated_at())
-                .updated_at(post.getUpdated_at())
-                .user_id(post.getUser_id())
-                .coverImageUrl(post.getCoverImageUrl())
-                .country(post.getCountry())
-                .build();
+        List<PostImage> postImages = post.getImages();
+        List<String> images = new ArrayList<>();
+        for(PostImage postImage : postImages){
+            images.add(postImage.getPostImageUrl());
+            System.out.println(postImage.getPostImageUrl());
+        }
+
+        PostDTO postDTO = new PostDTO(
+                post.getPostId(),
+                post.getUser_id(),
+                post.getTitle(),
+                post.getContent(),
+                post.getDestination(),
+                post.getStartDate(),
+                post.getEndDate(),
+                post.getMax_participants(),
+                post.getView_count(),
+                post.getComment_count(),
+                post.getCreated_at(),
+                post.getUpdated_at(),
+                post.getCoverImageUrl(),
+                post.getProfileImageUrl(),
+                post.getCountry(),
+                images
+        );
+
+       return postDTO;
     }
 
 
