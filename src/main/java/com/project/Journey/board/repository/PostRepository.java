@@ -32,4 +32,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 특정 기간 + 특정 국가의 게시글 검색 (페이징 적용)
     Page<Post> findByStartDateBetweenAndCountry(LocalDate startDate, LocalDate endDate, String country, Pageable pageable);
+
+    // 지정된 개수만큼 랜덤으로 게시글 조회
+    @Query(value = "SELECT * FROM posts ORDER BY RAND() LIMIT :count", nativeQuery = true)
+    List<Post> findRandomPosts(@Param("count") int count);
+
 }

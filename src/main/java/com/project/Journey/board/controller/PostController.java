@@ -2,6 +2,7 @@ package com.project.Journey.board.controller;
 
 
 import com.project.Journey.board.dto.PostDTO;
+import com.project.Journey.board.dto.PostPageResponseDTO;
 import com.project.Journey.board.dto.PostRequestDTO;
 import com.project.Journey.board.dto.PostSearchResponseDTO;
 import com.project.Journey.board.entity.Post;
@@ -398,7 +399,14 @@ public class PostController {
     }
 
 
+    //랜덤 동행자 게시글 가져오기
+    @GetMapping("api/posts/random")
+    public ResponseEntity<List<PostPageResponseDTO>> getRandomPosts(
+            @RequestParam(value = "count", defaultValue = "3") int count) {
 
+        List<PostPageResponseDTO> randomPosts = postService.getRandomPosts(count);
+        return ResponseEntity.ok(randomPosts);
+    }
 
 
 }
