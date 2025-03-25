@@ -205,19 +205,25 @@ public class PostController {
             
             response :
             {
-                "user_id": "user1234",
-                "title": "속초 여행",
-                "content": "속초로 떠나요!",
-                "destination": "한국",
-                "start_date": "2024-12-30",
-                "end_date": "2024-12-31",
-                "max_participants": 7,
-                "view_count": 1,
-                "comment_count": 0,
-                "created_at": "2025-02-17T23:21:09.609157",
-                "updated_at": "2025-02-17T23:21:09.609157",
-                "imageUrl": "https://s3.amazonaws.com/bucket-name/path/to/image2.jpg",
-                "country": "한국"
+               "postId": 21,
+                   "user_id": "미국여행자2",
+                   "title": "미국으로 떠나요2",
+                   "content": "미국 뉴욕여행같이해요~~!!!",
+                   "destination": "미국",
+                   "start_date": "2025-03-23",
+                   "end_date": "2024-03-23",
+                   "max_participants": 6,
+                   "view_count": 3,
+                   "comment_count": 0,
+                   "created_at": "2025-03-23T19:19:59.533322",
+                   "updated_at": "2025-03-23T19:19:59.533322",
+                   "coverImageUrl": "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/APPLICATION/~~~.jpg",
+                   "profileImageUrl": "",
+                   "country": "미국",
+                   "imageUrls": [
+                       "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/APPLICATION/~~~.jpg",
+                       "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/APPLICATION/~~~.jpg"
+                   ]
             }
             
             DTO를 반환하고 "view_count"가 1 증가
