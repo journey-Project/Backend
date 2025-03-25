@@ -6,6 +6,7 @@ import com.project.Journey.board.dto.PostDTO;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
 import com.project.Journey.community.dto.CommunityDTO;
+import com.project.Journey.community.dto.CommunityMainHotPostDTO;
 import com.project.Journey.community.dto.CommunityRequestDTO;
 import com.project.Journey.community.dto.CommunityResponseDTO;
 import com.project.Journey.community.service.CommunityService;
@@ -105,5 +106,11 @@ public class CommunityController {
         communityService.deleteCommunityPost(CommunityPostId);
         return ResponseEntity.noContent().build();
     }
-}
 
+    //메인 페이지 - 오늘은 어떤 이야기를 나누었을까요? (조회수가 가장 높은 게시글 count 수만큼 반환)
+    @GetMapping("/api/community/main-hot-posts")
+    public ResponseEntity<List<CommunityMainHotPostDTO>> getHotPosts(@RequestParam(defaultValue = "3") int count) {
+        List<CommunityMainHotPostDTO> hotPosts = communityService.getHotPosts(count);
+        return ResponseEntity.ok(hotPosts);
+    }
+}
