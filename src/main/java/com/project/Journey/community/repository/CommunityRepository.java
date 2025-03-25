@@ -1,5 +1,6 @@
 package com.project.Journey.community.repository;
 
+import com.project.Journey.board.entity.Post;
 import com.project.Journey.community.entity.Community;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -29,5 +31,8 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     // 특정 기간과 국가별 게시글 페이징 조회
     Page<Community> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-    // Page<Community> findByCreatedAtBetweenAndCountry(LocalDateTime startDateTime, LocalDateTime endDateTime, String country, Pageable pageable);
+
+    //조회수가 높은 커뮤니티 게시글을 지정한 개수만큼 받아오기
+    @Query("SELECT c FROM Community c ORDER BY c.viewCount DESC")
+    List<Community> findTopCommunityViewCount(Pageable pageable);
 }

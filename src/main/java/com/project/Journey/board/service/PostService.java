@@ -10,6 +10,7 @@ import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.entity.PostImage;
 import com.project.Journey.board.repository.PostImageRepository;
 import com.project.Journey.board.repository.PostRepository;
+import com.project.Journey.community.dto.CommunityMainHotPostDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -396,4 +397,6 @@ public class PostService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+
 }

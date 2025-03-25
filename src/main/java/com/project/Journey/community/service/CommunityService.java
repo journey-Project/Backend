@@ -238,4 +238,21 @@ public class CommunityService {
     }
 
 
+    //오늘은 어떤 이야기를 나누었을까요? -> 커뮤니티 게시글 중 조회수가 가장 높은 게시글 지정된 개수만큼 가져오기
+    public List<CommunityMainHotPostDTO> getHotPosts(int count) {
+        List<Community> hotPosts = communityRepository.findTopCommunityViewCount(PageRequest.of(0, count));
+
+        return hotPosts.stream().map(post -> CommunityMainHotPostDTO.builder()
+                .postId(post.getCommunityPostId())
+                .user_id(post.getUser_id())
+                .profileImageUrl(post.getProfileImageUrl())
+                .imageUrls(post.getImages().stream()
+                        .map(image -> image.getImageUrl())
+                        .collect(Collectors.toList()))
+                .content(post.getContent())
+                .country(post.getCountry())
+                .build()
+        ).collect(Collectors.toList());
+    }
+
 }
