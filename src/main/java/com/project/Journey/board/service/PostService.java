@@ -3,7 +3,9 @@ package com.project.Journey.board.service;
 
 import com.project.Journey.awss3.S3Service;
 import com.project.Journey.board.dto.PostDTO;
+import com.project.Journey.board.dto.PostPageResponseDTO;
 import com.project.Journey.board.dto.PostRequestDTO;
+import com.project.Journey.board.dto.PostSearchResponseDTO;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.entity.PostImage;
 import com.project.Journey.board.repository.PostImageRepository;
@@ -21,8 +23,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 
@@ -138,6 +142,7 @@ public class PostService {
     }
 
     // post_id로 게시글 조회
+    /*
     public PostDTO getPostById(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
@@ -158,6 +163,8 @@ public class PostService {
                 .country(post.getCountry())
                 .build();
     }
+
+     */
     // 게시글 삭제
     @Transactional
     public void deletePost(Long postId) {
@@ -340,4 +347,33 @@ public class PostService {
         return postDTOList;
     }
 
+
+
+    public PostSearchResponseDTO getPostsByDateRangeAndCountry(LocalDate startDate, LocalDate endDate, String country, Pageable pageable) {
+        Page<Post> posts = postRepository.findByStartDateBetweenAndCountry(startDate, endDate, country, pageable);
+
+        // Entity → DTO 변환
+        List<PostPageResponseDTO> content = posts.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return PostSearchResponseDTO.builder()
+                .content(content)
+                .currentElements(content.size()) // 현재 페이지에서 가져온 게시글 개수
+                .page(pageable.getPageNumber() + 1) // 1부터 시작하도록 변환
+                .build();
+    }
+
+    private PostPageResponseDTO convertToDTO(Post post) {
+        return PostPageResponseDTO.builder()
+                .postId(post.getPostId())
+                .destination(post.getDestination())
+                .startDate(post.getStartDate())
+                .endDate(post.getEndDate())
+                .max_participants(post.getMax_participants())
+                .title(post.getTitle())
+                .coverImageUrl(post.getCoverImageUrl())
+                .country(post.getCountry()) // 국가 정보 추가
+                .build();
+    }
 }

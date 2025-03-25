@@ -3,6 +3,7 @@ package com.project.Journey.board.controller;
 
 import com.project.Journey.board.dto.PostDTO;
 import com.project.Journey.board.dto.PostRequestDTO;
+import com.project.Journey.board.dto.PostSearchResponseDTO;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
@@ -16,12 +17,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.JwtBearerOAuth2AuthorizedClientProvider;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -372,6 +376,28 @@ public class PostController {
             ){
         return postService.getPostsByCountry(country,page,size);
     }
+
+
+    //동행자 모집 게시글 페이지네이션
+    @GetMapping("api/posts/search")
+    public ResponseEntity<PostSearchResponseDTO> searchPostsByDateRangeAndCountry(
+            @RequestParam("startDate") String startDateStr,
+            @RequestParam("endDate") String endDateStr,
+            @RequestParam("country") String country,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        LocalDate startDate = LocalDate.parse(startDateStr);
+        LocalDate endDate = LocalDate.parse(endDateStr);
+
+        // `page`가 1부터 시작하도록 변환 (Spring Data JPA는 0부터 시작)
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        PostSearchResponseDTO response = postService.getPostsByDateRangeAndCountry(startDate, endDate, country, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+
 
 
 
