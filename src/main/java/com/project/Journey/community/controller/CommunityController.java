@@ -5,10 +5,8 @@ package com.project.Journey.community.controller;
 import com.project.Journey.board.dto.PostDTO;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
-import com.project.Journey.community.dto.CommunityDTO;
-import com.project.Journey.community.dto.CommunityMainHotPostDTO;
-import com.project.Journey.community.dto.CommunityRequestDTO;
-import com.project.Journey.community.dto.CommunityResponseDTO;
+import com.project.Journey.community.dto.*;
+import com.project.Journey.community.entity.Community;
 import com.project.Journey.community.service.CommunityService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -112,5 +110,21 @@ public class CommunityController {
     public ResponseEntity<List<CommunityMainHotPostDTO>> getHotPosts(@RequestParam(defaultValue = "3") int count) {
         List<CommunityMainHotPostDTO> hotPosts = communityService.getHotPosts(count);
         return ResponseEntity.ok(hotPosts);
+    }
+
+    //검색 API 개발
+
+    @GetMapping("/api/community/search")
+    public ResponseEntity<CommunitySearchResponseDTO> searchCommunities(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int recordSize,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        SearchDTO searchDto = new SearchDTO(page, recordSize, pageSize, keyword, startDate, endDate, null);
+        CommunitySearchResponseDTO result = communityService.searchCommunities(searchDto);
+        return ResponseEntity.ok(result);
     }
 }
