@@ -8,8 +8,6 @@ import com.project.Journey.board.dto.PostSearchResponseDTO;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
-import com.project.Journey.login.jwt.constants.JwtConstants;
-import com.project.Journey.login.jwt.constants.JwtUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
