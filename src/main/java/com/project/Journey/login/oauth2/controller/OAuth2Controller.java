@@ -3,6 +3,13 @@ package com.project.Journey.login.oauth2.controller;
 import com.project.Journey.login.auth.CustomUserDetails;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.oauth2.service.OAuth2UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +26,7 @@ import java.util.Collections;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/oauth2")
+@Tag(name = "소셜 로그인", description = "OAuth2 기반 소셜 로그인 API (현재 카카오만 구현), 세션방식 구현완료, 테스트 완료. ")
 public class OAuth2Controller {
 
     private final OAuth2UserService oAuth2UserService;
@@ -27,9 +35,30 @@ public class OAuth2Controller {
      * 인가코드를 프론트에서 받아서, 아래 API로 전달
      * 예: POST /api/oauth2/callback?provider=kakao&code=AAAABBBB
      */
+    @Operation(
+            summary = "소셜 로그인 콜백 처리",
+            description = """
+        프론트에서 받은 인가 코드를 통해 소셜 로그인 처리를 수행합니다.
+        
+        provider는 현재 카카오만, 카카오만 구현함.///
+        로그인 성공하면, 서버는 세션을 생성하고 JSESSIONID 쿠키를 반환합니다.  
+        이후 요청에서는 쿠키로 인증이 유지됩니다. (세션 기반 인증)
+
+        예시 요청:  
+        POST /api/oauth2/callback?provider=kakao&code=AAAABBBB
+        """
+
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "소셜 로그인 성공", content = @Content(schema = @Schema(example = "소셜 로그인 성공! Email=test@kakao.com"))),
+            @ApiResponse(responseCode = "400", description = "로그인 실패", content = @Content(schema = @Schema(example = "소셜 로그인 실패: 유효하지 않은 인가 코드입니다.")))
+    })
     @PostMapping("/callback")
     public ResponseEntity<?> socialLoginCallback(
+            @Parameter(description = "소셜 로그인 제공자 (kakao 또는 naver)", example = "kakao")
             @RequestParam String provider,
+
+            @Parameter(description = "프론트에서 받은 인가 코드", example = "abc123xyz456")
             @RequestParam String code,
             HttpSession session
     ) {
