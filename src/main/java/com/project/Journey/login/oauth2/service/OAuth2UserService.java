@@ -1,9 +1,5 @@
 package com.project.Journey.login.oauth2.service;
 
-import com.project.Journey.login.jwt.constants.JwtConstants;
-import com.project.Journey.login.jwt.constants.JwtUtils;
-import com.project.Journey.login.jwt.domain.RefreshToken;
-import com.project.Journey.login.jwt.service.JwtService;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberRole;
 import com.project.Journey.login.member.domain.SocialType;
@@ -12,19 +8,15 @@ import com.project.Journey.login.oauth2.userInfo.GoogleOAuth2UserInfo;
 import com.project.Journey.login.oauth2.userInfo.KakaoOAuth2UserInfo;
 import com.project.Journey.login.oauth2.userInfo.NaverOAuth2UserInfo;
 import com.project.Journey.login.oauth2.userInfo.OAuth2UserInfo;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
@@ -34,11 +26,11 @@ import java.util.Optional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class OAuth2UserServiceImpl {
+public class OAuth2UserService {
 
     private final MemberRepository memberRepository;
-    private final JwtService jwtService;
 
+    // ==== 소셜 설정 값들 ====
     @Value("${social.kakao.client-id}")
     private String KAKAO_CLIENT_ID;
     @Value("${social.kakao.client-secret:}")
@@ -60,107 +52,26 @@ public class OAuth2UserServiceImpl {
     @Value("${social.google.redirect-uri}")
     private String GOOGLE_REDIRECT_URI;
 
-
-    public Map<String, Object> oauthLogin(String provider, String code, HttpServletResponse response) {
-        log.info("OAuth 요청 시작: provider={}, code={}", provider, code);
-
-        // 중복 요청 방지 (이미 응답을 보냈다면 return)
-        if (response.isCommitted()) {
-            log.warn("이미 응답이 완료된 요청입니다. 중복 요청 방지.");
-            return null;
-        }
-
+    /**
+     * provider와 code를 받아, 소셜 사용자 정보 조회 + DB 조회/가입까지 처리.
+     *
+     * 단, "세션 인증" 자체는 여기서 하지 않는다.
+     * - 반환값: Member (DB에 이미 있거나, 새로 생성된 사용자)
+     */
+    public Member getOrCreateSocialUser(String provider, String code) {
+        // 1) 소셜 서버에서 유저정보 얻기
         SocialType socialType = SocialType.valueOf(provider.toUpperCase());
         OAuth2UserInfo userInfo = getUserInfoByProvider(socialType, code);
-        String socialId = userInfo.getSocialId();
-        String email = userInfo.getEmail();
-        log.info("[oauthLogin] provider={}, socialId={}, email={}", provider, socialId, email);
 
-        Optional<Member> optionalMember = memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+        // 2) DB 조회/신규 가입
+        Member member = findOrCreateMember(socialType, userInfo);
 
-        Member member;
-        if (optionalMember.isEmpty()) {
-            member = Member.builder()
-                    .email(email)
-                    .socialId(socialId)
-                    .socialType(socialType)
-                    .role(MemberRole.USER)
-                    .build();
-
-            //DB저장
-            memberRepository.save(member);
-
-            log.info("새 소셜사용자 가입: socialId={}, email={}", socialId, email);
-        } else {
-            member = optionalMember.get();
-            log.info("기존 소셜사용자 로그인: socialId={}, email={}", socialId, email);
-        }
-
-
-        // member는 role=USER 상태
-        // JWT 발급 + 쿠키 설정 바로 하기
-        String accessToken = JwtUtils.generateAccessToken(member);
-        String refreshToken = JwtUtils.generateRefreshToken(member);
-
-        // RefreshToken DB 저장
-        jwtService.save(new RefreshToken(refreshToken, member.getId()));
-
-        // -----------------------------------------------------------
-        // (수정) 직접 Set-Cookie 헤더로 SameSite=None 추가
-        // -----------------------------------------------------------
-        boolean isLocal = true; // 로컬환경이면 true, 운영환경(HTTPS)이면 false
-
-        int accessMaxAge = 60 * 30;  // 30분
-        int refreshMaxAge = 60 * 60 * 24 * 7;  // 7일
-
-        // ----- Access Token 쿠키 -----
-        StringBuilder accessCookieVal = new StringBuilder();
-        accessCookieVal.append("accessToken=").append(accessToken)
-                .append("; Max-Age=").append(accessMaxAge)
-                .append("; Path=/")
-                .append("; SameSite=None")
-                .append("; Secure");
-//                .append("; HttpOnly");
-//
-//        if (!isLocal) {
-//            accessCookieVal.append("; Secure");
-////            accessCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
-//        }
-
-        response.addHeader("Set-Cookie", accessCookieVal.toString());
-
-        // ----- Refresh Token 쿠키 -----
-        StringBuilder refreshCookieVal = new StringBuilder();
-        refreshCookieVal.append("refreshToken=").append(refreshToken)
-                .append("; Max-Age=").append(refreshMaxAge)
-                .append("; Path=/")
-                .append("; SameSite=None")
-                .append("; Secure");
-
-
-
-//        if (!isLocal) {
-//            refreshCookieVal.append("; Secure");
-//            refreshCookieVal.append("; HttpOnly"); // 운영 환경에서는 HttpOnly 적용, 일단 로컬에서 테스트.
-//        }
-
-
-
-        response.addHeader("Set-Cookie", refreshCookieVal.toString());
-
-        // -----------------------------
-        // 응답 JSON
-        // -----------------------------
-        String status = optionalMember.isEmpty() ? "NEW_USER" : "EXIST";
-
-        return Map.of(
-                "status", status,
-                "message", "소셜 로그인 성공",
-                "email", member.getEmail(),
-                "role", member.getRole().name()
-        );
+        return member;
     }
 
+    /**
+     * 소셜 타입별로 userInfo 조회 API 호출
+     */
     private OAuth2UserInfo getUserInfoByProvider(SocialType provider, String code) {
         switch (provider) {
             case KAKAO:
@@ -171,6 +82,33 @@ public class OAuth2UserServiceImpl {
                 return getGoogleUserInfo(code);
             default:
                 throw new IllegalArgumentException("지원하지 않는 소셜: " + provider);
+        }
+    }
+
+    /**
+     * DB에서 (socialType, socialId)로 Member 찾고, 없으면 신규 저장
+     */
+    private Member findOrCreateMember(SocialType socialType, OAuth2UserInfo userInfo) {
+        String socialId = userInfo.getSocialId();
+        String email = userInfo.getEmail();
+
+        Optional<Member> optional = memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+
+        if (optional.isPresent()) {
+            log.info("[OAuth2UserService] 기존 소셜회원: {}, {}", socialType, email);
+            return optional.get();
+        } else {
+            // 신규 가입
+            Member newMember = Member.builder()
+                    .socialType(socialType)
+                    .socialId(socialId)
+                    .email(email)
+                    .role(MemberRole.USER)
+                    .build();
+
+            memberRepository.save(newMember);
+            log.info("[OAuth2UserService] 새 소셜회원 가입: {}, {}", socialType, email);
+            return newMember;
         }
     }
 
@@ -192,21 +130,12 @@ public class OAuth2UserServiceImpl {
                             .queryParam("grant_type", "authorization_code")
                             .queryParam("client_id", KAKAO_CLIENT_ID)
                             .queryParam("redirect_uri", KAKAO_REDIRECT_URI)
-                            // 필요 시 client_secret
                             .queryParam("client_secret", KAKAO_CLIENT_SECRET)
                             .queryParam("code", code)
                             .build()
                     )
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
-                            // 반환타입: Function<ClientResponse, Mono<? extends Throwable>>
-                            response.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("[Kakao token error] body={}", errorBody);
-                                        return new RuntimeException("Kakao token API error: " + errorBody);
-                                    })
-                    )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block(Duration.ofSeconds(5));
         } catch (WebClientResponseException e) {
@@ -222,13 +151,6 @@ public class OAuth2UserServiceImpl {
                     .uri("/v2/user/me")
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
-                            response.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("[Kakao userinfo error] body={}", errorBody);
-                                        return new RuntimeException("Kakao userinfo API error: " + errorBody);
-                                    })
-                    )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block(Duration.ofSeconds(5));
         } catch (WebClientResponseException e) {
@@ -260,13 +182,6 @@ public class OAuth2UserServiceImpl {
                             .build())
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
-                            response.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("[Naver token error] body={}", errorBody);
-                                        return new RuntimeException("Naver token API error: " + errorBody);
-                                    })
-                    )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block(Duration.ofSeconds(5));
         } catch (WebClientResponseException e) {
@@ -282,13 +197,6 @@ public class OAuth2UserServiceImpl {
                     .uri("/v1/nid/me")
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
-                            response.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("[Naver userinfo error] body={}", errorBody);
-                                        return new RuntimeException("Naver userinfo API error: " + errorBody);
-                                    })
-                    )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block(Duration.ofSeconds(5));
         } catch (WebClientResponseException e) {
@@ -320,13 +228,6 @@ public class OAuth2UserServiceImpl {
                             .build())
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
-                            response.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("[Google token error] body={}", errorBody);
-                                        return new RuntimeException("Google token API error: " + errorBody);
-                                    })
-                    )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block(Duration.ofSeconds(5));
         } catch (WebClientResponseException e) {
@@ -342,13 +243,6 @@ public class OAuth2UserServiceImpl {
                     .uri("/oauth2/v2/userinfo")
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
-                            response.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("[Google userinfo error] body={}", errorBody);
-                                        return new RuntimeException("Google userinfo API error: " + errorBody);
-                                    })
-                    )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block(Duration.ofSeconds(5));
         } catch (WebClientResponseException e) {
