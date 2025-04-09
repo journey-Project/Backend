@@ -1,40 +1,42 @@
 package com.project.Journey.login.member.domain;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
-@Data
+@Getter  // or @Getter @Setter(AccessLevel.PROTECTED) if you want
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long no;
-    private String id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String loginId;
     private String name;
+    private String nickname;
     private String password;
     private String email;
+
     @Enumerated(EnumType.STRING)
     private MemberRole role;
 
     @Enumerated(EnumType.STRING)
     private SocialType socialType;
-
     private String socialId;
-
     private String profileImage;
 
-    public Member(){
-
-    }
-
+    // 빌더 또는 all-args 생성자
     @Builder
-    public Member(Long no, String id, String name, String password, String email, MemberRole role, SocialType socialType, String socialId, String profileImage) {
-        this.no = no;
-        this.id = id;
+    private Member(String loginId, String name, String nickname,
+                   String password, String email,
+                   MemberRole role,
+                   SocialType socialType,
+                   String socialId,
+                   String profileImage) {
+        this.loginId = loginId;
         this.name = name;
+        this.nickname = nickname;
         this.password = password;
         this.email = email;
         this.role = role;
@@ -43,27 +45,46 @@ public class Member {
         this.profileImage = profileImage;
     }
 
-    // Member가 생성되기 전 DTO로 User를 생성할 때 사용하는 코드
-    // 비밀번호 암호화까지 동시에 수행
-    public static Member createUser(MemberDTO dto, PasswordEncoder passwordEncoder){
-        Member member = Member.builder()
-                .id(dto.getId())
+    // 정적 팩토리 메서드
+    public static Member createNormalUser(MemberDTO dto, PasswordEncoder encoder) {
+        return Member.builder()
+                .loginId(dto.getLoginId())
                 .name(dto.getName())
+                .password(encoder.encode(dto.getPassword()))
                 .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
                 .role(MemberRole.USER)
-                .socialType(parseSocialType(dto.getSocialType()))  // 새 메서드로 분리 or inline
+                .build();
+    }
+
+    public static Member createSocialUser(MemberDTO dto) {
+        return Member.builder()
+                .loginId(dto.getLoginId())
+                .name(dto.getName())
+                .password("SOCIAL_USER")
+                .email(dto.getEmail())
+                .role(MemberRole.USER)
+                .socialType(parseSocialType(dto.getSocialType()))
                 .socialId(dto.getSocialId())
                 .profileImage(dto.getProfileImage())
                 .build();
-        return member;
     }
 
     private static SocialType parseSocialType(String socialTypeStr) {
         if (socialTypeStr == null || socialTypeStr.isBlank()) {
             return null;
         }
-        // 대소문자 구분 없이 변환
         return SocialType.valueOf(socialTypeStr.toUpperCase());
     }
+
+    // 닉네임 없으면 loginId 반환
+    public String getDisplayName() {
+        return (this.nickname == null || this.nickname.isBlank())
+                ? this.loginId
+                : this.nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
 }

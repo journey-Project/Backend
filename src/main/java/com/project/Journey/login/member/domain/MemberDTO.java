@@ -3,35 +3,40 @@ package com.project.Journey.login.member.domain;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Schema(description = "회원 가입/수정 등에 사용되는 DTO")
+@Getter
+@Setter
 public class MemberDTO {
 
-    @Schema(description = "회원 아이디 (고유값)", example = "user123", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "ID는 필수 값입니다")
-    private String id;
+    @Schema(description = "로그인 ID(중복 불가)", example = "testUser", nullable = false)
+    @NotBlank
+    private String loginId;
 
-    @Schema(description = "사용자 이름(닉네임)", example = "홍길동", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "이름은 필수 값입니다")
+    @Schema(description = "실명(사용자 구분용)", example = "홍길동", nullable = true)
     private String name;
 
-    @Schema(description = "비밀번호", example = "pass1234", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "비밀번호는 필수 값입니다")
+    @Schema(description = "로그인 비밀번호(6자 이상 필수)", example = "123456", nullable = false)
+    @NotBlank
+    @Size(min = 6)
     private String password;
 
-    @Schema(description = "이메일", example = "test@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
-    @Email(message = "올바른 이메일 형식이어야 합니다")
-    @NotBlank(message = "이메일은 필수 값입니다")
+    private String nickname;
+
+    @Schema(description = "이메일(중복 불가)", example = "test@example.com", nullable = false)
+    @NotBlank
+    @Email
     private String email;
 
-    @Schema(description = "소셜 로그인 타입 (예: GOOGLE, KAKAO, NAVER 등)", example = "GOOGLE")
+    @Schema(description = "소셜 타입(kakao, naver, google 등) - 일반회원은 null", example = "kakao", nullable = true)
     private String socialType;
 
-    @Schema(description = "소셜 로그인 ID", example = "1234567890")
+    @Schema(description = "소셜 계정의 고유 ID - 일반회원은 null", nullable = true)
     private String socialId;
 
-    @Schema(description = "프로필 이미지 URL", example = "https://example.com/path/to/profile.jpg")
-    private String profileImage;  // 새로 추가: 프로필 이미지(소셜 제공 or 직접 업로드)
-
+    @Schema(description = "프로필 이미지 URL, 가입시 null", nullable = true)
+    private String profileImage;
 }

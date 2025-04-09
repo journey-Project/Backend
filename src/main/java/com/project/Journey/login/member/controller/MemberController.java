@@ -1,167 +1,58 @@
 package com.project.Journey.login.member.controller;
 
+import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberDTO;
+import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.login.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
-
-/**
- * 회원가입 및 회원 관리 컨트롤러
- *
- * 일반 회원가입 (id, name, password, email) /
- * 소셜 회원가입 (email, socialId, socialType) 모두 처리 가능.
- */
-@Tag(name = "회원가입 및 회원 관리", description = "회원 정보 등록, 조회 등 처리")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/members")
 @RequiredArgsConstructor
 public class MemberController {
 
-    @Operation(
-            summary = "회원가입 API",
-            description = """
-                새로운 사용자를 등록합니다.
-                
-                1) 일반 회원가입:
-                   - DTO 필드: id, name, password, email (필수)
-                   - socialId, socialType = null (또는 미전달)
-                   - 예: 
-                     {
-                       "id": "user123",
-                       "name": "홍길동",
-                       "password": "pw123",
-                       "email": "test@example.com",
-                       "socialId": null,
-                       "socialType": null
-                     }
-                   
-                2) 소셜 회원가입 (GUEST → 정식 회원 전환):
-                   - DTO 필드: email, socialId, socialType (필요)
-                   - id/password/name도 받아서 일반회원처럼 관리할 수도 있음
-                   - profileImage 는 마이페이지에서 추후에 추가(추가 정보)
-                   - 예:
-                     {
-                       "id": "kakaoUser",
-                       "name": "카카오닉네임",
-                       "password": "optionalIfYouWant",
-                       "email": "kakao@example.com",
-                       "profileImage": "https://k.kakaocdn.net/dn/kakaoProfile.jpg",
-                       "socialId": "1234567890",
-                       "socialType": "KAKAO"
-                     }
-                
-                응답:
-                - 성공: { "status": "success", "message": "회원가입이 완료되었습니다." }
-                - 유효성 실패 (400): { "status": "error", "message": "유효성 검사 실패", "errors": {...} }
-                - 중복 (409): { "status": "error", "message": "이미 존재하는 아이디입니다." or "이미 존재하는 이메일입니다." }
-            """,
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "회원가입 성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(
-                                            name = "성공 예시",
-                                            value = """
-                                                    {
-                                                      "status": "success",
-                                                      "message": "회원가입이 완료되었습니다."
-                                                    }
-                                                    """
-                                    )
-                            )
-                    ),
-                    @ApiResponse(responseCode = "400",
-                            description = "잘못된 요청 (유효성 검사 실패)",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(
-                                            name = "유효성 실패 예시",
-                                            value = """
-                                                    {
-                                                      "status": "error",
-                                                      "message": "유효성 검사 실패",
-                                                      "errors": {
-                                                        "id": "아이디를 입력하세요"
-                                                      }
-                                                    }
-                                                    """
-                                    )
-                            )
-                    ),
-                    @ApiResponse(responseCode = "409",
-                            description = "중복된 회원 정보 (아이디 or 이메일 중복)",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(
-                                            name = "중복 예시",
-                                            value = """
-                                                    {
-                                                      "status": "error",
-                                                      "message": "이미 존재하는 아이디입니다."
-                                                    }
-                                                    """
-                                    )
-                            )
-                    )
-            }
-    )
-    @PostMapping("/sign-up")
-    public ResponseEntity<Map<String, Object>> signUp(
-            @Valid @RequestBody MemberDTO memberDTO,
-            BindingResult bindingResult
-    ) {
-        Map<String, Object> response = new HashMap<>();
+    private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
-        // 1) 유효성 검사 실패 처리
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            for (FieldError fieldError : bindingResult.getFieldErrors()) {
-                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-            }
-            response.put("status", "error");
-            response.put("message", "유효성 검사 실패");
-            response.put("errors", errors);
-            return ResponseEntity.badRequest().body(response); // 400
+    @Operation(summary = "회원가입", description = "일반 회원가입을 수행. 닉네임은 실명으로 초기값 설정함, 중복된 아이디/이메일 시 실패")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "가입 성공"),
+            @ApiResponse(responseCode = "400", description = "중복 아이디/이메일 or 잘못된 요청")
+    })
+    @PostMapping("/signup")
+    public ResponseEntity<?> signUp(@RequestBody MemberDTO dto) {
+        try {
+            Long memberId = memberService.signUp(dto);
+            return ResponseEntity.ok("회원가입 성공! memberId=" + memberId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("회원가입 실패: " + e.getMessage());
         }
-
-        // 2) 아이디 중복 체크
-        if (memberService.findById(memberDTO.getId()).isPresent()) {
-            response.put("status", "error");
-            response.put("message", "이미 존재하는 아이디입니다.");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response); // 409
-        }
-
-        // 3) 이메일 중복 체크
-        if (memberService.findByEmail(memberDTO.getEmail()).isPresent()) {
-            response.put("status", "error");
-            response.put("message", "이미 존재하는 이메일입니다.");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response); // 409
-        }
-
-        // 4) 회원가입 성공
-        memberService.save(memberDTO);
-        response.put("status", "success");
-        response.put("message", "회원가입이 완료되었습니다.");
-        return ResponseEntity.ok(response); // 200
     }
 
-    private final MemberService memberService;
+    @Operation(summary = "닉네임 수정", description = "기존 회원의 닉네임 수정. null 가능")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "닉네임 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "유효하지 않은 memberId")
+    })
+    @PatchMapping("/{memberId}/nickname")
+    public ResponseEntity<?> updateNickname(@PathVariable Long memberId, @RequestBody Map<String, String> body) {
+        try {
+            String nickname = body.get("nickname");
+            memberService.updateNickname(memberId, nickname);
+            return ResponseEntity.ok("닉네임 변경 성공!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("닉네임 변경 실패: " + e.getMessage());
+        }
+    }
 }
