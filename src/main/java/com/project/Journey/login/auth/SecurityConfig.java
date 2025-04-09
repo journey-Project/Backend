@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -29,6 +30,7 @@ public class SecurityConfig {
     // === 화이트리스트 경로 (예시) ===
     private static final String[] WHITELIST = {
             "/",
+            "/api/oauth2/**",
             "/login",
             "/loginHome",
             "/signUp",
@@ -100,6 +102,7 @@ public class SecurityConfig {
 
         // -- (D) URL 보안
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // 🔥 이 줄 추가!
                 .requestMatchers(WHITELIST).permitAll()
                 .anyRequest().authenticated()
         );
@@ -125,8 +128,8 @@ public class SecurityConfig {
 
         // (1) 허용 origin
         // - 특정 도메인/포트, 혹은 패턴
-        config.setAllowedOrigins(List.of(
-                "http://localhost:3000",
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
                 "https://dxkiwmo9p9ise.cloudfront.net"
         ));
         // (2) 허용 메서드
