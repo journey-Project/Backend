@@ -4,6 +4,8 @@ import com.project.Journey.awss3.S3Service;
 import com.project.Journey.community.dto.*;
 import com.project.Journey.community.entity.Community;
 import com.project.Journey.community.entity.CommunityImage;
+import com.project.Journey.community.paging.CommunitySpecification;
+import com.project.Journey.community.paging.Pagination;
 import com.project.Journey.community.repository.CommunityImageRepository;
 import com.project.Journey.community.repository.CommunityRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -255,4 +257,27 @@ public class CommunityService {
         ).collect(Collectors.toList());
     }
 
+
+
+
+    public CommunitySearchResponseDTO searchCommunities(SearchDTO searchDto) {
+        Pageable pageable = PageRequest.of(searchDto.getPage() - 1, searchDto.getRecordSize(), Sort.by("createdAt").descending());
+
+        Page<Community> communityPage = communityRepository.findAll(CommunitySpecification.searchByCriteria(searchDto), pageable);
+
+        // 페이지네이션 설정
+        Pagination pagination = new Pagination((int) communityPage.getTotalElements(), searchDto);
+
+        // 결과 DTO 변환
+        List<CommunityPageResponseDTO> communityList = communityPage.getContent()
+                .stream()
+                .map(community -> new CommunityPageResponseDTO(
+                        community.getCommunityPostId(),
+                        community.getTitle(),
+                        community.getUser_id(),
+                        community.getCreatedAt()))
+                .collect(Collectors.toList());
+
+        return new CommunitySearchResponseDTO(communityList, pagination);
+    }
 }
