@@ -7,6 +7,7 @@ import com.project.Journey.login.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +21,16 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
+@Tag(name = "회원", description = "회원가입 및 회원 정보 수정 관련 API")
 public class MemberController {
 
     private final MemberRepository memberRepository;
     private final MemberService memberService;
 
-    @Operation(summary = "회원가입", description = "일반 회원가입을 수행. 닉네임은 실명으로 초기값 설정함, 중복된 아이디/이메일 시 실패")
+    @Operation(summary = "회원가입", description = "일반 회원가입을 수행. 닉네임은 실명으로 초기값 설정하였음. 중복된 아이디/이메일 시 실패")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "가입 성공"),
-            @ApiResponse(responseCode = "400", description = "중복 아이디/이메일 or 잘못된 요청")
+            @ApiResponse(responseCode = "400", description = "중복 아이디/이메일 or 잘못된 요청임")
     })
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody MemberDTO dto) {
@@ -40,7 +42,7 @@ public class MemberController {
         }
     }
 
-    @Operation(summary = "닉네임 수정", description = "기존 회원의 닉네임 수정. null 가능")
+    @Operation(summary = "닉네임 수정", description = "기존 회원의 닉네임 수정. null 가능 / null값 넘기면 null로 입력됨")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "닉네임 변경 성공"),
             @ApiResponse(responseCode = "400", description = "유효하지 않은 memberId")
