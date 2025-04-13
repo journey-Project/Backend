@@ -74,9 +74,15 @@ public class AuthController {
 
     @Operation(
             summary = "로그아웃",
-            description = "현재 세션을 무효화하여 로그아웃하도록 구현됨."
+            description = """
+        현재 로그인된 사용자의 세션을 무효화하여 로그아웃합니다.<br><br>
+
+       응답:
+        - 200: 세션 종료 성공
+        """
     )
-    @ApiResponse(responseCode = "200", description = "로그아웃 성공", content = @Content(schema = @Schema(example = "로그아웃 완료")))
+    @ApiResponse(responseCode = "200", description = "로그아웃 성공", content = @Content(schema = @Schema(example = "{\"message\": \"로그아웃 완료\"}")))
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {
         session.invalidate();

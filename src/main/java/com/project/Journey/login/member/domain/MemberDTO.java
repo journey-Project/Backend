@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 public class MemberDTO {
 
-    @Schema(description = "로그인 ID(중복 불가)", example = "testUser", nullable = false)
+    @Schema(description = "사용자가 로그인할 때 입력하는 로그인 ID (회원가입 시 생성한 ID)", example = "user123")
     @NotBlank
     private String loginId;
 
@@ -20,7 +20,7 @@ public class MemberDTO {
     @NotBlank
     private String name;
 
-    @Schema(description = "비밀번호 (6자 이상)", example = "123456", nullable = false)
+    @Schema(description = "사용자 비밀번호 (6자 이상)", example = "password123")
     @NotBlank
     @Size(min = 6)
     private String password;
