@@ -19,17 +19,14 @@ public class MemberService {
 
 
     public Long signUp(MemberDTO dto) {
-        // 1) 아이디 중복 체크
         if (memberRepository.findByLoginId(dto.getLoginId()).isPresent()) {
             throw new IllegalArgumentException("이미 사용중인 아이디 입니다.");
         }
 
-        // 2) 이메일 중복 체크
         if (memberRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");
         }
 
-        // 3) 엔티티 생성 (nickname=null)
         Member member = Member.builder()
                 .loginId(dto.getLoginId())
                 .name(dto.getName())
@@ -37,7 +34,6 @@ public class MemberService {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .email(dto.getEmail())
                 .role(MemberRole.USER)
-                .nickname(null)
                 .build();
 
         // 4) DB 저장

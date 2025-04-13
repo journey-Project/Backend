@@ -1,5 +1,6 @@
 package com.project.Journey.login.member.controller;
 
+import com.project.Journey.login.auth.CustomUserDetails;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberDTO;
 import com.project.Journey.login.member.repository.MemberRepository;
@@ -8,12 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -56,5 +54,27 @@ public class MemberController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("닉네임 변경 실패: " + e.getMessage());
         }
+    }
+
+    @Operation(summary = "내 정보 조회", description = "세션 인증된 사용자 본인의 정보를 반환")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "로그인되지 않은 사용자")
+    })
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyInfo(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("로그인되지 않은 사용자입니다.");
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Member member = userDetails.getMember();
+
+        MemberDTO result = new MemberDTO();
+        result.setLoginId(member.getLoginId());
+        result.setName(member.getName());
+        result.setEmail(member.getEmail());
+
+        return ResponseEntity.ok(result);
     }
 }
