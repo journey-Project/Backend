@@ -3,6 +3,7 @@ package com.project.Journey.login.member.controller;
 import com.project.Journey.login.auth.CustomUserDetails;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberDTO;
+import com.project.Journey.login.member.domain.MemberInfoDTO;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.login.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,11 +57,21 @@ public class MemberController {
         }
     }
 
-    @Operation(summary = "내 정보 조회", description = "세션 인증된 사용자 본인의 정보를 반환")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "로그인되지 않은 사용자")
-    })
+    @Operation(
+            summary = "내 정보 조회",
+            description = """
+        세션 인증된 사용자 본인의 정보를 반환합니다.<br><br>
+        
+        응답:
+        - loginId (로그인 ID)
+        - name (실명)
+        - nickname (닉네임)
+        - email (이메일)
+        - profileImage (프로필 이미지 URL)
+        - socialType (소셜 로그인 플랫폼: KAKAO, NAVER 등)<br><br>
+
+        """
+    )
     @GetMapping("/me")
     public ResponseEntity<?> getMyInfo(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -70,11 +81,14 @@ public class MemberController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Member member = userDetails.getMember();
 
-        MemberDTO result = new MemberDTO();
-        result.setLoginId(member.getLoginId());
-        result.setName(member.getName());
-        result.setEmail(member.getEmail());
+        MemberInfoDTO dto = new MemberInfoDTO();
+        dto.setLoginId(member.getLoginId());
+        dto.setName(member.getName());
+        dto.setNickname(member.getNickname());
+        dto.setEmail(member.getEmail());
+        dto.setProfileImage(member.getProfileImage());
+        dto.setSocialType(member.getSocialType() != null ? member.getSocialType().name() : null);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(dto);
     }
 }
