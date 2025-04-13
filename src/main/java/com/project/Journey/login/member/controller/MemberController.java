@@ -20,16 +20,30 @@
     @RestController
     @RequestMapping("/api/members")
     @RequiredArgsConstructor
-    @Tag(name = "회원", description = "회원가입 및 회원 정보 수정 관련 API")
+    @Tag(name = "회원", description = "회원가입 및 회원 정보 수정 및 회원 정보 조회 API")
     public class MemberController {
 
         private final MemberRepository memberRepository;
         private final MemberService memberService;
 
-        @Operation(summary = "회원가입", description = "일반 회원가입을 수행. 닉네임은 실명으로 초기값 설정하였음. 중복된 아이디/이메일 시 실패")
+        @Operation(
+                summary = "회원가입",
+                description = """
+        일반 회원가입을 수행
+
+        입력 필드:
+        - loginId (string): 사용자가 로그인 시 사용할 ID (중복 불가)
+        - name (string): 실명
+        - password (string): 비밀번호 (6자 이상)
+        - email (string): 이메일 주소 (중복 불가)
+        - nickname (string, nullable): 닉네임 (실명으로 설정됨), 사용자가 가입할 때 설정안함. 자동으로 실명으로 디비에 저장됨.
+
+        참고: loginId 또는 email이 중복되면 가입에 실패되도록 함.
+        """
+        )
         @ApiResponses({
                 @ApiResponse(responseCode = "200", description = "가입 성공"),
-                @ApiResponse(responseCode = "400", description = "중복 아이디/이메일 or 잘못된 요청임")
+                @ApiResponse(responseCode = "400", description = "중복된 아이디 또는 이메일, 혹은 잘못된 요청")
         })
         @PostMapping("/signup")
         public ResponseEntity<?> signUp(@RequestBody MemberDTO dto) {
