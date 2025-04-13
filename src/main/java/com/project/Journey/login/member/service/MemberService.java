@@ -19,17 +19,14 @@ public class MemberService {
 
 
     public Long signUp(MemberDTO dto) {
-        // 1) 아이디 중복 체크
         if (memberRepository.findByLoginId(dto.getLoginId()).isPresent()) {
             throw new IllegalArgumentException("이미 사용중인 아이디 입니다.");
         }
 
-        // 2) 이메일 중복 체크
         if (memberRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");
         }
 
-        // 3) 엔티티 생성 (nickname=null)
         Member member = Member.builder()
                 .loginId(dto.getLoginId())
                 .name(dto.getName())
@@ -37,7 +34,6 @@ public class MemberService {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .email(dto.getEmail())
                 .role(MemberRole.USER)
-                .nickname(null)
                 .build();
 
         // 4) DB 저장
@@ -48,8 +44,12 @@ public class MemberService {
     public void updateNickname(Long memberId, String nickname) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다: " + memberId));
-        member.setNickname(nickname); // null이 될 수도, 어떤 문자열이 될 수도 있음
-        // 변경감지로 DB에 업데이트
+
+        if (nickname == null || nickname.isBlank()) {
+            member.setNickname(member.getName());  // 기본값으로 실명 설정
+        } else {
+            member.setNickname(nickname);
+        }
     }
 
 

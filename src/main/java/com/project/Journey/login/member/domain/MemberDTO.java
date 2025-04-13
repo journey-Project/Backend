@@ -7,36 +7,29 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-@Schema(description = "회원 가입/수정 등에 사용되는 DTO")
+@Schema(description = "회원 가입에 사용되는 DTO")
 @Getter
 @Setter
 public class MemberDTO {
 
-    @Schema(description = "로그인 ID(중복 불가)", example = "testUser", nullable = false)
+    @Schema(description = "사용자가 로그인할 때 입력하는 로그인 ID (회원가입 시 생성한 ID)", example = "user123")
     @NotBlank
     private String loginId;
 
-    @Schema(description = "실명(사용자 구분용)", example = "홍길동", nullable = true)
+    @Schema(description = "사용자 실명", example = "홍길동", nullable = false)
+    @NotBlank
     private String name;
 
-    @Schema(description = "로그인 비밀번호(6자 이상 필수)", example = "123456", nullable = false)
+    @Schema(description = "사용자 비밀번호 (6자 이상)", example = "password123")
     @NotBlank
     @Size(min = 6)
     private String password;
 
+    @Schema(description = "닉네임 (입력하지 않으면 실명으로 설정됩니다)", example = "홍길동", nullable = true)
     private String nickname;
 
     @Schema(description = "이메일(중복 불가)", example = "test@example.com", nullable = false)
     @NotBlank
     @Email
     private String email;
-
-    @Schema(description = "소셜 타입(kakao, naver, google 등) - 일반회원은 null", example = "kakao", nullable = true)
-    private String socialType;
-
-    @Schema(description = "소셜 계정의 고유 ID - 일반회원은 null", nullable = true)
-    private String socialId;
-
-    @Schema(description = "프로필 이미지 URL, 가입시 null", nullable = true)
-    private String profileImage;
 }

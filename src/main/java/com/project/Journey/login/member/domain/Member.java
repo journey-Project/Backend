@@ -50,16 +50,18 @@ public class Member {
         return Member.builder()
                 .loginId(dto.getLoginId())
                 .name(dto.getName())
+                .nickname(dto.getName()) // 닉네임은 name으로 자동 설정
                 .password(encoder.encode(dto.getPassword()))
                 .email(dto.getEmail())
                 .role(MemberRole.USER)
                 .build();
     }
 
-    public static Member createSocialUser(MemberDTO dto) {
+    public static Member createSocialUser(SocialMemberDTO dto) {
         return Member.builder()
                 .loginId(dto.getLoginId())
                 .name(dto.getName())
+                .nickname(dto.getName())
                 .password("SOCIAL_USER")
                 .email(dto.getEmail())
                 .role(MemberRole.USER)

@@ -52,26 +52,15 @@ public class OAuth2UserService {
     @Value("${social.google.redirect-uri}")
     private String GOOGLE_REDIRECT_URI;
 
-    /**
-     * provider와 code를 받아, 소셜 사용자 정보 조회 + DB 조회/가입까지 처리.
-     *
-     * 단, "세션 인증" 자체는 여기서 하지 않는다.
-     * - 반환값: Member (DB에 이미 있거나, 새로 생성된 사용자)
-     */
     public Member getOrCreateSocialUser(String provider, String code) {
-        // 1) 소셜 서버에서 유저정보 얻기
         SocialType socialType = SocialType.valueOf(provider.toUpperCase());
         OAuth2UserInfo userInfo = getUserInfoByProvider(socialType, code);
 
-        // 2) DB 조회/신규 가입
         Member member = findOrCreateMember(socialType, userInfo);
 
         return member;
     }
 
-    /**
-     * 소셜 타입별로 userInfo 조회 API 호출
-     */
     private OAuth2UserInfo getUserInfoByProvider(SocialType provider, String code) {
         switch (provider) {
             case KAKAO:
@@ -85,9 +74,6 @@ public class OAuth2UserService {
         }
     }
 
-    /**
-     * DB에서 (socialType, socialId)로 Member 찾고, 없으면 신규 저장
-     */
     private Member findOrCreateMember(SocialType socialType, OAuth2UserInfo userInfo) {
         String socialId = userInfo.getSocialId();
         String email = userInfo.getEmail();
@@ -112,7 +98,6 @@ public class OAuth2UserService {
         }
     }
 
-    // ================== KAKAO ==================
     private OAuth2UserInfo getKakaoUserInfo(String code) {
         Map<String, Object> tokenMap = tokenRequestKakao(code);
         String accessToken = (String) tokenMap.get("access_token");
@@ -159,7 +144,6 @@ public class OAuth2UserService {
         }
     }
 
-    // ================== NAVER ==================
     private OAuth2UserInfo getNaverUserInfo(String code) {
         Map<String, Object> tokenMap = tokenRequestNaver(code);
         String accessToken = (String) tokenMap.get("access_token");
@@ -205,7 +189,6 @@ public class OAuth2UserService {
         }
     }
 
-    // ================== GOOGLE ==================
     private OAuth2UserInfo getGoogleUserInfo(String code) {
         Map<String, Object> tokenMap = tokenRequestGoogle(code);
         String accessToken = (String) tokenMap.get("access_token");
