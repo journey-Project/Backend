@@ -44,8 +44,12 @@ public class MemberService {
     public void updateNickname(Long memberId, String nickname) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다: " + memberId));
-        member.setNickname(nickname); // null이 될 수도, 어떤 문자열이 될 수도 있음
-        // 변경감지로 DB에 업데이트
+
+        if (nickname == null || nickname.isBlank()) {
+            member.setNickname(member.getName());  // 기본값으로 실명 설정
+        } else {
+            member.setNickname(nickname);
+        }
     }
 
 
