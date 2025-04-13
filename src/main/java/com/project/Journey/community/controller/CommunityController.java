@@ -65,6 +65,7 @@ public class CommunityController {
     }
 
     //국가별 커뮤니티 특정 기간의 게시글 페이징 조회
+    /*
     @GetMapping("/api/community/posts")
     public ResponseEntity<Map<String, Object>> getPostsByDateRange(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -75,7 +76,7 @@ public class CommunityController {
         Map<String, Object> response = communityService.getPostsByDateRange(startDate, endDate, page, size);
         return ResponseEntity.ok(response);
     }
-
+*/
 
     //오늘의 핫 게시물 기능 (페이지네이션 추가)
     @GetMapping("/api/community/hot-posts")
@@ -115,16 +116,26 @@ public class CommunityController {
     //검색 API 개발
 
     @GetMapping("/api/community/search")
-    public ResponseEntity<CommunitySearchResponseDTO> searchCommunities(
-            @RequestParam(required = false) String keyword,
+    public CommunitySearchResponseDTO searchPosts(
+            @RequestParam String country,
+            @RequestParam(required = false) Long number,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String writer,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int recordSize,
-            @RequestParam(defaultValue = "10") int pageSize
+            @RequestParam(defaultValue = "10") int recordSize
     ) {
-        SearchDTO searchDto = new SearchDTO(page, recordSize, pageSize, keyword, startDate, endDate, null);
-        CommunitySearchResponseDTO result = communityService.searchCommunities(searchDto);
-        return ResponseEntity.ok(result);
+        SearchDTO searchDTO = new SearchDTO();
+        searchDTO.setCountry(country);
+        searchDTO.setCommunityPostId(number);
+        searchDTO.setTitle(title);
+        searchDTO.setUserId(writer);
+        searchDTO.setStartDate(startDate);
+        searchDTO.setEndDate(endDate);
+        searchDTO.setPage(page);
+        searchDTO.setRecordSize(recordSize);
+
+        return communityService.searchCommunityPosts(searchDTO);
     }
 }

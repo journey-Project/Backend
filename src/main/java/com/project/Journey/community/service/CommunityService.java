@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.internal.util.collections.ReadOnlyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -181,6 +182,7 @@ public class CommunityService {
     }
 
     // 국가별 특정 기간의 게시글 페이징 조회
+    /*
     @Transactional
     public Map<String, Object> getPostsByDateRange(LocalDate startDate, LocalDate endDate, int page, int size) {
         int pageIndex = page - 1; // 1부터 시작한 페이지 번호를 0부터 시작하도록 조정
@@ -210,7 +212,7 @@ public class CommunityService {
 
         return result;
     }
-
+*/
 
     @Transactional
     public Map<String, Object> getHotPosts(int page, int size) {
@@ -260,23 +262,16 @@ public class CommunityService {
 
 
 
-    public CommunitySearchResponseDTO searchCommunities(SearchDTO searchDto) {
-        Pageable pageable = PageRequest.of(searchDto.getPage() - 1, searchDto.getRecordSize(), Sort.by("createdAt").descending());
+    public CommunitySearchResponseDTO searchCommunityPosts(SearchDTO searchDTO) {
+        Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getRecordSize());
+        Specification<Community> spec = CommunitySpecification.searchWithFilters(searchDTO);
 
-        Page<Community> communityPage = communityRepository.findAll(CommunitySpecification.searchByCriteria(searchDto), pageable);
-
-        // 페이지네이션 설정
-        Pagination pagination = new Pagination((int) communityPage.getTotalElements(), searchDto);
-
-        // 결과 DTO 변환
-        List<CommunityPageResponseDTO> communityList = communityPage.getContent()
-                .stream()
-                .map(community -> new CommunityPageResponseDTO(
-                        community.getCommunityPostId(),
-                        community.getTitle(),
-                        community.getUser_id(),
-                        community.getCreatedAt()))
+        Page<Community> resultPage = communityRepository.findAll(spec, pageable);
+        List<CommunityPageResponseDTO> communityList = resultPage.getContent().stream()
+                .map(CommunityPageResponseDTO::fromEntity)
                 .collect(Collectors.toList());
+
+        Pagination pagination = new Pagination((int) resultPage.getTotalElements(), searchDTO);
 
         return new CommunitySearchResponseDTO(communityList, pagination);
     }

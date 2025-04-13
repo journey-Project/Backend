@@ -18,7 +18,7 @@ public class Community {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "communityPostId")
+    @Column(name = "community_post_id")
     private Long CommunityPostId;
 
     //커뮤니티 글 작성자

@@ -14,7 +14,7 @@ public class CommunityImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "imageId")
+    @Column(name = "image_id")
     private Long imageId;
 
     //이미지 url
@@ -23,6 +23,6 @@ public class CommunityImage {
 
     //community와 관계
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "communityPostId", nullable = false)
+    @JoinColumn(name = "community_post_id", nullable = false)
     private Community community;
 }
