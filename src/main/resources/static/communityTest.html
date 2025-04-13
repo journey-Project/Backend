@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 작성</title>
+</head>
+<body>
+<h2>게시글 작성</h2>
+<form id="communityForm" enctype="multipart/form-data">
+    <label for="user_id">사용자 ID:</label>
+    <input type="text" id="user_id" name="user_id" required>
+    <br><br>
+
+    <label for="country">국가:</label>
+    <input type="text" id="country" name="country" required>
+    <br><br>
+
+    <label for="title">제목:</label>
+    <input type="text" id="title" name="title" required>
+    <br><br>
+
+    <label for="content">내용:</label>
+    <textarea id="content" name="content" required></textarea>
+    <br><br>
+
+    <label for="imageInput">이미지 선택 (1개 또는 여러 개):</label>
+    <input type="file" id="imageInput" name="images" multiple>
+    <br><br>
+
+    <button type="button" onclick="submitForm()">게시글 저장</button>
+</form>
+
+<script>
+    function submitForm() {
+        const formData = new FormData();
+
+        // 폼 데이터에 텍스트 필드 추가
+        formData.append("data", JSON.stringify({
+            user_id: document.querySelector("#user_id").value,
+            country: document.querySelector("#country").value,
+            title: document.querySelector("#title").value,
+            content: document.querySelector("#content").value,
+        }));
+
+        // 이미지 파일이 선택되었으면 추가
+        const imageFiles = document.querySelector("#imageInput").files;
+        if (imageFiles.length > 0) {
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append("images", imageFiles[i]);
+            }
+        }
+
+        // 서버에 폼 데이터 전송
+        fetch("http://localhost:8080/api/community/save", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("게시글 저장 완료:", data);
+            alert("게시글이 저장되었습니다. ID: " + data);
+        })
+        .catch(error => {
+            console.error("게시글 저장 오류:", error);
+            alert("게시글 저장 중 오류가 발생했습니다.");
+        });
+    }
+</script>
+</body>
+</html>
