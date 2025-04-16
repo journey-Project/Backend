@@ -40,6 +40,9 @@ public class SecurityConfig {
             "/oauth2/signUp",
             "/error",
             "/js/**",
+            "/api/posts/**",
+            "/api/community/**",
+
             // Swagger
             "/swagger-ui",
             "/v3/api-docs",
