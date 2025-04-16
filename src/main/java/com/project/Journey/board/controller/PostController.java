@@ -1,10 +1,7 @@
 package com.project.Journey.board.controller;
 
 
-import com.project.Journey.board.dto.PostDTO;
-import com.project.Journey.board.dto.PostPageResponseDTO;
-import com.project.Journey.board.dto.PostRequestDTO;
-import com.project.Journey.board.dto.PostSearchResponseDTO;
+import com.project.Journey.board.dto.*;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
@@ -325,7 +322,6 @@ public class PostController {
 
     //국가별 게시글 반환 :
     //예시 : http://localhost:8080/api/posts/getPostByCountry/한국?page=0&size=5
-
     @Operation(summary = "국가별 게시글 조회", description = """
             페이지네이션을 적용하여 page와 size를 지정하여 국가별 커뮤니티 게시글을 반환합니다.
             
@@ -378,6 +374,7 @@ public class PostController {
 
 
     //동행자 모집 게시글 페이지네이션
+    //http://localhost:8080/api/posts/searchPost?title=미국&page=1
     @GetMapping("api/posts/search")
     public ResponseEntity<PostSearchResponseDTO> searchPostsByDateRangeAndCountry(
             @RequestParam("startDate") String startDateStr,
@@ -406,5 +403,16 @@ public class PostController {
         return ResponseEntity.ok(randomPosts);
     }
 
+    //동행자 모집 검색 & 페이지네이션
+    @GetMapping("/api/posts/searchPost")
+    public PostSearchResponse searchPosts(
+            @ModelAttribute PostSearchRequest request,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        request.setPage(page);           // 필수: request 내부에 페이지 정보 세팅
+        request.setRecordSize(size);    // 필수: 한 페이지 크기 세팅
+        return postService.searchPosts(request);
+    }
 
 }

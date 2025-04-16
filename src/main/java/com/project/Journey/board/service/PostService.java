@@ -2,15 +2,14 @@ package com.project.Journey.board.service;
 
 
 import com.project.Journey.awss3.S3Service;
-import com.project.Journey.board.dto.PostDTO;
-import com.project.Journey.board.dto.PostPageResponseDTO;
-import com.project.Journey.board.dto.PostRequestDTO;
-import com.project.Journey.board.dto.PostSearchResponseDTO;
+import com.project.Journey.board.dto.*;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.entity.PostImage;
+import com.project.Journey.board.paging.PostSpecification;
 import com.project.Journey.board.repository.PostImageRepository;
 import com.project.Journey.board.repository.PostRepository;
 import com.project.Journey.community.dto.CommunityMainHotPostDTO;
+import com.project.Journey.board.paging.Pagination;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,8 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -70,7 +71,7 @@ public class PostService {
                 .comment_count(0)
                 .coverImageUrl(coverImageUrl)
                 .content(postRequestDTO.getContent())
-                .created_at(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
                 .updated_at(LocalDateTime.now())
                 .profileImageUrl("") //프로필 이미지
                 .build();
@@ -113,7 +114,7 @@ public class PostService {
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
-                    .created_at(post.getCreated_at())
+                    .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .coverImageUrl(post.getCoverImageUrl())// image url
@@ -227,7 +228,7 @@ public class PostService {
                 post.getMax_participants(),
                 post.getView_count(),
                 post.getComment_count(),
-                post.getCreated_at(),
+                post.getCreatedAt(),
                 post.getUpdated_at(),
                 post.getCoverImageUrl(),
                 post.getProfileImageUrl(),
@@ -281,7 +282,7 @@ public class PostService {
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
-                    .created_at(post.getCreated_at())
+                    .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .coverImageUrl(post.getCoverImageUrl())
@@ -311,7 +312,7 @@ public class PostService {
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
-                    .created_at(post.getCreated_at())
+                    .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .coverImageUrl(post.getCoverImageUrl())
@@ -337,7 +338,7 @@ public class PostService {
                     .max_participants(post.getMax_participants())
                     .view_count(post.getView_count())
                     .comment_count(post.getComment_count())
-                    .created_at(post.getCreated_at())
+                    .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
                     .user_id(post.getUser_id())
                     .coverImageUrl(post.getCoverImageUrl())
@@ -396,6 +397,42 @@ public class PostService {
                         .country(post.getCountry())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+
+    //동행자 모집 검색 & 페이지네이션
+    public PostSearchResponse searchPosts(PostSearchRequest request) {
+
+        // SearchDTO로부터 페이징 정보 추출
+        int page = request.getPage(); // 1-based
+        int size = request.getRecordSize(); // 한 페이지당 게시글 수
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Specification 적용
+        Specification<Post> spec = PostSpecification.search(request);
+        Page<Post> postPage = postRepository.findAll(spec, pageable);
+
+        // PostPageResponseDTO 리스트 생성
+        List<PostPageResponseDTO> posts = postPage.getContent().stream()
+                .map(post -> PostPageResponseDTO.builder()
+                        .postId(post.getPostId())
+                        .destination(post.getDestination())
+                        .startDate(post.getStartDate())
+                        .endDate(post.getEndDate())
+                        .max_participants(post.getMax_participants())
+                        .title(post.getTitle())
+                        .coverImageUrl(post.getCoverImageUrl())
+                        .country(post.getCountry())
+                        .created_at(LocalDate.from(post.getCreatedAt()))
+                        .build())
+                .toList();
+
+        // Pagination 객체 생성
+        Pagination pagination = new Pagination((int) postPage.getTotalElements(), request);
+
+
+        // 최종 응답 DTO 생성
+        return new PostSearchResponse(posts, pagination);
     }
 
 
