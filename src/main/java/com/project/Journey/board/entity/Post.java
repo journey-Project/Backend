@@ -52,7 +52,7 @@ public class Post {
     private int comment_count;
 
     @Column(nullable = false)
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private LocalDateTime updated_at;
