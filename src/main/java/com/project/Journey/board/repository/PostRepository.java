@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
     @Transactional
     @Modifying
     @Query("UPDATE Post p SET p.view_count = :increment WHERE p.postId = :postId")
@@ -36,5 +37,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 지정된 개수만큼 랜덤으로 게시글 조회
     @Query(value = "SELECT * FROM posts ORDER BY RAND() LIMIT :count", nativeQuery = true)
     List<Post> findRandomPosts(@Param("count") int count);
+
+    //동행자 모집 페이지네이션
 
 }
