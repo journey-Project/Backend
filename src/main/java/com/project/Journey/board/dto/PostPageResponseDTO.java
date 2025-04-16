@@ -19,5 +19,6 @@ public class PostPageResponseDTO {
     private String title; //제목
     private String coverImageUrl; //커버이미지
     private String country; //국가
+    private LocalDate created_at; // 글 작성일
 
 }
