@@ -2,6 +2,7 @@ package com.project.Journey.community.controller;
 
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.Journey.board.dto.PostDTO;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
@@ -36,16 +37,14 @@ public class CommunityController {
 
     @PostMapping(value = "/api/community/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Long> createPost(
-            @RequestPart("data") @Parameter(description = "게시글 정보", required = true) CommunityRequestDTO communityRequestDTO,
+            @RequestPart("data") String data, //@Parameter(description = "게시글 정보", required = true) CommunityRequestDTO communityRequestDTO
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-        if (communityRequestDTO == null) {
+        if (data == null) {
             throw new IllegalArgumentException("요청 데이터가 올바르지 않습니다.");
         }
-        if (images== null) {
-            throw new IllegalArgumentException("이미지 리스트가 null입니다");
-        }
-
         try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            CommunityRequestDTO communityRequestDTO = objectMapper.readValue(data, CommunityRequestDTO.class);
 
             log.info("Request DTO: {}", communityRequestDTO);
             log.info("Received {} images", (images != null ? images.size() : 0));
