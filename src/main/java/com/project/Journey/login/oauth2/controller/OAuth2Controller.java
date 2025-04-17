@@ -67,7 +67,7 @@ public class OAuth2Controller {
     @PostMapping("/{provider}")
     public ResponseEntity<?> socialLoginCallback(
             @Parameter(description = "소셜 로그인 제공자 (kakao 또는 naver)", example = "kakao")
-            @PathVariable String provider,
+            @RequestParam String provider,
 
             @Parameter(description = "프론트에서 받은 인가 코드", example = "abc123xyz456")
             @RequestParam String code,
