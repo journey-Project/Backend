@@ -1,6 +1,9 @@
 package com.project.Journey.board.controller;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.project.Journey.board.dto.*;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.exception.PostException;
@@ -61,14 +64,20 @@ public class PostController {
     })
     @PostMapping("api/posts/save")
     public ResponseEntity<Long> createPost(
-            @RequestPart("post") PostRequestDTO postRequestDTO,
+            @RequestPart("post") String postJson, //PostRequestDTO postRequestDTO,
             @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
         try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // 날짜를 타임스탬프가 아니라 문자열로
+            PostRequestDTO postRequestDTO = objectMapper.readValue(postJson, PostRequestDTO.class);
+
             Long postId = postService.savePost(postRequestDTO, coverImage, images);
             return ResponseEntity.ok(postId);
         }catch (Exception e){
+            e.printStackTrace();
             throw new PostException("동행자 모집 게시글 저장 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
         }
     }
