@@ -10,25 +10,22 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
 
     public KakaoOAuth2UserInfo(Map<String, Object> attributes) {
         super(attributes);
-        this.account = (Map<String, Object>) attributes.get("kakao_account");
-        if (account != null) {
-            this.profile = (Map<String, Object>) account.get("profile");
-        } else {
-            this.profile = null;
-        }
+        this.account  = (Map<String, Object>) attributes.getOrDefault("kakao_account", Map.of());
+        this.profile  = (Map<String, Object>)  account.getOrDefault("profile", Map.of());
     }
 
     @Override
     public String getSocialId() {
-        return String.valueOf(attributes.get("id"));
+        Object id = attributes.get("id");
+        if (id == null) {
+            throw new IllegalStateException("Kakao userinfo에 id가 없습니다");
+        }
+        return String.valueOf(id);
     }
 
     @Override
     public String getEmail() {
-        if (account != null) {
-            return (String) account.get("email");
-        }
-        return null;
+        return (String) account.get("email");   // null이면 그대로 null 반환
     }
 }
 
