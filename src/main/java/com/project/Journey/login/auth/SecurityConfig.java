@@ -126,15 +126,14 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // (1) 허용 origin
-        // - 특정 도메인/포트, 혹은 패턴
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
-                "https://dxkiwmo9p9ise.cloudfront.net"
+                "https://dxkiwmo9p9ise.cloudfront.net",
+                "https://journeysite.site"
         ));
-        // (2) 허용 메서드
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // (3) 기타
+
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); // 세션 쿠키 전송 허용
         config.setMaxAge(3600L);         // Pre-flight 캐싱 시간(초)
