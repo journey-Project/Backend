@@ -24,7 +24,7 @@ public class CommunitySpecification {
             }
 
             if (dto.getUserId() != null && !dto.getUserId().isEmpty()) {
-                predicates.add(cb.like(root.get("user_id"), "%" + dto.getUserId() + "%"));
+                predicates.add(cb.equal(root.get("user_id"), dto.getUserId()));
             }
 
             if (dto.getStartDate() != null) {
