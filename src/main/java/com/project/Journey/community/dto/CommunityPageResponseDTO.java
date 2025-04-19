@@ -19,7 +19,6 @@ public class CommunityPageResponseDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdAt;
 
-    private String country;
 
     public static CommunityPageResponseDTO fromEntity(Community community) {
         return CommunityPageResponseDTO.builder()
@@ -27,7 +26,6 @@ public class CommunityPageResponseDTO {
                 .title(community.getTitle())
                 .user_id(community.getUser_id())
                 .createdAt(community.getCreatedAt())
-                .country(community.getCountry())
                 .build();
     }
 }
