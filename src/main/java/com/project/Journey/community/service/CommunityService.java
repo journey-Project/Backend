@@ -116,6 +116,65 @@ public class CommunityService {
 
     //게시글 수정
     @Transactional
+    public void updateCommunityPostById(Long communityPostId,
+                                        CommunityResponseDTO communityResponseDTO,
+                                        List<MultipartFile> newImages) {
+
+        Community community = communityRepository.findById(communityPostId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 CommunityPostId의 게시글이 없습니다"));
+
+        // 게시글 기본 정보 수정
+        community.updateCountry(communityResponseDTO.getCountry());
+        community.updateTitle(communityResponseDTO.getTitle());
+        community.updateContent(communityResponseDTO.getContent());
+        community.updateUpdatedAt(LocalDateTime.now());
+
+        // 기존 이미지 가져오기
+        List<CommunityImage> existingImages = new ArrayList<>(community.getImages());
+        List<String> updatedImageUrls = communityResponseDTO.getImageUrls();
+
+        // 유지할 이미지
+        List<CommunityImage> imagesToKeep = existingImages.stream()
+                .filter(img -> updatedImageUrls.contains(img.getImageUrl()))
+                .collect(Collectors.toList());
+
+        // 삭제할 이미지
+        List<CommunityImage> imagesToRemove = existingImages.stream()
+                .filter(img -> !updatedImageUrls.contains(img.getImageUrl()))
+                .collect(Collectors.toList());
+
+        // 삭제 수행
+        communityImageRepository.deleteAll(imagesToRemove);
+        community.getImages().removeAll(imagesToRemove);
+
+        // 기존 유지 이미지 URL 목록
+        List<String> existingImageUrls = imagesToKeep.stream()
+                .map(CommunityImage::getImageUrl)
+                .collect(Collectors.toList());
+
+        // 새 이미지 업로드 및 추가
+        if (newImages != null && !newImages.isEmpty()) {
+            for (MultipartFile file : newImages) {
+                if (file != null && !file.isEmpty()) {
+                    String uploadedUrl = s3Service.uploadApplicationImage(file); // S3 또는 저장소에 업로드
+                    if (!existingImageUrls.contains(uploadedUrl)) {
+                        CommunityImage newImage = new CommunityImage(null, uploadedUrl, community);
+                        community.getImages().add(newImage);
+                    }
+                }
+            }
+        }
+
+        // 변경 내용 저장
+        communityRepository.save(community);
+    }
+
+
+
+
+
+    /*
+    @Transactional
     public void updateCommunityPostById(Long communityPostId, CommunityResponseDTO communityResponseDTO){
         Community community = communityRepository.findById(communityPostId)
                 .orElseThrow(()-> new IllegalArgumentException("해당 CommunityPostId의 게시글이 없습니다"));
@@ -173,6 +232,8 @@ public class CommunityService {
 
 
     }
+
+         */
     //게시글 삭제
     @Transactional
     public void deleteCommunityPost(Long communityPostId){
