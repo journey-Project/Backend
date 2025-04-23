@@ -3,6 +3,8 @@ package com.project.Journey.community.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.project.Journey.board.dto.PostDTO;
 import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.service.PostService;
@@ -92,11 +94,34 @@ public class CommunityController {
 
     //게시글 수정
     @PutMapping("/api/community/update/{CommunityPostId}")
+    public ResponseEntity<Void> updatePost(@PathVariable Long CommunityPostId,
+                                           @RequestPart("post") String postJson,
+                                           @RequestPart(value = "newImages", required = false) List<MultipartFile> newImages) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            //LocalDateTime 처리 가능하도록 설정
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            CommunityResponseDTO dto = mapper.readValue(postJson, CommunityResponseDTO.class);
+
+            communityService.updateCommunityPostById(CommunityPostId, dto, newImages);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+
+
+    /*
+    @PutMapping("/api/community/update/{CommunityPostId}")
     public ResponseEntity<String> updateCommunityPost(@PathVariable Long CommunityPostId,
                                                       @RequestBody CommunityResponseDTO communityResponseDTO){
         communityService.updateCommunityPostById(CommunityPostId, communityResponseDTO);
         return ResponseEntity.ok("커뮤니티 게시글이 성공적으로 수정되었습니다");
     }
+     */
 
     //게시글 삭제
     @DeleteMapping("/api/community/DeletePosts/{CommunityPostId}")
