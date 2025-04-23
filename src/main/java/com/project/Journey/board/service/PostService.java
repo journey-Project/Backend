@@ -128,6 +128,72 @@ public class PostService {
 
     //게시글 수정
     @Transactional
+    public void updatePostById(Long postId,
+                               PostDTO postDTO,
+                               List<MultipartFile> newImages,
+                               MultipartFile newCoverImage) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
+
+        // 기본 게시글 정보 업데이트
+        post.updateTitle(postDTO.getTitle());
+        post.updateContent(postDTO.getContent());
+        post.updateDestination(postDTO.getDestination());
+        post.updateMaxParticipants(postDTO.getMax_participants());
+        post.updateStartDate(postDTO.getStart_date());
+        post.updateEndDate(postDTO.getEnd_date());
+        post.updateUpdateTime(postDTO.getUpdated_at());
+        post.updateCountry(postDTO.getCountry());
+
+        // ✅ [1] 기존 일반 이미지 처리
+        List<PostImage> existingImages = postImageRepository.findByPost(post);
+        List<String> remainingUrls = postDTO.getImageUrls();
+
+        for (PostImage image : existingImages) {
+            if (!remainingUrls.contains(image.getPostImageUrl())) {
+                s3Service.deleteS3Image(image.getPostImageUrl());
+                postImageRepository.delete(image);
+            }
+        }
+
+        if (newImages != null) {
+            for (MultipartFile file : newImages) {
+                if (!file.isEmpty()) {
+                    String imageUrl = s3Service.uploadApplicationImage(file);
+                    //postImageRepository.save(new PostImage(post, imageUrl));
+                    PostImage postImage = PostImage.builder()
+                            .post(post)
+                            .postImageUrl(imageUrl)
+                            .build();
+                    postImageRepository.save(postImage);
+                }
+            }
+        }
+
+        //2 커버 이미지 처리
+        if (newCoverImage != null && !newCoverImage.isEmpty()) {
+            // 기존 커버 이미지가 있다면 삭제
+            if (post.getCoverImageUrl() != null && !post.getCoverImageUrl().isEmpty()) {
+                s3Service.deleteS3Image(post.getCoverImageUrl());
+            }
+
+            // 새 커버 이미지 저장 및 URL 업데이트
+            String newCoverImageUrl = s3Service.uploadApplicationImage(newCoverImage);
+            post.updateCoverImageUrl(newCoverImageUrl);
+        } else {
+            // 새 커버 이미지가 없으면, 기존 DTO 값 그대로 유지
+            post.updateCoverImageUrl(postDTO.getCoverImageUrl());
+        }
+    }
+
+
+
+
+
+
+    /*
+    @Transactional
     public void updatePostById(Long postId, PostDTO postDTO){
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
@@ -142,6 +208,19 @@ public class PostService {
         post.updateCountry(postDTO.getCountry());
 
     }
+*/
+
+
+
+
+
+
+
+
+
+
+
+
 
     // post_id로 게시글 조회
     /*
