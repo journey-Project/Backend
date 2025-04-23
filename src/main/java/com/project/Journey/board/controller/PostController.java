@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.JwtBearerOAuth2AuthorizedClientProvider;
 import org.springframework.web.bind.annotation.*;
@@ -176,6 +177,7 @@ public class PostController {
             @ApiResponse(responseCode = "400", description = "수정 요청값이 잘못되었습니다."),
             @ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.")
     })
+    /*
     @PutMapping("api/posts/update/{post_id}")
     public ResponseEntity<String> updatePost( @Parameter(description = "수정할 게시글의 ID", required = true, example = "1") @PathVariable Long post_id,
                                               @RequestBody @Parameter(description = "게시글 수정에 필요한 정보", required = true) PostDTO postDTO){
@@ -187,6 +189,38 @@ public class PostController {
         }
 
     }
+    */
+    @PutMapping(value = "/api/posts/update/{post_id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> updatePost(
+            @PathVariable Long post_id,
+            @RequestPart("post") String postJson,
+            @RequestPart(value = "newImages", required = false) List<MultipartFile> newImages,
+            @RequestPart(value = "newCoverImage", required = false) MultipartFile newCoverImage
+    ) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+
+            PostDTO postDTO = mapper.readValue(postJson, PostDTO.class);
+
+            postService.updatePostById(post_id, postDTO, newImages, newCoverImage);
+            return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new PostException("게시글 수정 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
 
     //조회수가 높은 순서대로 게시물 조회
 
