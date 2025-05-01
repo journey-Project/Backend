@@ -35,6 +35,11 @@ public class S3Service {
     @Value("${AWS_S3_BUCKET}")
     private String bucket;
 
+    //region 추가-------------------
+    @Value("${AWS_REGION}")
+    private String region;
+    //--------------------------------
+
     /**
      * 사용자 프로필 이미지를 S3에 업로드하는 메서드
      * @param multipartFile 업로드할 이미지 파일
@@ -129,12 +134,16 @@ public class S3Service {
      */
     private String getImageUrlToKey(final String imageUrl) {
         // 정확한 버킷 URL을 동적으로 생성
-        String bucketUrl = "https://" + bucket + ".s3.amazonaws.com/";
+       // String bucketUrl = "https://" + bucket + ".s3.amazonaws.com/";
+
+        String bucketUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/";
+
 
         // 이미지 URL이 버킷 URL로 시작하는지 확인 후, Key만 추출
         if (imageUrl.startsWith(bucketUrl)) {
             return imageUrl.substring(bucketUrl.length()); // 정확한 key 추출
         }
+
 
         // URL이 예상한 형식이 아니면 예외 발생
         throw new IllegalArgumentException("Invalid S3 URL: " + imageUrl);
