@@ -181,8 +181,8 @@ public class PostService {
             // 새 커버 이미지 저장 및 URL 업데이트
             String newCoverImageUrl = s3Service.uploadApplicationImage(newCoverImage);
             post.updateCoverImageUrl(newCoverImageUrl);
-        } else {
-            // 새 커버 이미지가 없으면, 기존 DTO 값 그대로 유지
+        } else if (postDTO.getCoverImageUrl() != null && !postDTO.getCoverImageUrl().isEmpty()) {
+            // 새 커버 이미지가 없지만, DTO에 기존 coverImageUrl이 있으면 유지
             post.updateCoverImageUrl(postDTO.getCoverImageUrl());
         }
     }
