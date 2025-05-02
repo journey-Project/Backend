@@ -143,7 +143,13 @@ public class CommunityService {
                 .filter(img -> !updatedImageUrls.contains(img.getImageUrl()))
                 .collect(Collectors.toList());
 
-        // 삭제 수행
+        //S3에서 이미지 삭제
+        for(CommunityImage image : imagesToRemove){
+            s3Service.deleteS3Image(image.getImageUrl());
+        }
+
+
+        // DB에서 삭제 수행
         communityImageRepository.deleteAll(imagesToRemove);
         community.getImages().removeAll(imagesToRemove);
 
