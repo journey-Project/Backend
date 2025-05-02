@@ -175,7 +175,7 @@ public class PostService {
 
         //2 커버 이미지 처리
         if (newCoverImage != null && !newCoverImage.isEmpty()) {
-            // 기존 커버 이미지가 있다면 삭제
+            // 새 커버 이미지가 올라온 경우 → 기존 이미지 삭제 후 새 이미지 등록
             if (post.getCoverImageUrl() != null && !post.getCoverImageUrl().isEmpty()) {
                 s3Service.deleteS3Image(post.getCoverImageUrl());
             }
@@ -186,6 +186,12 @@ public class PostService {
         } else if (postDTO.getCoverImageUrl() != null && !postDTO.getCoverImageUrl().isEmpty()) {
             // 새 커버 이미지가 없지만, DTO에 기존 coverImageUrl이 있으면 유지
             post.updateCoverImageUrl(postDTO.getCoverImageUrl());
+        } else{
+            // 커버 이미지를 삭제하고 싶은 경우(커버이미지가 없게)
+            if(post.getCoverImageUrl() != null && !post.getCoverImageUrl().isEmpty()){
+                s3Service.deleteS3Image(post.getCoverImageUrl());
+                post.updateCoverImageUrl(null); //DB에서도 NULL 처리
+            }
         }
     }
 
