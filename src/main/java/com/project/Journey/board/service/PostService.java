@@ -5,6 +5,7 @@ import com.project.Journey.awss3.S3Service;
 import com.project.Journey.board.dto.*;
 import com.project.Journey.board.entity.Post;
 import com.project.Journey.board.entity.PostImage;
+import com.project.Journey.board.exception.PostException;
 import com.project.Journey.board.paging.PostSpecification;
 import com.project.Journey.board.repository.PostImageRepository;
 import com.project.Journey.board.repository.PostRepository;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -247,10 +249,41 @@ public class PostService {
 
      */
     // 게시글 삭제
+    /*
     @Transactional
     public void deletePost(Long postId) {
         postRepository.deleteById(postId);
     }
+    */
+    @Transactional
+    public void deletePost(Long postId){
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostException("해당 게시글이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
+
+        //커버 이미지 삭제
+        String coverImageUrl = post.getCoverImageUrl();
+        if(coverImageUrl!= null && !coverImageUrl.isEmpty()){
+            s3Service.deleteS3Image(coverImageUrl);
+        }
+
+        //첨부 이미지들 삭제
+        List<PostImage> postImages = post.getImages();
+        if(postImages != null && !postImages.isEmpty()){
+            for(PostImage image : postImages){
+                String imageUrl = image.getPostImageUrl();
+                if(imageUrl != null && !imageUrl.isEmpty()){
+                    s3Service.deleteS3Image(imageUrl);
+                }
+            }
+        }
+
+        //게시글 삭제
+        postRepository.delete(post);
+    }
+
+
+
+
 
     //조회 수가 높은 순서대로 조회(핫 게시글)
     public List<Post> getPostsByViewCount(){
