@@ -169,111 +169,27 @@ public class CommunityService {
         communityRepository.save(community);
     }
 
-
-
-
-
-    /*
-    @Transactional
-    public void updateCommunityPostById(Long communityPostId, CommunityResponseDTO communityResponseDTO){
-        Community community = communityRepository.findById(communityPostId)
-                .orElseThrow(()-> new IllegalArgumentException("해당 CommunityPostId의 게시글이 없습니다"));
-        community.updateCountry(communityResponseDTO.getCountry());
-        community.updateTitle(communityResponseDTO.getTitle());
-        community.updateContent(communityResponseDTO.getContent());
-        community.updateUpdatedAt(communityResponseDTO.getUpdated_at());
-
-        // 기존 이미지 리스트 가져오기 (수정 불가능한 리스트 방지)
-        List<CommunityImage> existingImages = new ArrayList<>(community.getImages());
-
-        //사용자가 보낸 이미지 리스트
-        List<String> updatedImageUrls = communityResponseDTO.getImageUrls();
-
-        // 기존 이미지 중 유지할 이미지 확인
-        List<CommunityImage> imagesToKeep = new ArrayList<>();
-        for (CommunityImage image : existingImages) {
-            if (updatedImageUrls.contains(image.getImageUrl())) {
-                imagesToKeep.add(image); // 유지할 이미지 추가
-            }
-        }
-
-        // 삭제해야 할 이미지 확인
-        List<CommunityImage> imagesToRemove = new ArrayList<>();
-        for (CommunityImage image : existingImages) {
-            if (!updatedImageUrls.contains(image.getImageUrl())) {
-                imagesToRemove.add(image); // 삭제할 이미지 추가
-            }
-        }
-
-        // DB에서 삭제
-        communityImageRepository.deleteAll(imagesToRemove);
-        community.getImages().removeAll(imagesToRemove);  // 기존 컬렉션에서 제거
-
-        // 새롭게 추가할 이미지 확인
-        List<String> existingImageUrls = new ArrayList<>();
-        for (CommunityImage image : imagesToKeep) {
-            existingImageUrls.add(image.getImageUrl());
-        }
-
-        List<CommunityImage> newImages = new ArrayList<>();
-        for (String url : updatedImageUrls) {
-            if (!existingImageUrls.contains(url)) { // 기존에 없는 경우만 추가
-                CommunityImage newImage = new CommunityImage(null, url, community);
-                newImages.add(newImage);
-            }
-        }
-
-        // 기존 리스트에 유지할 이미지와 새 이미지를 직접 추가
-        community.getImages().addAll(newImages);
-
-        //  변경 사항 저장
-        communityRepository.save(community);
-
-
-
-    }
-
-         */
     //게시글 삭제
     @Transactional
     public void deleteCommunityPost(Long communityPostId){
         Community community = communityRepository.findById(communityPostId)
                 .orElseThrow(()-> new EntityNotFoundException("커뮤니티 게시글을 찾을 수 없습니다."));
+
+        //이미지 url들을 S3에서 삭제
+        if(community.getImages() != null){
+            for(CommunityImage communityImage : community.getImages()){
+                s3Service.deleteS3Image(communityImage.getImageUrl());
+            }
+        }
+
+        //DB에서 게시글 삭제
         communityRepository.delete(community);
     }
 
-    // 국가별 특정 기간의 게시글 페이징 조회
-    /*
-    @Transactional
-    public Map<String, Object> getPostsByDateRange(LocalDate startDate, LocalDate endDate, int page, int size) {
-        int pageIndex = page - 1; // 1부터 시작한 페이지 번호를 0부터 시작하도록 조정
-        if (pageIndex < 0) {
-            pageIndex = 0; // 잘못된 요청 방지
-        }
 
-        //최신순으로 정렬
-        Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Community> communityPage = communityRepository.findByCreatedAtBetween(
-                startDate.atStartOfDay(), endDate.atTime(23, 59, 59), pageable);
 
-        List<CommunityPageResponseDTO> posts = communityPage.getContent().stream()
-                .map(community -> new CommunityPageResponseDTO(
-                        community.getCommunityPostId(),
-                        community.getTitle(),
-                        community.getUser_id(),
-                        community.getCreatedAt()
-                ))
-                .collect(Collectors.toList());
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("totalCount", communityPage.getTotalElements()); // 전체 게시글 수
-        result.put("posts", posts); // 게시글 리스트
-        result.put("currentPage", page); // 클라이언트가 요청한 페이지 번호 (1부터 시작)
-
-        return result;
-    }
-*/
 
     @Transactional
     public Map<String, Object> getHotPosts(int page, int size) {
