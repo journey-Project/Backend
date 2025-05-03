@@ -89,12 +89,22 @@ class S3ServiceTest {
     void testGetPreSignedUrlToDownload() {
         // given
         String fileName = "APPLICATION/test-file.png";
-        String imageUrl = "https://journeybucket0.s3.amazonaws.com/" + fileName; // HTTPS 사용
+        String bucket = "journeybucket0";
+        String region = "ap-northeast-2";
+
+        //String imageUrl = "https://journeybucket0.s3.amazonaws.com/" + fileName; // HTTPS 사용
+        // S3 URL과 Pre-signed URL 설정
+        String imageUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/" + fileName;
 
         java.net.URL presigned = null;
         try {
             presigned = new java.net.URL("http://example.com/signed-url");
         } catch (Exception e) { /* ignore */ }
+
+        // S3Service 내부 필드 강제 설정
+        ReflectionTestUtils.setField(s3Service, "region", region);
+        ReflectionTestUtils.setField(s3Service, "bucket", bucket);
+
 
         when(amazonS3.generatePresignedUrl(any(GeneratePresignedUrlRequest.class)))
                 .thenReturn(presigned);
@@ -111,7 +121,16 @@ class S3ServiceTest {
     @Test
     void testDeleteS3Image() {
         // given
-        String imageUrl = "https://journeybucket0.s3.amazonaws.com/APPLICATION/xyz.png";
+        String region = "ap-northeast-2";
+        String bucket = "journeybucket0";
+        String key = "APPLICATION/xyz.png";
+
+        //String imageUrl = "https://journeybucket0.s3.amazonaws.com/APPLICATION/xyz.png";
+        String imageUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
+
+        // @Value로 주입되는 값들을 강제로 설정
+        ReflectionTestUtils.setField(s3Service, "region", region);
+        ReflectionTestUtils.setField(s3Service, "bucket", bucket);
 
         // when
         s3Service.deleteS3Image(imageUrl);
