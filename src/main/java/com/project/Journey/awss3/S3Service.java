@@ -92,6 +92,12 @@ public class S3Service {
     public void deleteS3Image(final String imageUrl) {
         final String imageKey = getImageUrlToKey(imageUrl);
         amazonS3.deleteObject(bucket, imageKey);
+
+        //삭제 후 존재 여부 확인 추가 ------------
+        if (amazonS3.doesObjectExist(bucket, imageKey)) {
+            throw new RuntimeException("S3 이미지 삭제 실패: " + imageKey);
+        }
+        //--------------------------------------
     }
 
     /**
