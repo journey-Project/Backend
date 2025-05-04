@@ -18,7 +18,7 @@ import java.util.List;
 public class CommentDTO {
 
     private Long commentId;
-    private String userId;
+    private Long memberId;
 
     @NotBlank
     private String content;

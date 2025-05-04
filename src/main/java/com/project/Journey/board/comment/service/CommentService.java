@@ -7,6 +7,9 @@ import com.project.Journey.board.comment.repository.CommentRepository;
 import com.project.Journey.board.entity.Post;
 
 import com.project.Journey.board.repository.PostRepository;
+import com.project.Journey.login.member.domain.Member;
+import com.project.Journey.login.member.repository.MemberRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,24 +17,35 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final MemberRepository memberRepository;
 
-    public Comment createComment(Long postId, String userId, String content, Long parentCommentId) {
+    public Comment createComment(Long postId, Long memberId,
+                                 String content, Long parentCommentId) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다: " + postId));
 
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다: " + memberId));
+
+        /* 부모 댓글 검증 / replyCount 증감 로직은 그대로 */
         Comment parent = null;
         if (parentCommentId != null) {
             parent = commentRepository.findById(parentCommentId)
                     .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다: " + parentCommentId));
+            if (parent.getParentComment() != null)
+                throw new IllegalArgumentException("대댓글은 한 단계만 허용됩니다");
+            parent.incrementReplyCount();
         }
 
         Comment comment = Comment.builder()
                 .post(post)
-                .userId(userId)
+                .member(member)          // ⭐ FK 세팅
                 .content(content)
                 .parentComment(parent)
                 .build();
@@ -39,32 +53,47 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
+    /* ---------- 댓글 목록 ---------- */
     public List<Comment> getCommentsByPost(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다: " + postId));
 
-        List<Comment> rootComments = commentRepository.findByPostAndParentCommentIsNullOrderByCreatedAtAsc(post);
-        return rootComments;
+        return commentRepository
+                .findByPostAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(post);
     }
 
     public List<Comment> getReplies(Long parentCommentId) {
         Comment parent = commentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + parentCommentId));
 
-        return commentRepository.findByParentCommentOrderByCreatedAtAsc(parent);
+        return commentRepository
+                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent);
     }
 
+    /* ---------- 댓글 수정 ---------- */
     public Comment updateComment(Long commentId, String content) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + commentId));
+
+        if (!comment.isActive()) {
+            throw new IllegalStateException("삭제된 댓글은 수정할 수 없습니다");
+        }
         comment.setContent(content);
-        return commentRepository.save(comment);
+        return comment;
     }
 
+    /* ---------- 논리 삭제 ---------- */
     public void deleteComment(Long commentId) {
-        // 대댓글이 있는 경우 어떻게 처리할지 결정 필요 (함께 삭제 vs 불가)
+
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + commentId));
-        commentRepository.delete(comment);
+
+        if (!comment.isActive()) return;          // 이미 삭제된 경우 무시
+
+        comment.deactivate();                     // 물리 삭제 대신 플래그만 변경
+
+        if (comment.getParentComment() != null) {
+            comment.getParentComment().decrementReplyCount();
+        }
     }
 }

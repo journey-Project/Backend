@@ -54,6 +54,7 @@ public class CommunityController {
 
             return ResponseEntity.ok(savedPostId);
         } catch (Exception e){
+            log.error("게시글 저장 중 오류", e);
             throw new PostException("게시글 저장 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
         }
 
