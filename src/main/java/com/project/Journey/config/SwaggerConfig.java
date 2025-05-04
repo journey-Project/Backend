@@ -11,25 +11,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
-    /**
-     * Swagger/OpenAPI 설정
-     */
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Journey Login API")
-                        .description("소셜 로그인 + JWT + 회원가입 관련 API 문서")
-                        .version("v2.6.0")
-                        .contact(new Contact()
-                                .name("Journey Dev Team")
-                                .email("sprauncy76@gmail.com"))
-                )
-                .components(new Components()
-                        .addSecuritySchemes("BearerAuth",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")));
+                        .title("Journey API Documentation")
+                        .description("여정(Journey) 프로젝트의 전체 API 문서입니다. 로그인, 회원가입, 게시판 등 기능 포함.")
+                        .version("v1.0.0")
+                        .contact(new Contact().name("Journey Dev Team").email("sprauncy76@gmail.com"))
+                );
     }
 }
