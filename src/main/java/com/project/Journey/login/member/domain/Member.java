@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
-@Getter  // or @Getter @Setter(AccessLevel.PROTECTED) if you want
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
@@ -25,6 +28,22 @@ public class Member {
     private SocialType socialType;
     private String socialId;
     private String profileImage;
+
+    // Profile 관련 필드
+    private Integer age;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+    private String region;
+    private String homepage;
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MemberTag> tags = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TravelPlan> travelPlans = new ArrayList<>();
 
     // 빌더 또는 all-args 생성자
     @Builder
@@ -89,4 +108,12 @@ public class Member {
         this.nickname = nickname;
     }
 
+    public void updateProfile(String nickname, Integer age, Gender gender, String region, String homepage, String bio) {
+        if(nickname != null) this.nickname = nickname;
+        if(age != null) this.age = age;
+        if(gender != null) this.gender = gender;
+        if(region != null) this.region = region;
+        if(homepage != null) this.homepage = homepage;
+        if(bio != null) this.bio = bio;
+    }
 }
