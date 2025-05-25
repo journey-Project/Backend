@@ -501,7 +501,7 @@ public class PostController {
             @RequestParam(defaultValue = "1") int page,
 
             @Parameter(description = "페이지 당 가져올 게시글 수")
-            @RequestParam(defaultValue = "12") int size
+            @RequestParam(defaultValue = "6") int size
     ) {
         request.setPage(page);           // 필수: request 내부에 페이지 정보 세팅
         request.setRecordSize(size);    // 필수: 한 페이지 크기 세팅
