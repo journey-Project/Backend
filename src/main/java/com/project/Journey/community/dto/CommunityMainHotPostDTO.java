@@ -12,7 +12,7 @@ import java.util.List;
 public class CommunityMainHotPostDTO {
 
     private Long postId;
-    private String user_id;
+    private String nickname;
     private String profileImageUrl;
     private List<String> imageUrls;
     private String content;
