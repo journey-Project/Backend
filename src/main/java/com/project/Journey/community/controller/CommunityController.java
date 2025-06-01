@@ -281,7 +281,9 @@ response 예시 :
            
             API 호출 예시: 
                        
-            * API 테스트 default(country는 입력 필수) : http://localhost:8080/api/community/search?country=국내
+            * API 테스트 default: http://localhost:8080/api/community/search?country=국내
+            
+            * 전체 게시글 검색 : http://localhost:8080/api/community/search
             
             * 게시글 제목으로 검색 : http://localhost:8080/api/community/search?country=국내&title=맛집
             
@@ -382,9 +384,9 @@ response 예시 :
             """)
     @GetMapping("/api/community/search")
     public CommunitySearchResponseDTO searchPosts(
-
-            @Parameter(description = "국가", required = true)
-            @RequestParam String country,
+            //기본은 country 값을 지정(default), 커뮤니티 게시글 전체를 조회하고 싶으면 쿼리파라미터 없이 호출
+            @Parameter(description = "국가", required = false)
+            @RequestParam(required = false) String country,
 
             @Parameter(description = "게시글 번호", required = false)
             @RequestParam(required = false) Long number,
