@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 public class CommunityRequestDTO { //커뮤니티 게시글을 생성/수정할 때 사용하는 DTO
 
-    private String user_id;
+    private Long memberId;
     private String country;
     private String title;
     private String content;
