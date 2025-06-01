@@ -2,6 +2,7 @@ package com.project.Journey.login.member.service;
 
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberTag;
+import com.project.Journey.login.member.dto.ProfileImageResponse;
 import com.project.Journey.login.member.dto.ProfileResponse;
 import com.project.Journey.login.member.dto.ProfileUpdateRequest;
 import com.project.Journey.login.member.repository.MemberRepository;
@@ -65,6 +66,17 @@ public class ProfileService {
                 tagRepo.save(new MemberTag(m, t));
             });
         }
+    }
+
+    public ProfileImageResponse getProfileImage(Long memberId) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
+
+        return ProfileImageResponse.builder()
+                .memberId(member.getId())
+                .nickname(member.getDisplayName())
+                .profileImage(member.getProfileImage())
+                .build();
     }
 
 }

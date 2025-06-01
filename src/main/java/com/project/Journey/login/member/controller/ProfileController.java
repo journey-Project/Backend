@@ -1,9 +1,6 @@
 package com.project.Journey.login.member.controller;
 
-import com.project.Journey.login.member.dto.ProfileResponse;
-import com.project.Journey.login.member.dto.ProfileUpdateRequest;
-import com.project.Journey.login.member.dto.TravelPlanRequest;
-import com.project.Journey.login.member.dto.TravelPlanResponse;
+import com.project.Journey.login.member.dto.*;
 import com.project.Journey.login.member.service.ProfileService;
 import com.project.Journey.login.member.service.TravelPlanService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,6 +79,21 @@ public class ProfileController {
     public ResponseEntity<?> deletePlan(@PathVariable Long planId) {
         planService.deletePlan(planId);
         return ResponseEntity.ok("삭제 완료");
+    }
+
+    @Operation(
+            summary = "프로필 이미지와 닉네임 조회",
+            description = "댓글, 목록 그리고 헤더에 사용할 가벼운 전용 API입니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = ProfileImageResponse.class))),
+            @ApiResponse(responseCode = "400", description = "회원 없음",
+                    content = @Content(schema = @Schema(example = "회원 없음")))
+    })
+    @GetMapping("/{id}/profile-image")
+    public ResponseEntity<ProfileImageResponse> getProfileImage(@PathVariable Long id) {
+        return ResponseEntity.ok(profileService.getProfileImage(id));
     }
 
 }
