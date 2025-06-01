@@ -8,6 +8,9 @@ import com.project.Journey.community.paging.CommunitySpecification;
 import com.project.Journey.community.paging.Pagination;
 import com.project.Journey.community.repository.CommunityImageRepository;
 import com.project.Journey.community.repository.CommunityRepository;
+import com.project.Journey.login.member.domain.Member;
+import com.project.Journey.login.member.repository.MemberRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,20 +39,27 @@ public class CommunityService {
 
    private final CommunityImageRepository communityImageRepository;
 
+   private final MemberRepository memberRepository;
     private final S3Service s3Service;
 
-    public CommunityService(CommunityRepository communityRepository, CommunityImageRepository communityImageRepository, S3Service s3Service) {
+    public CommunityService(CommunityRepository communityRepository, CommunityImageRepository communityImageRepository,
+		MemberRepository memberRepository, S3Service s3Service) {
         this.communityRepository = communityRepository;
         this.communityImageRepository = communityImageRepository;
-        this.s3Service = s3Service;
+		this.memberRepository = memberRepository;
+		this.s3Service = s3Service;
     }
 
 
     //게시글 저장
     @Transactional
     public Long saveCommunityPost(CommunityRequestDTO communityRequestDTO, List<MultipartFile> images) throws IOException {
+        Long memberId = communityRequestDTO.getMemberId();
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new EntityNotFoundException("해당 회원을 찾을 수 없습니다"));
+
         Community community = Community.builder()
-                .user_id(communityRequestDTO.getUser_id())
+                .member(member)
                 .country(communityRequestDTO.getCountry())
                 .title(communityRequestDTO.getTitle())
                 .content(communityRequestDTO.getContent())
@@ -76,8 +86,6 @@ public class CommunityService {
 
         }
 
-       // community.setImages(imageEntities);
-        //communityRepository.save(savedCommunity);
         communityImageRepository.saveAll(imageEntities);
         return savedCommunity.getCommunityPostId();
     }
@@ -86,6 +94,7 @@ public class CommunityService {
     public CommunityResponseDTO getPostByCommunityPostId(Long communitypostid){
         Community community = communityRepository.findById(communitypostid)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+
         community.setViewCount(community.getViewCount()+1);
         communityRepository.save(community);
 
@@ -98,7 +107,7 @@ public class CommunityService {
         CommunityResponseDTO communityResponseDTO
                 = new CommunityResponseDTO(
                 community.getCommunityPostId(),
-                community.getUser_id(),
+                community.getMember().getNickname(),
                 community.getCountry(),
                 community.getTitle(),
                 community.getContent(),
@@ -106,7 +115,7 @@ public class CommunityService {
                 community.getComment_count(),
                 community.getCreatedAt(),
                 community.getUpdatedAt(),
-                community.getProfileImageUrl(),
+                community.getMember().getProfileImage(),
                 images
 
         );
@@ -231,8 +240,9 @@ public class CommunityService {
 
         return hotPosts.stream().map(post -> CommunityMainHotPostDTO.builder()
                 .postId(post.getCommunityPostId())
-                .user_id(post.getUser_id())
-                .profileImageUrl(post.getProfileImageUrl())
+                //.user_id(post.getUser_id())
+                .nickname(post.getMember().getNickname())
+                .profileImageUrl(post.getMember().getProfileImage())
                 .imageUrls(post.getImages().stream()
                         .map(image -> image.getImageUrl())
                         .collect(Collectors.toList()))
