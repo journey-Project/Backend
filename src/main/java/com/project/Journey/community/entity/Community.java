@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.project.Journey.login.member.domain.Member;
+
 @Entity
 @Getter
 @Setter
@@ -21,9 +23,10 @@ public class Community {
     @Column(name = "community_post_id")
     private Long CommunityPostId;
 
-    //커뮤니티 글 작성자
-    @Column(name = "user_id", nullable = false)
-    private String user_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
 
     //커뮤니티 국가
     @Column(name = "country", nullable = false)
@@ -51,10 +54,6 @@ public class Community {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    //프로필 이미지 url
-    @Column(nullable = true)
-    private String profileImageUrl;
 
     //첨부파일 이미지 (여러 개)
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
