@@ -23,8 +23,8 @@ public class CommunitySpecification {
                 predicates.add(cb.like(root.get("title"), "%" + dto.getTitle() + "%"));
             }
 
-            if (dto.getUserId() != null && !dto.getUserId().isEmpty()) {
-                predicates.add(cb.equal(root.get("user_id"), dto.getUserId()));
+            if (dto.getNickname() != null && !dto.getNickname().isEmpty()) {
+                predicates.add(cb.equal(root.get("nickname"), dto.getNickname()));
             }
 
             if (dto.getStartDate() != null) {
