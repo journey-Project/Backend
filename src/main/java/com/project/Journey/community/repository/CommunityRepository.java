@@ -19,18 +19,6 @@ import java.util.Optional;
 @Repository
 public interface CommunityRepository extends JpaRepository<Community, Long>, JpaSpecificationExecutor<Community> {
     Page<Community> findByCountry(String country, Pageable pageable);
-    //Community<Community> findById(Long id);
-
-    // yyyy-mm-dd 형식의 날짜 범위 내에서 게시글 페이징 조회
-    /*
-    @Query("SELECT c from Community c WHERE c.created_at BETWEEN :startDate AND :endDate")
-    Page<Community> findAllByDateRangeAndCountry(
-            @Param("startDate")LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            String country,
-            Pageable pageable
-    );
-*/
 
     // 특정 기간과 국가별 게시글 페이징 조회
     Page<Community> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
