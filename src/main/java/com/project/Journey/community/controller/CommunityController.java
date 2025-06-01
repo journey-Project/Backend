@@ -42,7 +42,7 @@ public class CommunityController {
             JSON 데이터와 이미지 파일을 포함하여 새 커뮤니티 게시글을 생성합니다.
             
             request 예시 : form-data -> key : data, value :{
-            "user_id": "구름",
+            "memberId": 1,
             "country": "국내",
             "title": "요즘 제주도 날씨는 어떤가요?",
             "content": "저번주에 다녀온 지인 얘기 들어보니까 서울보다는 따뜻하다고 그러더라고요. 서울은 너무 요즘 너무 추운데 패딩은 입기 싫고 어떤 걸 입어야 할 지 고민중입니다... 지금 제주도에 계신 분들은 어떻게 입고 갔는지 궁금해서 여쭤봅니다!"
@@ -53,7 +53,7 @@ public class CommunityController {
     public ResponseEntity<Long> createPost(
 
             @Parameter(description = "커뮤니티 게시글 데이터 (JSON 문자열)")
-            @RequestPart("data") String data, //@Parameter(description = "게시글 정보", required = true) CommunityRequestDTO communityRequestDTO
+            @RequestPart("data") String data,
 
             @Parameter(description = "이미지 파일들", required = false)
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
@@ -86,7 +86,7 @@ public class CommunityController {
     response 예시 :
     
             response : {
-                "user_id": "구름",
+                "nickname": "구름",
                 "country": "국내",
                 "title": "요즘 제주도 날씨는 어떤가요?",
                 "content": "저번주에 다녀온 지인 얘기 들어보니까 서울보다는 따뜻하다고 그러더라고요.
@@ -111,20 +111,6 @@ public class CommunityController {
             @PathVariable Long communityPostId) {
         return communityService.getPostByCommunityPostId(communityPostId);
     }
-
-    //국가별 커뮤니티 특정 기간의 게시글 페이징 조회
-    /*
-    @GetMapping("/api/community/posts")
-    public ResponseEntity<Map<String, Object>> getPostsByDateRange(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(value = "page", defaultValue = "1") int page,  // 기본값 1
-            @RequestParam(value = "size", defaultValue = "10") int size) {
-
-        Map<String, Object> response = communityService.getPostsByDateRange(startDate, endDate, page, size);
-        return ResponseEntity.ok(response);
-    }
-*/
 
     //오늘의 핫 게시물 기능 (페이지네이션 추가)
     @Operation(summary = "오늘의 핫 게시글 조회", description = """
@@ -186,7 +172,7 @@ public class CommunityController {
             
             
             request 예시{
-                "user_id": "커뮤니티테스트유저",
+                "nickname": "커뮤니티테스트유저",
                 "country": "국내",
                 "title": "두번째변경한테스트제목~~~~~",
                 "content": "두번째 변경한내용입니다",
@@ -227,16 +213,6 @@ public class CommunityController {
     }
 
 
-
-    /*
-    @PutMapping("/api/community/update/{CommunityPostId}")
-    public ResponseEntity<String> updateCommunityPost(@PathVariable Long CommunityPostId,
-                                                      @RequestBody CommunityResponseDTO communityResponseDTO){
-        communityService.updateCommunityPostById(CommunityPostId, communityResponseDTO);
-        return ResponseEntity.ok("커뮤니티 게시글이 성공적으로 수정되었습니다");
-    }
-     */
-
     //게시글 삭제
     @Operation(summary = "게시글 삭제", description = "커뮤니티 게시글 ID에 해당하는 게시글을 삭제합니다.")
     @DeleteMapping("/api/community/DeletePosts/{CommunityPostId}")
@@ -258,7 +234,7 @@ response 예시 :
 [
 {
 "postId": 8,
-"user_id": "바다",
+"nickname": "바다",
 "profileImageUrl":"image.jpg",
 "imageUrls": [
 "이미지4.jpg",
@@ -269,7 +245,7 @@ response 예시 :
 },
 {
 "postId": 1,
-"user_id": "user1234",
+"nickname": "user1234",
 "profileImageUrl": "",
 "imageUrls": [],
 "content": "이탈리아로 떠나요!",
@@ -277,7 +253,7 @@ response 예시 :
 },
 {
 "postId": 39,
-"user_id": "테스트유저2",
+"nickname": "테스트유저2",
 "profileImageUrl": null,
 "imageUrls": [
 "이미지1.jpg",
@@ -322,73 +298,73 @@ response 예시 :
                 {
                   "communityPostId": 353,
                   "title": "s3삭제테스트입니다",
-                  "user_id": "테스트테스트",
+                  "nickname": "테스트테스트",
                   "createdAt": "2025-05-02"
                 },
                 {
                   "communityPostId": 349,
                   "title": "에어비엔비가 나을까요?",
-                  "user_id": "강아지",
+                  "nickname": "강아지",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 348,
                   "title": "가족끼리 갈만한 국내 여행지 추천해주세요",
-                  "user_id": "마요네즈",
+                  "nickname": "마요네즈",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 347,
                   "title": "속초 좋네요~",
-                  "user_id": "사랑",
+                  "nickname": "사랑",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 346,
                   "title": "이번주 강릉 날씨 많이 춥겠죠ㅜㅜ?.",
-                  "user_id": "당근",
+                  "nickname": "당근",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 345,
                   "title": "서울로 여행가는데 종로 맛집 추천해주세요!",
-                  "user_id": "인형",
+                  "nickname": "인형",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 344,
                   "title": "금요일 오전 7시 제주행 에어부산이요....",
-                  "user_id": "사탕",
+                  "nickname": "사탕",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 343,
                   "title": "다음주에 부산 가는데 너무 설레요~",
-                  "user_id": "바다",
+                  "nickname": "바다",
                   "createdAt": "2025-04-20"
                 },
                 {
                   "communityPostId": 342,
                   "title": "방콕 여행 갈려구요~",
-                  "user_id": "테스트유저22",
+                  "nickname": "테스트유저22",
                   "createdAt": "2025-04-19"
                 },
                 {
                   "communityPostId": 341,
                   "title": "하와이 여행 갈려구요~",
-                  "user_id": "테스트유저",
+                  "nickname": "테스트유저",
                   "createdAt": "2025-04-19"
                 },
                 {
                   "communityPostId": 340,
                   "title": "국내 여행지 추천",
-                  "user_id": "산",
+                  "nickname": "산",
                   "createdAt": "2025-04-19"
                 },
                 {
                   "communityPostId": 339,
                   "title": "속초 날씨는 어떤가요?",
-                  "user_id": "속초러버",
+                  "nickname": "속초러버",
                   "createdAt": "2025-04-16"
                 }
               ],
@@ -416,7 +392,7 @@ response 예시 :
             @Parameter(description = "게시글 제목", required = false)
             @RequestParam(required = false) String title,
 
-            @Parameter(description = "작성자 ID", required = false)
+            @Parameter(description = "작성자 닉네임", required = false)
             @RequestParam(required = false) String writer,
 
             @Parameter(description = "검색 시작일", required = false, example = "2023-01-01")
@@ -435,7 +411,7 @@ response 예시 :
         searchDTO.setCountry(country);
         searchDTO.setCommunityPostId(number);
         searchDTO.setTitle(title);
-        searchDTO.setUserId(writer);
+        searchDTO.setNickname(writer);
         searchDTO.setStartDate(startDate);
         searchDTO.setEndDate(endDate);
         searchDTO.setPage(page);
