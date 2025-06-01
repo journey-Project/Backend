@@ -1,6 +1,8 @@
 package com.project.Journey.board.entity;
 
 import com.project.Journey.community.entity.CommunityImage;
+import com.project.Journey.login.member.domain.Member;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,10 +24,9 @@ public class Post {
     @Column(name = "post_id")
     private Long postId;
 
-    //@ManyToOne
-    //@JoinColumn(name = "user_id", nullable = false)
-    @Column(name = "user_id")
-    private String user_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Column(nullable = false, length = 100)
     private String title;
@@ -65,11 +66,6 @@ public class Post {
     //@Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private String country;
-
-
-    //프로필 이미지 url
-    @Column(nullable = true)
-    private String profileImageUrl;
 
     //첨부파일 이미지 (여러 개)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)

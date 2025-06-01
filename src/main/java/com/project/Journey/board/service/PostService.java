@@ -11,6 +11,9 @@ import com.project.Journey.board.repository.PostImageRepository;
 import com.project.Journey.board.repository.PostRepository;
 import com.project.Journey.community.dto.CommunityMainHotPostDTO;
 import com.project.Journey.board.paging.Pagination;
+import com.project.Journey.login.member.domain.Member;
+import com.project.Journey.login.member.repository.MemberRepository;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,18 +45,29 @@ public class PostService {
     @Autowired
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private final MemberRepository memberRepository;
 
-    public PostService(PostRepository postRepository, S3Service s3Service, PostImageRepository postImageRepository, @Qualifier("jsonRedisTemplate") RedisTemplate<String, Object> redisTemplate) {
+
+    public PostService(PostRepository postRepository, S3Service s3Service, PostImageRepository postImageRepository, @Qualifier("jsonRedisTemplate") RedisTemplate<String, Object> redisTemplate,
+		MemberRepository memberRepository) {
         this.postRepository = postRepository;
         this.s3Service = s3Service;
         this.postImageRepository = postImageRepository;
         this.redisTemplate = redisTemplate;
-    }
+		this.memberRepository = memberRepository;
+	}
 
     private static final String VIEW_COUNT_KEY = "view_count:";
 
     //게시글 저장
     public Long savePost(PostRequestDTO postRequestDTO, MultipartFile coverImage, List<MultipartFile> images) {
+
+
+        //1. 작성자 Member 조회
+        Member member = memberRepository.findById(postRequestDTO.getMemberId())
+            .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다."));
+
+
         // 1️. S3에 커버 이미지 업로드 후 URL 저장
         String coverImageUrl = null;
         if (coverImage != null && !coverImage.isEmpty()) {
@@ -62,7 +76,7 @@ public class PostService {
 
         // 2. 게시글 객체 생성
         Post post = Post.builder()
-                .user_id(postRequestDTO.getUserId())
+                .member(member)
                 .country(postRequestDTO.getCountry())
                 .title(postRequestDTO.getTitle())
                 .startDate(postRequestDTO.getStartDate())
@@ -75,7 +89,6 @@ public class PostService {
                 .content(postRequestDTO.getContent())
                 .createdAt(LocalDateTime.now())
                 .updated_at(LocalDateTime.now())
-                .profileImageUrl("") //프로필 이미지
                 .build();
 
         // 3️. 게시글을 먼저 저장 (DB에 저장)
@@ -108,6 +121,7 @@ public class PostService {
 
         for(Post post : postList){
             PostDTO postDto = PostDTO.builder()
+                    .postId(post.getPostId())
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
@@ -118,7 +132,8 @@ public class PostService {
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
-                    .user_id(post.getUser_id())
+                    .nickname(post.getMember().getNickname())
+                    .profileImageUrl(post.getMember().getProfileImage())
                     .coverImageUrl(post.getCoverImageUrl())// image url
                     .country(post.getCountry()) //국가
                     .build();
@@ -196,40 +211,6 @@ public class PostService {
     }
 
 
-
-
-
-
-    /*
-    @Transactional
-    public void updatePostById(Long postId, PostDTO postDTO){
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
-        post.updateTitle(postDTO.getTitle());
-        post.updateContent(postDTO.getContent());
-        post.updateDestination(postDTO.getDestination());
-        post.updateMaxParticipants(postDTO.getMax_participants());
-        post.updateStartDate(postDTO.getStart_date());
-        post.updateEndDate(postDTO.getEnd_date());
-        post.updateUpdateTime(postDTO.getUpdated_at());
-        post.updateCoverImageUrl(postDTO.getCoverImageUrl()); //커버 image url
-        post.updateCountry(postDTO.getCountry());
-
-    }
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
     // post_id로 게시글 조회
     /*
     public PostDTO getPostById(Long postId) {
@@ -255,12 +236,6 @@ public class PostService {
 
      */
     // 게시글 삭제
-    /*
-    @Transactional
-    public void deletePost(Long postId) {
-        postRepository.deleteById(postId);
-    }
-    */
     @Transactional
     public void deletePost(Long postId){
         Post post = postRepository.findById(postId)
@@ -287,12 +262,8 @@ public class PostService {
         postRepository.delete(post);
     }
 
-
-
-
-
     //조회 수가 높은 순서대로 조회(핫 게시글)
-    public List<Post> getPostsByViewCount(){
+    public List<PostDTO> getPostsByViewCount(){
         List<Post> hotPosts = postRepository.findAll();
         hotPosts.sort(new Comparator<Post>() {
             @Override
@@ -300,7 +271,30 @@ public class PostService {
                 return o2.getView_count() - o1.getView_count();
             }
         });
-        return hotPosts;
+        return hotPosts.stream()
+            .map(post -> PostDTO.builder()
+                .postId(post.getPostId())
+                .nickname(post.getMember().getNickname())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .destination(post.getDestination())
+                .start_date(post.getStartDate())
+                .end_date(post.getEndDate())
+                .max_participants(post.getMax_participants())
+                .view_count(post.getView_count())
+                .comment_count(post.getComment_count())
+                .created_at(post.getCreatedAt())
+                .updated_at(post.getUpdated_at())
+                .coverImageUrl(post.getCoverImageUrl())
+                .profileImageUrl(post.getMember().getProfileImage()) // Member에 해당 필드가 있다고 가정
+                .country(post.getCountry())
+                .imageUrls(post.getImages() != null ?
+                    post.getImages().stream()
+                        .map(PostImage::getPostImageUrl)
+                        .collect(Collectors.toList()) :
+                    List.of())
+                .build())
+            .collect(Collectors.toList());
     }
 
     //게시글 조회 - 이미지 불러오기 기능 추가
@@ -337,7 +331,7 @@ public class PostService {
 
         PostDTO postDTO = new PostDTO(
                 post.getPostId(),
-                post.getUser_id(),
+                post.getMember().getNickname(),
                 post.getTitle(),
                 post.getContent(),
                 post.getDestination(),
@@ -349,7 +343,7 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getUpdated_at(),
                 post.getCoverImageUrl(),
-                post.getProfileImageUrl(),
+                post.getMember().getProfileImage(),
                 post.getCountry(),
                 images
         );
@@ -386,12 +380,13 @@ public class PostService {
     }
 
     // user_id로 게시글 조회
-    public List<PostDTO> getPostsByUserId(String user_id) {
-        List<Post> list =  postRepository.findPostsByUserId(user_id);
-        List<PostDTO> postDtoListByUserId = new ArrayList<>();
+    public List<PostDTO> getPostsByMemberId(Long memberId) {
+        List<Post> list =  postRepository.findPostsByMemberId(memberId);
+        List<PostDTO> postDtoListByMemberId= new ArrayList<>();
 
         for(Post post : list){
             PostDTO postDto = PostDTO.builder()
+                    .postId(post.getPostId())
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
@@ -402,13 +397,14 @@ public class PostService {
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
-                    .user_id(post.getUser_id())
+                    .nickname(post.getMember().getNickname())
+                    .profileImageUrl(post.getMember().getProfileImage())
                     .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
-            postDtoListByUserId.add(postDto);
+            postDtoListByMemberId.add(postDto);
         }
-        return postDtoListByUserId;
+        return postDtoListByMemberId;
     }
 
 
@@ -432,7 +428,8 @@ public class PostService {
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
-                    .user_id(post.getUser_id())
+                    .nickname(post.getMember().getNickname())
+                    .profileImageUrl(post.getMember().getProfileImage())
                     .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
@@ -458,7 +455,8 @@ public class PostService {
                     .comment_count(post.getComment_count())
                     .created_at(post.getCreatedAt())
                     .updated_at(post.getUpdated_at())
-                    .user_id(post.getUser_id())
+                    .nickname(post.getMember().getNickname())
+                    .profileImageUrl(post.getMember().getProfileImage())
                     .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();

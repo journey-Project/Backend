@@ -45,7 +45,7 @@ public class PostController {
             participants 필수
             
             post : {
-            "userId": "미국여행자3", -> String
+            "memberId": 1, -> Long
             "country": "미국", -> String
             "title": "미국 뉴욕으로~~~", -> String
             "startDate": "2025-03-23", -> LocalDateTime
@@ -97,7 +97,7 @@ public class PostController {
             [
                 {
                     "postId": null,
-                        "user_id": "user1",
+                        "nickname": "user1",
                         "title": "유럽 여행 같이 가실 분 구합니다!",
                         "content": "유럽 여행 같이가요~~!",
                         "destination": "프랑스",
@@ -170,7 +170,7 @@ public class PostController {
             key : post, value: json( /api/posts/getIncrementView/{postId}의 response객체)
              {
                 "postId": 8,
-                "user_id": "여행자",
+                "nickname": "여행자",
                 "title": "캘리포니아 같이 가실 분 구해요!!! - 게시글 수정", -> 수정 가능
                 "content": "이번 방학때 캘리포니아에 가게 됐는데 혼자 여행가게 되었습니다!\\n같이 동행하실 분 구해요", -> 수정 가능
                 "destination": "미국 캘리포니아", -> 수정 가능
@@ -234,7 +234,7 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "서버에서 오류가 발생했습니다.")
     })
     @GetMapping("api/posts/top-views")
-    public List<Post> getTopViewedPosts(){
+    public List<PostDTO> getTopViewedPosts(){
         try{
             return postService.getPostsByViewCount();
         }catch (Exception e){
@@ -253,7 +253,7 @@ public class PostController {
             response :
             {
                "postId": 21,
-                   "user_id": "미국여행자2",
+                   "nickname": "미국여행자2",
                    "title": "미국으로 떠나요2",
                    "content": "미국 뉴욕여행같이해요~~!!!",
                    "destination": "미국",
@@ -292,13 +292,13 @@ public class PostController {
 
     //user_id로 게시글 조회
     @Operation(summary = "사용자 게시글 조회", description = """
-            특정 사용자의 user_id로 게시글을 조회합니다.
+            특정 사용자의 memberId로 게시글을 조회합니다.
             
             API 요청 예시 : http://localhost:8080/api/posts/get/user_id/user1234
             
             response : [
             {
-                    "user_id": "user1234",
+                    "nickname": "user1234",
                     "title": "제주도 여행",
                     "content": "제주도로 떠나요!",
                     "destination": "한국",
@@ -321,13 +321,13 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "해당 사용자의 게시글 목록이 성공적으로 반환되었습니다."),
             @ApiResponse(responseCode = "404", description = "해당 사용자의 게시글을 찾을 수 없습니다.")
     })
-    @GetMapping("api/posts/get/user_id/{user_id}")
-    public List<PostDTO> getPostsByUser_id( @Parameter(description = "게시글을 조회할 사용자의 user_id", required = true, example = "user123") @PathVariable String user_id){
+    @GetMapping("api/posts/get/memberId/{memberId}")
+    public List<PostDTO> getPostsByMemberId( @Parameter(description = "게시글을 조회할 사용자의 memberId", required = true, example = "1") @PathVariable Long memberId){
         try{
-            List<PostDTO> posts = postService.getPostsByUserId(user_id);
+            List<PostDTO> posts = postService.getPostsByMemberId(memberId);
             return posts;
         } catch (Exception e){
-            throw new PostException("해당 user_id의 게시글이 존재하지 않습니다.",HttpStatus.NOT_FOUND);
+            throw new PostException("해당 memberId의 게시글이 존재하지 않습니다.",HttpStatus.NOT_FOUND);
         }
     }
 
@@ -351,7 +351,7 @@ public class PostController {
             response :
             [
              {
-                    "user_id": "user1234",
+                    "memberId": "user1234",
                     "title": "제주도 여행",
                     "content": "제주도로 떠나요!",
                     "destination": "한국",
@@ -366,7 +366,7 @@ public class PostController {
                     "country": "한국"
                 },
                 {
-                    "user_id": "user1234",
+                    "memberId": "user1234",
                     "title": "부산 여행",
                     "content": "부산으로 떠나요!",
                     "destination": "한국",

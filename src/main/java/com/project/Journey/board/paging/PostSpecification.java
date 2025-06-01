@@ -19,8 +19,8 @@ public class PostSpecification {
                 predicates.add(builder.like(root.get("title"), "%" + request.getTitle() + "%"));
             }
 
-            if (request.getUser_id() != null && !request.getUser_id().isEmpty()) {
-                predicates.add(builder.equal(root.get("user_id"), request.getUser_id()));
+            if (request.getNickname() != null && !request.getNickname().isEmpty()) {
+                predicates.add(builder.equal(root.get("user_id"), request.getNickname()));
             }
 
             if (request.getCountry() != null && !request.getCountry().isEmpty()) {

@@ -14,7 +14,7 @@ import java.util.List;
 public class PostDTO {
 
     private Long postId; //게시글 id
-    private String user_id; //유저 아이디
+    private String nickname; //닉네임
     private String title; //제목
     private String content;//내용
     private String destination; //장소
