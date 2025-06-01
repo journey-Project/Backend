@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class CommunityPageResponseDTO {
     private Long communityPostId;
     private String title;
-    private String user_id;
+    private String nickname;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdAt;
@@ -24,7 +24,7 @@ public class CommunityPageResponseDTO {
         return CommunityPageResponseDTO.builder()
                 .communityPostId(community.getCommunityPostId())
                 .title(community.getTitle())
-                .user_id(community.getUser_id())
+                .nickname(community.getMember().getNickname())
                 .createdAt(community.getCreatedAt())
                 .build();
     }

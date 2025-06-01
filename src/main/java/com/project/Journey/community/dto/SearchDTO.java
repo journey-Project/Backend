@@ -17,7 +17,7 @@ public class SearchDTO {
     private int recordSize = 10;          // 페이지당 출력할 데이터 개수
     private int pageSize = 10;            // 하단 페이지 버튼 개수
     private String title;
-    private String userId;
+    private String nickname;
     private LocalDate startDate;
     private LocalDate endDate;
     private String country;

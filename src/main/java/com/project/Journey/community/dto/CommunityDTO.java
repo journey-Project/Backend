@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 public class CommunityDTO {
 
-    private String user_id;
+    private String nickname;
     private String country; //국가별 커뮤니티
     private String title;
     private String content;
