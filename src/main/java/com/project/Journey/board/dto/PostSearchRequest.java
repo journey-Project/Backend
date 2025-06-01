@@ -10,7 +10,7 @@ import java.time.LocalDate;
 public class PostSearchRequest extends PostSearchDTO{
     private String country;
     private String title;
-    private String user_id;
+    private String nickname;
     private LocalDate startDate;
     private LocalDate endDate;
     private Long postId; // 게시글 번호로 검색

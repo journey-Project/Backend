@@ -22,8 +22,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Query("UPDATE Post p SET p.view_count = :increment WHERE p.postId = :postId")
     void incrementViewCount(@Param("postId") Long postId, @Param("increment") int increment);
 
-    @Query("SELECT p FROM Post p WHERE p.user_id = :user_id")
-    List<Post> findPostsByUserId(@Param("user_id") String user_id);
+    @Query("SELECT p FROM Post p WHERE p.member.id = :memberId")
+    List<Post> findPostsByMemberId(@Param("memberId") Long memberId);
 
     //페이지네이션 기능 개발
     Page<Post> findAll(Pageable pageable);

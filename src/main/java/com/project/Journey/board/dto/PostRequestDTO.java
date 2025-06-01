@@ -15,7 +15,7 @@ import java.util.List;
 public class PostRequestDTO { //동행자 모집 게시글을 생성/수정할 때 사용하는 DTO
 
 
-    private String userId; //사용자 아이디
+    private Long memberId;
     private String country; //게시판 선택(국가)
     private String title; // 제목
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
