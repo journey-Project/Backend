@@ -15,6 +15,8 @@ public class CommunityResponseDTO {
 
     private Long communityPostId;
     private String loginId;
+    private Long writerId;
+    private boolean isMine;
     private String nickname;
     private String country;
     private String title;

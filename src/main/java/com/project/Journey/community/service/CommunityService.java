@@ -91,7 +91,7 @@ public class CommunityService {
     }
 
     //특정 게시글 조회
-    public CommunityResponseDTO getPostByCommunityPostId(Long communitypostid){
+    public CommunityResponseDTO getPostByCommunityPostId(Long communitypostid, Long currentMemberId) {
         Community community = communityRepository.findById(communitypostid)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
@@ -102,7 +102,11 @@ public class CommunityService {
                 .map(CommunityImage::getImageUrl)
                 .toList();
 
+        Long writerId = community.getMember().getId();
+
         return CommunityResponseDTO.builder()
+                .writerId(writerId)
+                .isMine(currentMemberId != null && currentMemberId.equals(writerId))
                 .loginId(community.getMember().getLoginId())
                 .communityPostId(community.getCommunityPostId())
                 .nickname(community.getMember().getNickname())
