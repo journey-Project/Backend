@@ -13,15 +13,16 @@ import java.util.List;
 @Builder
 public class CommunityResponseDTO {
 
-    private Long CommunityPostId;
+    private Long communityPostId;
+    private String loginId;
     private String nickname;
     private String country;
     private String title;
     private String content;
-    private int view_count;
-    private int comment_count;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private int viewCount;
+    private int commentCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String profileImageUrl;
     private List<String> imageUrls;
 
