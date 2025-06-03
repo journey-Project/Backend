@@ -75,12 +75,16 @@ public class CommunityController {
     // 특정 게시글 조회 (조회수 증가 반영)
     @Operation(summary = "게시글 단건 조회", description = """
     게시글 ID를 통해 게시글 상세 정보를 조회합니다.
-    
+
+    추가 필드:
+    - writerId: 게시글 작성자의 회원 ID
+    - isMine: 현재 로그인 사용자의 게시글 여부 (true/false)
+
     API 요청 예시
     http://localhost:8080/api/community/getPostByPostId/{communityPostId}
-    
+
     response 예시 :
-    
+
             response : {
                 "loginID": "traveler33",
                 "nickname": "구름",
@@ -98,9 +102,11 @@ public class CommunityController {
                     "이미지1.jpg",
                     "이미지2.jpg"
                 ],
-                "communityPostId": 39
+                "communityPostId": 39,
+                "writerId": 7,
+                "isMine": true
             }
-    
+
     """)
     @GetMapping("/api/community/getPostByPostId/{communityPostId}")
     public CommunityResponseDTO getCommunityPost(
