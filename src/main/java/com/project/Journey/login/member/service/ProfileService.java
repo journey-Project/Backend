@@ -2,9 +2,9 @@ package com.project.Journey.login.member.service;
 
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberTag;
-import com.project.Journey.login.member.dto.ProfileImageResponse;
-import com.project.Journey.login.member.dto.ProfileResponse;
-import com.project.Journey.login.member.dto.ProfileUpdateRequest;
+import com.project.Journey.login.member.dto.ProfileImageResponseDTO;
+import com.project.Journey.login.member.dto.ProfileResponseDTO;
+import com.project.Journey.login.member.dto.ProfileUpdateRequestDTO;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.login.member.repository.MemberTagRepository;
 
@@ -20,12 +20,12 @@ public class ProfileService {
     private final MemberTagRepository tagRepo;
 
     @Transactional(readOnly = true)
-    public ProfileResponse getMyProfile(Long memberId) {
+    public ProfileResponseDTO getMyProfile(Long memberId) {
 
         Member m = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
-        return ProfileResponse.builder()
+        return ProfileResponseDTO.builder()
                 .memberId(m.getId())
                 .loginId(m.getLoginId())
                 .nickname(m.getNickname())
@@ -41,7 +41,7 @@ public class ProfileService {
 
     }
 
-    public void updateProfile(Long memberId, ProfileUpdateRequest dto) {
+    public void updateProfile(Long memberId, ProfileUpdateRequestDTO dto) {
         Member m = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
@@ -68,11 +68,11 @@ public class ProfileService {
         }
     }
 
-    public ProfileImageResponse getProfileImage(Long memberId) {
+    public ProfileImageResponseDTO getProfileImage(Long memberId) {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
-        return ProfileImageResponse.builder()
+        return ProfileImageResponseDTO.builder()
                 .memberId(member.getId())
                 .nickname(member.getDisplayName())
                 .profileImage(member.getProfileImage())

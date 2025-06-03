@@ -1,5 +1,7 @@
 package com.project.Journey.login.member.domain;
 
+import com.project.Journey.login.member.dto.MemberDTO;
+import com.project.Journey.login.member.dto.SocialMemberDTO;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.crypto.password.PasswordEncoder;

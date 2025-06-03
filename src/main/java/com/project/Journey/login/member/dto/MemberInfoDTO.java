@@ -1,4 +1,4 @@
-package com.project.Journey.login.member.domain;
+package com.project.Journey.login.member.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -8,6 +8,9 @@ import lombok.Setter;
 @Setter
 @Schema(description = "로그인된 사용자의 정보 응답 DTO")
 public class MemberInfoDTO {
+
+    @Schema(description = "멤버 고유 id(PK)", example = "1")
+    private Long id;
 
     @Schema(description = "로그인 ID", example = "kakao_123456")
     private String loginId;

@@ -2,8 +2,8 @@ package com.project.Journey.login.member.service;
 
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.TravelPlan;
-import com.project.Journey.login.member.dto.TravelPlanRequest;
-import com.project.Journey.login.member.dto.TravelPlanResponse;
+import com.project.Journey.login.member.dto.TravelPlanRequestDTO;
+import com.project.Journey.login.member.dto.TravelPlanResponseDTO;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.login.member.repository.TravelPlanRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class TravelPlanService {
     private final MemberRepository memberRepo;
     private final TravelPlanRepository planRepo;
 
-    public TravelPlanResponse addPlan(Long memberId, TravelPlanRequest req) {
+    public TravelPlanResponseDTO addPlan(Long memberId, TravelPlanRequestDTO req) {
         Member m = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
@@ -33,20 +33,20 @@ public class TravelPlanService {
                         req.getEndDate())
         );
 
-        return TravelPlanResponse.of(saved);
+        return TravelPlanResponseDTO.of(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<TravelPlanResponse> listPlans(Long memberId) {
+    public List<TravelPlanResponseDTO> listPlans(Long memberId) {
         Member m = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
         return planRepo.findByMemberOrderByStartDateAsc(m)
-                .stream().map(TravelPlanResponse::of).toList();
+                .stream().map(TravelPlanResponseDTO::of).toList();
 
     }
 
-    public TravelPlanResponse updatePlan(Long planId, TravelPlanRequest req) {
+    public TravelPlanResponseDTO updatePlan(Long planId, TravelPlanRequestDTO req) {
         TravelPlan tp = planRepo.findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("일정 없음"));
 
@@ -56,7 +56,7 @@ public class TravelPlanService {
                 req.getStartDate(),
                 req.getEndDate());
 
-        return TravelPlanResponse.of(tp);
+        return TravelPlanResponseDTO.of(tp);
     }
 
     public void deletePlan(Long planId) {

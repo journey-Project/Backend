@@ -12,7 +12,7 @@ import java.util.List;
 
 @Schema(description = "프로필 수정 요청 DTO")
 @Setter @Getter
-public class ProfileUpdateRequest {
+public class ProfileUpdateRequestDTO {
 
     @Schema(description = "닉네임(선택)", example = "모아찌")
     private String nickname;
