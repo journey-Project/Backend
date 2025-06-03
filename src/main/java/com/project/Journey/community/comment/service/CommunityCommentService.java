@@ -58,23 +58,36 @@ public class CommunityCommentService {
         Community community = communityRepo.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("커뮤니티 글이 없습니다"));
 
-        return commentRepo
-                .findByCommunityAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(community)
+        List<CommunityComment> roots =
+                commentRepo.findByCommunityAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(community);
+
+        return roots.stream()
+                .map(this::toDtoWithReplies)
+                .toList();
+    }
+
+    private CommunityCommentResponseDTO toDtoWithReplies(CommunityComment root) {
+
+        List<CommunityCommentResponseDTO> children = commentRepo
+                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
                 .stream()
-                .map(CommunityCommentResponseDTO::from)
-                .collect(Collectors.toList());
+                .map(CommunityCommentResponseDTO::of)
+                .toList();
+
+        return CommunityCommentResponseDTO.of(root, children);
     }
 
     @Transactional(readOnly = true)
     public List<CommunityCommentResponseDTO> getReplies(Long parentId) {
+
         CommunityComment parent = commentRepo.findById(parentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 없습니다"));
 
         return commentRepo
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
                 .stream()
-                .map(CommunityCommentResponseDTO::from)
-                .collect(Collectors.toList());
+                .map(CommunityCommentResponseDTO::of)
+                .toList();
     }
 
     public CommunityCommentResponseDTO updateComment(Long id, String content) {
