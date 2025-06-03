@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.project.Journey.companion.exception.PostException;
 import com.project.Journey.community.dto.*;
 import com.project.Journey.community.service.CommunityService;
+import com.project.Journey.login.auth.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +18,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -102,9 +104,11 @@ public class CommunityController {
     """)
     @GetMapping("/api/community/getPostByPostId/{communityPostId}")
     public CommunityResponseDTO getCommunityPost(
-            @Parameter(description = "커뮤니티 게시글 ID", required = true)
-            @PathVariable Long communityPostId) {
-        return communityService.getPostByCommunityPostId(communityPostId);
+            @PathVariable Long communityPostId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long currentMemberId = (userDetails != null) ? userDetails.getMember().getId() : null;
+        return communityService.getPostByCommunityPostId(communityPostId, currentMemberId);
     }
 
     //오늘의 핫 게시물 기능 (페이지네이션 추가)
