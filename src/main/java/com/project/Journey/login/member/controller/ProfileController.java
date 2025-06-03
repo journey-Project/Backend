@@ -27,9 +27,9 @@ public class ProfileController {
 
     @Operation(summary = "내 프로필 조회")
     @ApiResponse(responseCode = "200", description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = ProfileResponse.class)))
+            content = @Content(schema = @Schema(implementation = ProfileResponseDTO.class)))
     @GetMapping("/{id}/profile")
-    public ProfileResponse getProfile(@PathVariable Long id) {
+    public ProfileResponseDTO getProfile(@PathVariable Long id) {
         return profileService.getMyProfile(id);
     }
 
@@ -44,32 +44,32 @@ public class ProfileController {
     })
     @PatchMapping("/{id}/profile")
     public ResponseEntity<?> updateProfile(@PathVariable Long id,
-                                           @Valid @RequestBody ProfileUpdateRequest dto) {
+                                           @Valid @RequestBody ProfileUpdateRequestDTO dto) {
         profileService.updateProfile(id, dto);
         return ResponseEntity.ok("프로필 수정 완료");
     }
 
     @Operation(summary = "여행 일정 추가")
     @ApiResponse(responseCode = "200", description = "등록 성공",
-            content = @Content(schema = @Schema(implementation = TravelPlanResponse.class)))
+            content = @Content(schema = @Schema(implementation = TravelPlanResponseDTO.class)))
     @PostMapping("/{id}/plans")
-    public TravelPlanResponse addPlan(@PathVariable Long id,
-                                      @RequestBody TravelPlanRequest req) {
+    public TravelPlanResponseDTO addPlan(@PathVariable Long id,
+                                         @RequestBody TravelPlanRequestDTO req) {
         return planService.addPlan(id, req);
     }
 
     @Operation(summary = "여행 일정 목록")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/{id}/plans")
-    public List<TravelPlanResponse> listPlans(@PathVariable Long id) {
+    public List<TravelPlanResponseDTO> listPlans(@PathVariable Long id) {
         return planService.listPlans(id);
     }
 
     @Operation(summary = "여행 일정 수정")
     @ApiResponse(responseCode = "200", description = "수정 성공")
     @PatchMapping("/plans/{planId}")
-    public TravelPlanResponse updatePlan(@PathVariable Long planId,
-                                         @RequestBody TravelPlanRequest req) {
+    public TravelPlanResponseDTO updatePlan(@PathVariable Long planId,
+                                            @RequestBody TravelPlanRequestDTO req) {
         return planService.updatePlan(planId, req);
     }
 
@@ -87,12 +87,12 @@ public class ProfileController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = ProfileImageResponse.class))),
+                    content = @Content(schema = @Schema(implementation = ProfileImageResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "회원 없음",
                     content = @Content(schema = @Schema(example = "회원 없음")))
     })
     @GetMapping("/{id}/profile-image")
-    public ResponseEntity<ProfileImageResponse> getProfileImage(@PathVariable Long id) {
+    public ResponseEntity<ProfileImageResponseDTO> getProfileImage(@PathVariable Long id) {
         return ResponseEntity.ok(profileService.getProfileImage(id));
     }
 

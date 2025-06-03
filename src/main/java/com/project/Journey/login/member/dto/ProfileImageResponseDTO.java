@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "닉네임과 프로필 이미지 전용 응답 DTO")
-public class ProfileImageResponse {
+public class ProfileImageResponseDTO {
 
     @Schema(description = "회원 PK", example = "7")
     private Long memberId;

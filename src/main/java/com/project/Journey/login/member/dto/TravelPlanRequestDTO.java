@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Schema(description = "여행 일정 등록·수정 요청 DTO")
 @Getter @Setter
-public class TravelPlanRequest {
+public class TravelPlanRequestDTO {
 
     @Schema(description = "제목", example = "여름 방콕 여행")
     @NotBlank

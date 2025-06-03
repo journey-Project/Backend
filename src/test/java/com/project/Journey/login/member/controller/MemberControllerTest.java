@@ -2,7 +2,7 @@
 //
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import com.project.Journey.login.member.domain.Member;
-//import com.project.Journey.login.member.domain.MemberDTO;
+//import com.project.Journey.login.member.dto.MemberDTO;
 //import com.project.Journey.login.member.service.MemberService;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Test;

@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @Schema(description = "여행 일정 응답 DTO")
 @Getter @Builder
-public class TravelPlanResponse {
+public class TravelPlanResponseDTO {
     @Schema(description = "일정 PK", example = "15")
     private Long id;
 
@@ -28,8 +28,8 @@ public class TravelPlanResponse {
     @Schema(description = "도착일")
     private LocalDate endDate;
 
-    public static TravelPlanResponse of(TravelPlan tp) {
-        return TravelPlanResponse.builder()
+    public static TravelPlanResponseDTO of(TravelPlan tp) {
+        return TravelPlanResponseDTO.builder()
                 .id(tp.getId())
                 .title(tp.getTitle())
                 .country(tp.getCountry())

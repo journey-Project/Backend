@@ -2,8 +2,8 @@
 
     import com.project.Journey.login.auth.CustomUserDetails;
     import com.project.Journey.login.member.domain.Member;
-    import com.project.Journey.login.member.domain.MemberDTO;
-    import com.project.Journey.login.member.domain.MemberInfoDTO;
+    import com.project.Journey.login.member.dto.MemberDTO;
+    import com.project.Journey.login.member.dto.MemberInfoDTO;
     import com.project.Journey.login.member.repository.MemberRepository;
     import com.project.Journey.login.member.service.MemberService;
     import io.swagger.v3.oas.annotations.Operation;
@@ -81,6 +81,7 @@
             세션 인증된 사용자 본인의 정보를 반환합니다.<br><br>
             
             응답:
+            - id (member 고유 id - PK)
             - loginId (로그인 ID)
             - name (실명)
             - nickname (닉네임)
@@ -100,6 +101,7 @@
             Member member = userDetails.getMember();
 
             MemberInfoDTO dto = new MemberInfoDTO();
+            dto.setId(member.getId());
             dto.setLoginId(member.getLoginId());
             dto.setName(member.getName());
             dto.setNickname(member.getNickname());

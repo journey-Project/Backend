@@ -9,7 +9,7 @@ import java.util.List;
 
 @Schema(description = "프로필 조회 응답 DTO")
 @Getter @Builder
-public class ProfileResponse {
+public class ProfileResponseDTO {
     @Schema(description = "회원 PK", example = "7")
     private Long memberId;
 

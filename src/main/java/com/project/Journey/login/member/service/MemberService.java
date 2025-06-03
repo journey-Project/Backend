@@ -1,7 +1,7 @@
 package com.project.Journey.login.member.service;
 
 import com.project.Journey.login.member.domain.Member;
-import com.project.Journey.login.member.domain.MemberDTO;
+import com.project.Journey.login.member.dto.MemberDTO;
 import com.project.Journey.login.member.domain.MemberRole;
 import com.project.Journey.login.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
