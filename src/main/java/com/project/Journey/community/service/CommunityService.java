@@ -96,30 +96,26 @@ public class CommunityService {
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
         community.setViewCount(community.getViewCount()+1);
-        communityRepository.save(community);
 
-        List<CommunityImage> communityImages = community.getImages();
-        List<String> images = new ArrayList<>();
-        for(CommunityImage communityImage : communityImages){
-            images.add(communityImage.getImageUrl());
-        }
+        List<String> imageUrls = community.getImages()
+                .stream()
+                .map(CommunityImage::getImageUrl)
+                .toList();
 
-        CommunityResponseDTO communityResponseDTO
-                = new CommunityResponseDTO(
-                community.getCommunityPostId(),
-                community.getMember().getNickname(),
-                community.getCountry(),
-                community.getTitle(),
-                community.getContent(),
-                community.getViewCount(),
-                community.getComment_count(),
-                community.getCreatedAt(),
-                community.getUpdatedAt(),
-                community.getMember().getProfileImage(),
-                images
-
-        );
-        return communityResponseDTO;
+        return CommunityResponseDTO.builder()
+                .loginId(community.getMember().getLoginId())
+                .communityPostId(community.getCommunityPostId())
+                .nickname(community.getMember().getNickname())
+                .country(community.getCountry())
+                .title(community.getTitle())
+                .content(community.getContent())
+                .viewCount(community.getViewCount())
+                .commentCount(community.getComment_count())
+                .createdAt(community.getCreatedAt())
+                .updatedAt(community.getUpdatedAt())
+                .profileImageUrl(community.getMember().getProfileImage())
+                .imageUrls(imageUrls)
+                .build();
     }
 
 

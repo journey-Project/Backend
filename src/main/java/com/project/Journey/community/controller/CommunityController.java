@@ -86,6 +86,7 @@ public class CommunityController {
     response 예시 :
     
             response : {
+                "loginID": "traveler33",
                 "nickname": "구름",
                 "country": "국내",
                 "title": "요즘 제주도 날씨는 어떤가요?",
