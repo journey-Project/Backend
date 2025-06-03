@@ -1,6 +1,8 @@
 package com.project.Journey.community.comment.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.project.Journey.community.comment.entity.CommunityComment;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder(toBuilder = true)
+@AllArgsConstructor
 public class CommunityCommentResponseDTO {
 
     private Long commentId;
@@ -21,7 +24,9 @@ public class CommunityCommentResponseDTO {
     private Long parentCommentId;
     private int  replyCount;
     private boolean isActive;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime updatedAt;
 
     public static CommunityCommentResponseDTO from(CommunityComment c) {
@@ -41,6 +46,31 @@ public class CommunityCommentResponseDTO {
                 .build();
     }
 
+    @Builder.Default
+    private List<CommunityCommentResponseDTO> replies = List.of();
+
+    public static CommunityCommentResponseDTO of(CommunityComment c,
+                                                 List<CommunityCommentResponseDTO> replies) {
+
+        return CommunityCommentResponseDTO.builder()
+                .commentId(c.getCommentId())
+                .communityId(c.getCommunity().getCommunityPostId())
+                .memberId(c.getMember().getId())
+                .displayName(c.getMember().getDisplayName())
+                .profileImage(c.getMember().getProfileImage())
+                .content(c.getContent())
+                .parentCommentId(c.getParentComment() != null ? c.getParentComment().getCommentId() : null)
+                .isActive(c.isActive())
+                .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
+                .replies(replies)
+                .build();
+    }
+
+    public static CommunityCommentResponseDTO of(CommunityComment c) {
+        return of(c, List.of());
+    }
+
     public static CommunityCommentResponseDTO withReplies(CommunityComment root,
                                                           List<CommunityComment> replies) {
         return CommunityCommentResponseDTO.from(root).toBuilder()
@@ -48,7 +78,6 @@ public class CommunityCommentResponseDTO {
                 .build();
     }
 
-    /* 유틸: List<CommunityComment> → List<DTO> */
     public static List<CommunityCommentResponseDTO> listOf(List<CommunityComment> list) {
         return list.stream().map(CommunityCommentResponseDTO::from).collect(Collectors.toList());
     }
