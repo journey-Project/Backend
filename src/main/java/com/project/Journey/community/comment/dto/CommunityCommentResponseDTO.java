@@ -22,7 +22,8 @@ public class CommunityCommentResponseDTO {
     private String profileImage;
     private String content;
     private Long parentCommentId;
-    private int  replyCount;
+    private int replyCount;
+    private int depth;
     private boolean isActive;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime createdAt;
@@ -40,6 +41,7 @@ public class CommunityCommentResponseDTO {
                 .parentCommentId(
                         c.getParentComment() != null ? c.getParentComment().getCommentId() : null)
                 .replyCount(c.getReplyCount())
+                .depth(c.getParentComment() != null ? 1 : 0)
                 .isActive(c.isActive())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
@@ -60,6 +62,7 @@ public class CommunityCommentResponseDTO {
                 .profileImage(c.getMember().getProfileImage())
                 .content(c.getContent())
                 .parentCommentId(c.getParentComment() != null ? c.getParentComment().getCommentId() : null)
+                .depth(c.getParentComment() != null ? 1 : 0)
                 .isActive(c.isActive())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
