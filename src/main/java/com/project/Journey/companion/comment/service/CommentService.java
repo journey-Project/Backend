@@ -1,6 +1,7 @@
 package com.project.Journey.companion.comment.service;
 
 
+import com.project.Journey.companion.comment.dto.CommentResponseDTO;
 import com.project.Journey.companion.comment.entity.Comment;
 import com.project.Journey.companion.comment.repository.CommentRepository;
 
@@ -45,7 +46,7 @@ public class CommentService {
 
         Comment comment = Comment.builder()
                 .post(post)
-                .member(member)          // ⭐ FK 세팅
+                .member(member)
                 .content(content)
                 .parentComment(parent)
                 .build();
@@ -54,12 +55,31 @@ public class CommentService {
     }
 
     /* ---------- 댓글 목록 ---------- */
-    public List<Comment> getCommentsByPost(Long postId) {
+    public List<CommentResponseDTO> getCommentsByPost(Long postId, Long currentMemberId) {
+
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다: " + postId));
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 없음: "+ postId));
 
         return commentRepository
-                .findByPostAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(post);
+                .findByPostAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(post)
+                .stream()
+                .map(c -> toDtoWithChildren(c, currentMemberId))
+                .toList();
+    }
+
+    private CommentResponseDTO toDtoWithChildren(Comment root, Long currentId) {
+
+        boolean mineRoot = currentId != null && root.getMember().getId().equals(currentId);
+
+        List<CommentResponseDTO> childDtos = commentRepository
+                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
+                .stream()
+                .map(child -> CommentResponseDTO.of(
+                        child,
+                        currentId != null && child.getMember().getId().equals(currentId)))
+                .toList();
+
+        return CommentResponseDTO.of(root, mineRoot, childDtos);   // ← replies 포함
     }
 
     public List<Comment> getReplies(Long parentCommentId) {
@@ -71,17 +91,19 @@ public class CommentService {
     }
 
     /* ---------- 댓글 수정 ---------- */
-    public Comment updateComment(Long commentId, String content) {
+    public Comment updateComment(Long commentId, String content, Long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + commentId));
 
+        if (!comment.getMember().getId().equals(userId)) {
+            throw new IllegalStateException("수정 권한이 없습니다");
+        }
         if (!comment.isActive()) {
             throw new IllegalStateException("삭제된 댓글은 수정할 수 없습니다");
         }
         comment.setContent(content);
         return comment;
     }
-
     /* ---------- 논리 삭제 ---------- */
     public void deleteComment(Long commentId) {
 

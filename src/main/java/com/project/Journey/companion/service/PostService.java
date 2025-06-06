@@ -57,93 +57,65 @@ public class PostService {
     private static final String VIEW_COUNT_KEY = "view_count:";
 
     //게시글 저장
-    public Long savePost(PostRequestDTO postRequestDTO, MultipartFile coverImage, List<MultipartFile> images) {
+    public Long savePost(PostRequestDTO dto,
+                         MultipartFile coverImage,
+                         List<MultipartFile> images) {
 
+        // ① 작성자 조회
+        Member member = memberRepository.findById(dto.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
-        //1. 작성자 Member 조회
-        Member member = memberRepository.findById(postRequestDTO.getMemberId())
-            .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다."));
+        // ② 커버 이미지 S3 업로드
+        String coverUrl = (coverImage != null && !coverImage.isEmpty())
+                ? s3Service.uploadApplicationImage(coverImage)
+                : null;
 
-
-        // 1️. S3에 커버 이미지 업로드 후 URL 저장
-        String coverImageUrl = null;
-        if (coverImage != null && !coverImage.isEmpty()) {
-            coverImageUrl = s3Service.uploadApplicationImage(coverImage);
-        }
-
-        // 2. 게시글 객체 생성
+        // ③ Post 엔티티 생성
         Post post = Post.builder()
                 .member(member)
-                .country(postRequestDTO.getCountry())
-                .title(postRequestDTO.getTitle())
-                .startDate(postRequestDTO.getStartDate())
-                .endDate(postRequestDTO.getEndDate())
-                .max_participants(postRequestDTO.getParticipants())
-                .destination(postRequestDTO.getDestination())
+                .country(dto.getCountry())
+                .title(dto.getTitle())
+                .content(dto.getContent())
+                .destination(dto.getDestination())
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
+                .max_participants(dto.getParticipants())
+                .coverImageUrl(coverUrl)
                 .view_count(0)
                 .comment_count(0)
-                .coverImageUrl(coverImageUrl)
-                .content(postRequestDTO.getContent())
                 .createdAt(LocalDateTime.now())
                 .updated_at(LocalDateTime.now())
                 .build();
 
-        // 3️. 게시글을 먼저 저장 (DB에 저장)
-        Post savedPost = postRepository.save(post);
+        Post saved = postRepository.save(post);
 
-        // 4️. 이미지 저장을 위한 리스트 생성
-        List<PostImage> imageEntities = new ArrayList<>();
-
-        // 5️. 이미지 업로드 및 PostImage 엔티티 생성
+        // ④ 첨부 이미지 처리 (선택)
         if (images != null && !images.isEmpty()) {
-            for (MultipartFile image : images) {
-                // S3에 업로드 후 URL 반환
-                String imageUrl = s3Service.uploadApplicationImage(image);
-                PostImage postImage = new PostImage(null, imageUrl, savedPost);
-                imageEntities.add(postImage);
-            }
+            List<PostImage> list = images.stream()
+                    .filter(mf -> !mf.isEmpty())
+                    .map(mf -> {
+                        String url = s3Service.uploadApplicationImage(mf);
+                        return PostImage.builder()
+                                .post(saved)
+                                .postImageUrl(url)
+                                .build();
+                    }).toList();
+            postImageRepository.saveAll(list);
         }
-
-        // 6️. 이미지 엔티티 저장
-        postImageRepository.saveAll(imageEntities);
-
-        return savedPost.getPostId();
+        return saved.getPostId();
     }
+
 
     // 모든 게시글 조회
-    public List<PostDTO> getAllPosts() {
-
-        List<Post> postList = postRepository.findAll();
-        List<PostDTO> postDtoList = new ArrayList<>();
-
-        for(Post post : postList){
-            PostDTO postDto = PostDTO.builder()
-                    .postId(post.getPostId())
-                    .title(post.getTitle())
-                    .content(post.getContent())
-                    .destination(post.getDestination())
-                    .start_date(post.getStartDate())
-                    .end_date(post.getEndDate())
-                    .max_participants(post.getMax_participants())
-                    .view_count(post.getView_count())
-                    .comment_count(post.getComment_count())
-                    .created_at(post.getCreatedAt())
-                    .updated_at(post.getUpdated_at())
-                    .nickname(post.getMember().getNickname())
-                    .profileImageUrl(post.getMember().getProfileImage())
-                    .coverImageUrl(post.getCoverImageUrl())// image url
-                    .country(post.getCountry()) //국가
-                    .build();
-            postDtoList.add(postDto);
-        }
-
-        return postDtoList;
+    public List<PostResponseDTO> getAllPosts(Long currentUserId) {
+        return postRepository.findAll().stream()
+                .map(p -> toDto(p, currentUserId))      // ★ isMine 적용
+                .toList();
     }
-
     //게시글 수정
     @Transactional
     public void updatePostById(Long postId,
-                               PostDTO postDTO,
+                               PostResponseDTO postResponseDTO,
                                List<MultipartFile> newImages,
                                MultipartFile newCoverImage) {
 
@@ -151,18 +123,18 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
 
         // 기본 게시글 정보 업데이트
-        post.updateTitle(postDTO.getTitle());
-        post.updateContent(postDTO.getContent());
-        post.updateDestination(postDTO.getDestination());
-        post.updateMaxParticipants(postDTO.getMax_participants());
-        post.updateStartDate(postDTO.getStart_date());
-        post.updateEndDate(postDTO.getEnd_date());
-        post.updateUpdateTime(postDTO.getUpdated_at());
-        post.updateCountry(postDTO.getCountry());
+        post.updateTitle(postResponseDTO.getTitle());
+        post.updateContent(postResponseDTO.getContent());
+        post.updateDestination(postResponseDTO.getDestination());
+        post.updateMaxParticipants(postResponseDTO.getMax_participants());
+        post.updateStartDate(postResponseDTO.getStart_date());
+        post.updateEndDate(postResponseDTO.getEnd_date());
+        post.updateUpdateTime(postResponseDTO.getUpdated_at());
+        post.updateCountry(postResponseDTO.getCountry());
 
         // ✅ [1] 기존 일반 이미지 처리
         List<PostImage> existingImages = postImageRepository.findByPost(post);
-        List<String> remainingUrls = postDTO.getImageUrls();
+        List<String> remainingUrls = postResponseDTO.getImageUrls();
 
         for (PostImage image : existingImages) {
             if (!remainingUrls.contains(image.getPostImageUrl())) {
@@ -195,9 +167,9 @@ public class PostService {
             // 새 커버 이미지 저장 및 URL 업데이트
             String newCoverImageUrl = s3Service.uploadApplicationImage(newCoverImage);
             post.updateCoverImageUrl(newCoverImageUrl);
-        } else if (postDTO.getCoverImageUrl() != null && !postDTO.getCoverImageUrl().isEmpty()) {
+        } else if (postResponseDTO.getCoverImageUrl() != null && !postResponseDTO.getCoverImageUrl().isEmpty()) {
             // 새 커버 이미지가 없지만, DTO에 기존 coverImageUrl이 있으면 유지
-            post.updateCoverImageUrl(postDTO.getCoverImageUrl());
+            post.updateCoverImageUrl(postResponseDTO.getCoverImageUrl());
         } else{
             // 커버 이미지를 삭제하고 싶은 경우(커버이미지가 없게)
             if(post.getCoverImageUrl() != null && !post.getCoverImageUrl().isEmpty()){
@@ -233,156 +205,62 @@ public class PostService {
 
      */
     // 게시글 삭제
-    @Transactional
-    public void deletePost(Long postId){
+    public void deletePost(Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new PostException("해당 게시글이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new PostException("게시글이 존재하지 않습니다", HttpStatus.NOT_FOUND));
 
-        //커버 이미지 삭제
-        String coverImageUrl = post.getCoverImageUrl();
-        if(coverImageUrl!= null && !coverImageUrl.isEmpty()){
-            s3Service.deleteS3Image(coverImageUrl);
-        }
+        // 커버 + 첨부 이미지 S3 삭제
+        Optional.ofNullable(post.getCoverImageUrl()).ifPresent(s3Service::deleteS3Image);
+        post.getImages().forEach(pi -> s3Service.deleteS3Image(pi.getPostImageUrl()));
 
-        //첨부 이미지들 삭제
-        List<PostImage> postImages = post.getImages();
-        if(postImages != null && !postImages.isEmpty()){
-            for(PostImage image : postImages){
-                String imageUrl = image.getPostImageUrl();
-                if(imageUrl != null && !imageUrl.isEmpty()){
-                    s3Service.deleteS3Image(imageUrl);
-                }
-            }
-        }
-
-        //게시글 삭제
         postRepository.delete(post);
     }
 
     //조회 수가 높은 순서대로 조회(핫 게시글)
-    public List<PostDTO> getPostsByViewCount(){
-        List<Post> hotPosts = postRepository.findAll();
-        hotPosts.sort(new Comparator<Post>() {
-            @Override
-            public int compare(Post o1, Post o2) {
-                return o2.getView_count() - o1.getView_count();
-            }
-        });
-        return hotPosts.stream()
-            .map(post -> PostDTO.builder()
-                .postId(post.getPostId())
-                .nickname(post.getMember().getNickname())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .destination(post.getDestination())
-                .start_date(post.getStartDate())
-                .end_date(post.getEndDate())
-                .max_participants(post.getMax_participants())
-                .view_count(post.getView_count())
-                .comment_count(post.getComment_count())
-                .created_at(post.getCreatedAt())
-                .updated_at(post.getUpdated_at())
-                .coverImageUrl(post.getCoverImageUrl())
-                .profileImageUrl(post.getMember().getProfileImage()) // Member에 해당 필드가 있다고 가정
-                .country(post.getCountry())
-                .imageUrls(post.getImages() != null ?
-                    post.getImages().stream()
-                        .map(PostImage::getPostImageUrl)
-                        .collect(Collectors.toList()) :
-                    List.of())
-                .build())
-            .collect(Collectors.toList());
-    }
+    public PostResponseDTO getPostByIdAndIncrementView(Long postId, Long currentUserId) {
 
-    //게시글 조회 - 이미지 불러오기 기능 추가
-    @Transactional
-    public PostDTO getPostByIdAndIncrementView(Long postId) {
-        String redisKey = VIEW_COUNT_KEY + postId;
+        String key = VIEW_COUNT_KEY + postId;
+        Long cnt = redisTemplate.opsForValue().increment(key, 1);
 
-        // 1. Redis에서 조회수 증가
-        Long updatedViewCount = redisTemplate.opsForValue().increment(redisKey, 1);
-
-        // 2. Redis 키가 없거나 데이터가 초기화되지 않았을 경우 MySQL에서 초기화
-        if (updatedViewCount == 1) { // Redis에 키가 없었던 경우
-            Optional<Post> postOptional = postRepository.findById(postId);
-
-            if (postOptional.isPresent()) {
-                Post post = postOptional.get();
-                redisTemplate.opsForValue().set(redisKey, post.getView_count()+1); // Redis 초기화 및 증가
-                updatedViewCount = (long) (post.getView_count() + 1); // 증가된 값 업데이트
-            } else {
-                throw new IllegalArgumentException("해당 postId의 게시글이 없습니다.");
-            }
+        // Redis 첫 저장이면 DB 값으로 초기화
+        if (cnt != null && cnt == 1L) {
+            Post tmp = postRepository.findById(postId)
+                    .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+            redisTemplate.opsForValue().set(key, tmp.getView_count() + 1);
         }
 
-        // 4. 게시글 데이터 반환
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 postId의 게시글이 없습니다."));
-
-        List<PostImage> postImages = post.getImages();
-        List<String> images = new ArrayList<>();
-        for(PostImage postImage : postImages){
-            images.add(postImage.getPostImageUrl());
-            System.out.println(postImage.getPostImageUrl());
-        }
-
-        PostDTO postDTO = new PostDTO(
-                post.getPostId(),
-                post.getMember().getNickname(),
-                post.getTitle(),
-                post.getContent(),
-                post.getDestination(),
-                post.getStartDate(),
-                post.getEndDate(),
-                post.getMax_participants(),
-                post.getView_count(),
-                post.getComment_count(),
-                post.getCreatedAt(),
-                post.getUpdated_at(),
-                post.getCoverImageUrl(),
-                post.getMember().getProfileImage(),
-                post.getCountry(),
-                images
-        );
-
-       return postDTO;
+                .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+        return toDto(post, currentUserId);              // ★ isMine 적용
     }
+
+
+
 
 
     //게시글 조회수 Redis와 MySQL 동기화 기능 구현
-    @Transactional
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 10_000)
     public void syncViewCountToDatabase() {
         Set<String> keys = redisTemplate.keys(VIEW_COUNT_KEY + "*");
-
-        if(keys == null || keys.isEmpty()) return;
+        if (keys == null) return;
 
         for (String key : keys) {
             Long postId = Long.parseLong(key.replace(VIEW_COUNT_KEY, ""));
-
-            try {
-                //Redis에서 조회수 가져오기
-                Integer viewCount = (Integer) redisTemplate.opsForValue().get(key); // JSON 문자열을 정수로 변환
-
-                if (viewCount != null) {
-                    //MySQL에 반영
-                    postRepository.incrementViewCount(postId,viewCount); // MySQL 동기화
-                    redisTemplate.delete(key); // Redis에서 데이터(키) 삭제
-                }
-            } catch (Exception e) {
-                System.err.println("게시글 ID " + postId + "의 조회수를 동기화하는 중 오류가 발생했습니다. 키: " + key);
-                e.printStackTrace();
+            Integer views = (Integer) redisTemplate.opsForValue().get(key);
+            if (views != null) {
+                postRepository.incrementViewCount(postId, views);
+                redisTemplate.delete(key);
             }
         }
     }
 
     // user_id로 게시글 조회
-    public List<PostDTO> getPostsByMemberId(Long memberId) {
+    public List<PostResponseDTO> getPostsByMemberId(Long memberId) {
         List<Post> list =  postRepository.findPostsByMemberId(memberId);
-        List<PostDTO> postDtoListByMemberId= new ArrayList<>();
+        List<PostResponseDTO> postResponseDtoListByMemberId = new ArrayList<>();
 
         for(Post post : list){
-            PostDTO postDto = PostDTO.builder()
+            PostResponseDTO postResponseDto = PostResponseDTO.builder()
                     .postId(post.getPostId())
                     .title(post.getTitle())
                     .content(post.getContent())
@@ -399,22 +277,22 @@ public class PostService {
                     .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
-            postDtoListByMemberId.add(postDto);
+            postResponseDtoListByMemberId.add(postResponseDto);
         }
-        return postDtoListByMemberId;
+        return postResponseDtoListByMemberId;
     }
 
 
     //페이지네이션 적용
-    public List<PostDTO> getPosts(int page, int size){
+    public List<PostResponseDTO> getPosts(int page, int size){
         Pageable pageable = PageRequest.of(page,size);
         Page<Post> postPage = postRepository.findAll(pageable);
         //1.postPage에서 Post 객체들을 추출
         List<Post> posts = postPage.getContent();
         //2.Post 객체 리스트에서 PostResponseDto 객체 리스트로 변환
-        List<PostDTO> postDTOList = new ArrayList<>();
+        List<PostResponseDTO> postResponseDTOList = new ArrayList<>();
         for(Post post: posts){
-            PostDTO postDTO = PostDTO.builder()
+            PostResponseDTO postResponseDTO = PostResponseDTO.builder()
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
@@ -430,18 +308,18 @@ public class PostService {
                     .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
-            postDTOList.add(postDTO);
+            postResponseDTOList.add(postResponseDTO);
         }
-        return postDTOList;
+        return postResponseDTOList;
     }
 
-    public List<PostDTO> getPostsByCountry(String country, int page, int size){
+    public List<PostResponseDTO> getPostsByCountry(String country, int page, int size){
         Page<Post> postPage = postRepository.findByCountry(country, PageRequest.of(page, size));
 
-        List<PostDTO> postDTOList = new ArrayList<>();
+        List<PostResponseDTO> postResponseDTOList = new ArrayList<>();
         List<Post> posts = postPage.getContent();
         for(Post post: posts){
-            PostDTO postDTO = PostDTO.builder()
+            PostResponseDTO postResponseDTO = PostResponseDTO.builder()
                     .title(post.getTitle())
                     .content(post.getContent())
                     .destination(post.getDestination())
@@ -457,9 +335,9 @@ public class PostService {
                     .coverImageUrl(post.getCoverImageUrl())
                     .country(post.getCountry())
                     .build();
-            postDTOList.add(postDTO);
+            postResponseDTOList.add(postResponseDTO);
         }
-        return postDTOList;
+        return postResponseDTOList;
     }
 
 
@@ -548,5 +426,44 @@ public class PostService {
         return new PostSearchResponse(posts, pagination);
     }
 
+
+    public List<PostResponseDTO> getPostsByViewCount() {
+        return getPostsByViewCount(null);           // 기본값: 로그인 안 함
+    }
+
+    public List<PostResponseDTO> getPostsByViewCount(Long currentUserId) { // ★ 새로 추가
+        List<Post> hot = postRepository.findAll(Sort.by(Sort.Direction.DESC, "view_count"));
+        return hot.stream()
+                .map(p -> toDto(p, currentUserId))
+                .toList();
+    }
+
+    private PostResponseDTO toDto(Post p, Long currentUserId) {
+        boolean mine = currentUserId != null &&
+                p.getMember().getId().equals(currentUserId);
+
+        return PostResponseDTO.builder()
+                .postId(p.getPostId())
+                .writerId(p.getMember().getId())            // 작성자 PK
+                .isMine(mine)                               // 로그인한 사용자가 작성자인지
+                .nickname(p.getMember().getNickname())      // 작성자 닉네임
+                .title(p.getTitle())                        // 제목
+                .content(p.getContent())                    // 본문 내용
+                .destination(p.getDestination())            // 여행지
+                .start_date(p.getStartDate())               // 여행 시작일
+                .end_date(p.getEndDate())                   // 여행 종료일
+                .max_participants(p.getMax_participants())  // 최대 인원
+                .view_count(p.getView_count())              // 조회수
+                .comment_count(p.getComment_count())        // 댓글 수
+                .created_at(p.getCreatedAt())               // 작성일
+                .updated_at(p.getUpdated_at())              // 수정일
+                .coverImageUrl(p.getCoverImageUrl())        // 커버 이미지
+                .profileImageUrl(p.getMember().getProfileImage()) // 작성자 프로필 이미지
+                .country(p.getCountry())                    // 국가
+                .imageUrls(p.getImages().stream()           // 이미지 리스트
+                        .map(PostImage::getPostImageUrl)
+                        .toList())
+                .build();
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.project.Journey.companion.comment.entity;
+package com.project.Journey.companion.comment.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
