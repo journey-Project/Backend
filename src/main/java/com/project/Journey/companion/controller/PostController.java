@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.project.Journey.companion.dto.*;
 import com.project.Journey.companion.exception.PostException;
 import com.project.Journey.companion.service.PostService;
+import com.project.Journey.login.auth.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +33,6 @@ import java.util.List;
 @Tag(name = "동행자 모집 게시글 관리", description = "동행자모집 게시판 관련 API")
 public class PostController {
 
-    @Autowired
     private final PostService postService;
 
 
@@ -62,26 +63,20 @@ public class PostController {
     })
     @PostMapping("api/posts/save")
     public ResponseEntity<Long> createPost(
-            @Parameter(description = "게시글 정보(JSON 형식)", required = true)
             @RequestPart("post") String postJson,
-
-            @Parameter(description = "커버 이미지 파일", required = false)
             @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
+            @RequestPart(value = "images",     required = false) List<MultipartFile> images) {
 
-            @Parameter(description = "게시글에 첨부할 이미지 파일 리스트", required = false)
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        try {
+            ObjectMapper om = new ObjectMapper()
+                    .registerModule(new JavaTimeModule())
+                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        try{
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // 날짜를 타임스탬프가 아니라 문자열로
-            PostRequestDTO postRequestDTO = objectMapper.readValue(postJson, PostRequestDTO.class);
-
-            Long postId = postService.savePost(postRequestDTO, coverImage, images);
-            return ResponseEntity.ok(postId);
-        }catch (Exception e){
-            e.printStackTrace();
-            throw new PostException("동행자 모집 게시글 저장 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST);
+            PostRequestDTO dto = om.readValue(postJson, PostRequestDTO.class);
+            Long id = postService.savePost(dto, coverImage, images);
+            return ResponseEntity.ok(id);
+        } catch (Exception e) {
+            throw new PostException("게시글 저장 중 오류", HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -117,14 +112,10 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "게시글 목록이 성공적으로 반환되었습니다."),
             @ApiResponse(responseCode = "500", description = "서버에서 오류가 발생했습니다.")
     })
-    @GetMapping("api/posts/getAll")
-    public List<PostDTO> getAllPosts(HttpServletRequest request) {
-        try {
-            return postService.getAllPosts();
-        } catch (Exception e){
-            throw new PostException("게시글 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+    @GetMapping("/api/posts/getAll")
+    public List<PostResponseDTO> getAllPosts(@AuthenticationPrincipal CustomUserDetails principal) {
+        Long curId = principal != null ? principal.getMember().getId() : null;     // ★
+        return postService.getAllPosts(curId);                                     // ★
     }
 
     // 게시글 삭제
@@ -214,9 +205,9 @@ public class PostController {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
 
-            PostDTO postDTO = mapper.readValue(postJson, PostDTO.class);
+            PostResponseDTO postResponseDTO = mapper.readValue(postJson, PostResponseDTO.class);
 
-            postService.updatePostById(post_id, postDTO, newImages, newCoverImage);
+            postService.updatePostById(post_id, postResponseDTO, newImages, newCoverImage);
             return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
         } catch (Exception e) {
             e.printStackTrace();
@@ -231,14 +222,11 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "조회수가 높은 게시글 목록이 성공적으로 반환되었습니다."),
             @ApiResponse(responseCode = "500", description = "서버에서 오류가 발생했습니다.")
     })
-    @GetMapping("api/posts/top-views")
-    public List<PostDTO> getTopViewedPosts(){
-        try{
-            return postService.getPostsByViewCount();
-        }catch (Exception e){
-            throw new PostException("핫 게시글 조회 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+    @GetMapping("/api/posts/top-views")
+    public List<PostResponseDTO> getTopViewedPosts(
+            @AuthenticationPrincipal CustomUserDetails principal) {                // ★
+        Long curId = principal != null ? principal.getMember().getId() : null;     // ★
+        return postService.getPostsByViewCount(curId);                             // ★
     }
 
 
@@ -279,15 +267,12 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.")
     })
     @GetMapping("api/posts/getIncrementView/{post_id}")
-    public PostDTO incrementPostView(@Parameter(description = "조회할 게시글의 ID", required = true, example = "1") @PathVariable Long post_id) {
-        try{
-            return postService.getPostByIdAndIncrementView(post_id);
-        }catch (Exception e){
-            throw new PostException("해당 게시글이 존재하지 않습니다.", HttpStatus.NOT_FOUND);
-        }
-
+    public PostResponseDTO incrementPostView(
+            @PathVariable("post_id") Long postId,
+            @AuthenticationPrincipal CustomUserDetails principal) {                // ★
+        Long curId = principal != null ? principal.getMember().getId() : null;     // ★
+        return postService.getPostByIdAndIncrementView(postId, curId);             // ★
     }
-
     //user_id로 게시글 조회
     @Operation(summary = "사용자 게시글 조회", description = """
             특정 사용자의 memberId로 게시글을 조회합니다.
@@ -320,9 +305,9 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "해당 사용자의 게시글을 찾을 수 없습니다.")
     })
     @GetMapping("api/posts/get/memberId/{memberId}")
-    public List<PostDTO> getPostsByMemberId( @Parameter(description = "게시글을 조회할 사용자의 memberId", required = true, example = "1") @PathVariable Long memberId){
+    public List<PostResponseDTO> getPostsByMemberId(@Parameter(description = "게시글을 조회할 사용자의 memberId", required = true, example = "1") @PathVariable Long memberId){
         try{
-            List<PostDTO> posts = postService.getPostsByMemberId(memberId);
+            List<PostResponseDTO> posts = postService.getPostsByMemberId(memberId);
             return posts;
         } catch (Exception e){
             throw new PostException("해당 memberId의 게시글이 존재하지 않습니다.",HttpStatus.NOT_FOUND);
@@ -331,7 +316,7 @@ public class PostController {
 
 
     @GetMapping("api/posts/getPostByPage")
-    public List<PostDTO> getPostByPage(
+    public List<PostResponseDTO> getPostByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){
         return postService.getPosts(page,size);
@@ -383,7 +368,7 @@ public class PostController {
 
             """)*/
     @GetMapping("api/posts/getPostByCountry/{country}")
-    public List<PostDTO> getPostByCountry(
+    public List<PostResponseDTO> getPostByCountry(
             @PathVariable String country,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size

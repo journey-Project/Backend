@@ -6,14 +6,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
 @Builder
-@AllArgsConstructor
 @Getter
-@Setter
-public class PostDTO {
+public class PostResponseDTO {
 
     private Long postId; //게시글 id
+    private Long writerId;
+    private boolean isMine;
     private String nickname; //닉네임
     private String title; //제목
     private String content;//내용
@@ -32,8 +31,7 @@ public class PostDTO {
 
     private String profileImageUrl;
     private String country; // 국가별 게시판
-    private List<String> imageUrls; //게시글에 첨부된 이미지들
-    public PostDTO() {
-        // Default constructor
-    }
+
+    @Builder.Default
+    private final List<String> imageUrls = List.of();
 }
