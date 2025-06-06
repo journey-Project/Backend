@@ -17,13 +17,15 @@ public class CommunityCommentResponseDTO {
 
     private Long commentId;
     private Long communityId;
+    private Long writerId;     // 댓글 작성자 ID
+    private boolean isMine;
+
     private Long memberId;
     private String displayName;
     private String profileImage;
     private String content;
     private Long parentCommentId;
-    private int replyCount;
-    private int depth;
+    private int  replyCount;
     private boolean isActive;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime createdAt;
@@ -41,7 +43,6 @@ public class CommunityCommentResponseDTO {
                 .parentCommentId(
                         c.getParentComment() != null ? c.getParentComment().getCommentId() : null)
                 .replyCount(c.getReplyCount())
-                .depth(c.getParentComment() != null ? 1 : 0)
                 .isActive(c.isActive())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
@@ -51,18 +52,19 @@ public class CommunityCommentResponseDTO {
     @Builder.Default
     private List<CommunityCommentResponseDTO> replies = List.of();
 
-    public static CommunityCommentResponseDTO of(CommunityComment c,
+    public static CommunityCommentResponseDTO of(CommunityComment c, boolean isMine,
                                                  List<CommunityCommentResponseDTO> replies) {
 
         return CommunityCommentResponseDTO.builder()
                 .commentId(c.getCommentId())
                 .communityId(c.getCommunity().getCommunityPostId())
                 .memberId(c.getMember().getId())
+                .writerId(c.getMember().getId())
+                .isMine(isMine)
                 .displayName(c.getMember().getDisplayName())
                 .profileImage(c.getMember().getProfileImage())
                 .content(c.getContent())
                 .parentCommentId(c.getParentComment() != null ? c.getParentComment().getCommentId() : null)
-                .depth(c.getParentComment() != null ? 1 : 0)
                 .isActive(c.isActive())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
@@ -70,8 +72,8 @@ public class CommunityCommentResponseDTO {
                 .build();
     }
 
-    public static CommunityCommentResponseDTO of(CommunityComment c) {
-        return of(c, List.of());
+    public static CommunityCommentResponseDTO of(CommunityComment c, boolean isMine) {
+        return of(c, isMine, List.of());
     }
 
     public static CommunityCommentResponseDTO withReplies(CommunityComment root,
@@ -84,5 +86,7 @@ public class CommunityCommentResponseDTO {
     public static List<CommunityCommentResponseDTO> listOf(List<CommunityComment> list) {
         return list.stream().map(CommunityCommentResponseDTO::from).collect(Collectors.toList());
     }
+
+
 }
 

@@ -53,32 +53,35 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommunityCommentResponseDTO> getRootComments(Long communityId) {
+    public List<CommunityCommentResponseDTO> getRootComments(Long communityId, Long currentMemberId) {
 
         Community community = communityRepo.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("커뮤니티 글이 없습니다"));
 
-        List<CommunityComment> roots =
-                commentRepo.findByCommunityAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(community);
-
-        return roots.stream()
-                .map(this::toDtoWithReplies)
+        return commentRepo
+                .findByCommunityAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(community)
+                .stream()
+                .map(c -> toDtoWithReplies(c, currentMemberId))
                 .toList();
     }
 
-    private CommunityCommentResponseDTO toDtoWithReplies(CommunityComment root) {
+    private CommunityCommentResponseDTO toDtoWithReplies(CommunityComment root, Long currentMemberId) {
 
-        List<CommunityCommentResponseDTO> children = commentRepo
+        boolean rootMine = root.getMember().getId().equals(currentMemberId);
+
+        List<CommunityCommentResponseDTO> childDtos = commentRepo
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
                 .stream()
-                .map(CommunityCommentResponseDTO::of)
+                .map(child -> CommunityCommentResponseDTO.of(child,
+                        child.getMember().getId().equals(currentMemberId)))
                 .toList();
 
-        return CommunityCommentResponseDTO.of(root, children);
+        return CommunityCommentResponseDTO.of(root, rootMine, childDtos);
     }
 
+
     @Transactional(readOnly = true)
-    public List<CommunityCommentResponseDTO> getReplies(Long parentId) {
+    public List<CommunityCommentResponseDTO> getReplies(Long parentId, Long currentMemberId) {
 
         CommunityComment parent = commentRepo.findById(parentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 없습니다"));
@@ -86,7 +89,8 @@ public class CommunityCommentService {
         return commentRepo
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
                 .stream()
-                .map(CommunityCommentResponseDTO::of)
+                .map(child -> CommunityCommentResponseDTO.of(child,
+                        child.getMember().getId().equals(currentMemberId)))
                 .toList();
     }
 

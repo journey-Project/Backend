@@ -6,6 +6,7 @@ import com.project.Journey.community.comment.dto.CommunityCommentRequest;
 import com.project.Journey.community.comment.dto.CommunityCommentResponseDTO;
 import com.project.Journey.community.comment.entity.CommunityComment;
 import com.project.Journey.community.comment.service.CommunityCommentService;
+import com.project.Journey.login.auth.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticatedPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -52,10 +55,13 @@ public class CommunityCommentController {
     })
     @GetMapping("/{communityId}/comments")
     public ResponseEntity<List<CommunityCommentResponseDTO>> getComments(
-            @PathVariable Long communityId) {
-
-        return ResponseEntity.ok(commentService.getRootComments(communityId));
+            @PathVariable Long communityId,
+            @AuthenticationPrincipal CustomUserDetails principal /* ← 현재 로그인 사용자  */
+    ) {
+        Long currentId = principal != null ? principal.getMember().getId() : null;
+        return ResponseEntity.ok(commentService.getRootComments(communityId, currentId));
     }
+
 
     @Getter @Setter
     static class UpdateRequest {
