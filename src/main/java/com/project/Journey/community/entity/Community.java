@@ -1,5 +1,6 @@
 package com.project.Journey.community.entity;
 
+import com.project.Journey.community.comment.entity.CommunityComment;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,8 @@ public class Community {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommunityComment> comments = new ArrayList<>();
 
     //커뮤니티 국가
     @Column(name = "country", nullable = false)
