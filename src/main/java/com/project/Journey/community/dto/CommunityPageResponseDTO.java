@@ -15,6 +15,7 @@ public class CommunityPageResponseDTO {
     private Long communityPostId;
     private String title;
     private String nickname;
+    private int commentCount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdAt;
@@ -25,6 +26,7 @@ public class CommunityPageResponseDTO {
                 .communityPostId(community.getCommunityPostId())
                 .title(community.getTitle())
                 .nickname(community.getMember().getNickname())
+                .commentCount(community.getComment_count())
                 .createdAt(community.getCreatedAt())
                 .build();
     }
