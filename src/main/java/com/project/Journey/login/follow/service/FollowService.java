@@ -15,19 +15,19 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
-public class FollwService {
+public class FollowService {
 
     private final FollowRepository followRepository;
     private final MemberRepository memberRepository;
 
     //팔로우
-    public void follow(String myLoginId, String targetLoginId){
-        Member me = memberRepository.findByLoginId(myLoginId).orElseThrow(() -> new EntityNotFoundException("내 계정이 존재하지 않습니다: " + myLoginId));
+    public void follow(Long myMemberId, Long targetMemberId){
+        Member me = memberRepository.findById(myMemberId).orElseThrow(() -> new EntityNotFoundException("내 계정이 존재하지 않습니다: " + myMemberId));
 
-        Member target = memberRepository.findByLoginId(targetLoginId).orElseThrow(() -> new EntityNotFoundException("팔로우 대상 계정이 존재하지 않습니다: " + targetLoginId));
+        Member target = memberRepository.findById(targetMemberId).orElseThrow(() -> new EntityNotFoundException("팔로우 대상 계정이 존재하지 않습니다: " + targetMemberId));
 
         if(followRepository.existsByFollowerAndFollowing(me, target)){
-            throw new IllegalStateException(me+"는 이미"+target+"을 팔로우하고 있습니다.");
+            throw new IllegalStateException("memberId가 "+myMemberId+"인 사용자는 이미 memberId가 "+targetMemberId+"인 사용자를 팔로우하고 있습니다.");
         }
 
         Follow follow = new Follow();
@@ -38,11 +38,11 @@ public class FollwService {
     }
 
     //언팔로우
-    public void unfollow(String myLoginId, String targetLoginId){
-        Member me = memberRepository.findByLoginId(myLoginId).orElseThrow(() -> new EntityNotFoundException("내 계정이 존재하지 않습니다: " + myLoginId));
+    public void unfollow(Long myMemberId, Long targetMemberId){
+        Member me = memberRepository.findById(myMemberId).orElseThrow(() -> new EntityNotFoundException("내 계정이 존재하지 않습니다: " + myMemberId));
 
-        Member target = memberRepository.findByLoginId(targetLoginId)
-                .orElseThrow(() -> new EntityNotFoundException("언팔로우 대상 계정이 존재하지 않습니다: " + targetLoginId));
+        Member target = memberRepository.findById(targetMemberId)
+                .orElseThrow(() -> new EntityNotFoundException("언팔로우 대상 계정이 존재하지 않습니다: " + targetMemberId));
 
         Follow follow = followRepository.findByFollowerAndFollowing(me, target)
                 .orElseThrow(()-> new IllegalStateException("팔로우 관계가 존재하지 않습니다."));
@@ -51,8 +51,8 @@ public class FollwService {
     }
 
     //팔로잉 리스트 가져오기
-    public List<FollowResponseDTO> getFollowingList(String LoginId){
-        Member member = memberRepository.findByLoginId(LoginId).orElseThrow(() -> new EntityNotFoundException(LoginId+"의 계정이 존재하지 않습니다."));
+    public List<FollowResponseDTO> getFollowingList(Long memberId){
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("memberId가 "+memberId+"인 사용자가 존재하지 않습니다."));
 
         List<Follow> follows = followRepository.findByFollower(member);
         List<FollowResponseDTO> result = new ArrayList<>();
@@ -67,8 +67,8 @@ public class FollwService {
     }
 
     //팔로워 리스트 가져오기
-    public List<FollowResponseDTO> getFollowerList(String LoginId){
-        Member member = memberRepository.findByLoginId(LoginId).orElseThrow(() -> new EntityNotFoundException(LoginId+"의 계정이 존재하지 않습니다."));
+    public List<FollowResponseDTO> getFollowerList(Long memberId){
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("memberId가 "+memberId+"인 사용자가 존재하지 않습니다."));
         List<Follow> follows = followRepository.findByFollowing(member);
 
         List<FollowResponseDTO> result = new ArrayList<>();
