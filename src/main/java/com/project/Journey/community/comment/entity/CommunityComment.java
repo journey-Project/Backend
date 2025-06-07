@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "community_comment")
@@ -39,6 +41,10 @@ public class CommunityComment {
     @Builder.Default                                          // 기본값 true
     @Column(nullable = false)
     private boolean isActive = true;
+
+    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
+    private List<CommunityComment> replies = new ArrayList<>();
+
 
     @Builder.Default
     @Column(nullable = false)
