@@ -8,8 +8,6 @@ import lombok.Setter;
 @Setter
 public class FollowRequestDTO {
 
-    @Schema(description = "팔로우할 대상 로그인 ID", example = "user2", required = true)
-    private String targetLoginId; //팔로우할 대상 사용자의 로그인 아이디
-
-    //private Long targetId; // 팔로우할 대상 사용자 ID
+    @Schema(description = "팔로우할 대상 memberId", example = "2", required = true)
+    private Long targetMemberId; //팔로우할 대상 사용자의 memberId
 }

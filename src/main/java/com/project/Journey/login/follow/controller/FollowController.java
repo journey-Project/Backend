@@ -2,7 +2,7 @@ package com.project.Journey.login.follow.controller;
 
 import com.project.Journey.login.follow.dto.FollowRequestDTO;
 import com.project.Journey.login.follow.dto.FollowResponseDTO;
-import com.project.Journey.login.follow.service.FollwService;
+import com.project.Journey.login.follow.service.FollowService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,30 +24,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FollowController {
 
-    private final FollwService follwService;
+    private final FollowService followService;
 
     //팔로우
-    //http://localhost:8080/api/follow?myLoginId=user1
+    //http://localhost:8080/api/follow?myMemberId=1
     @Operation(
         summary = "팔로우 요청",
         description = """
             로그인한 사용자가 다른 사용자를 팔로우합니다.
             
-            POST http://localhost:8080/api/follow?myLoginId=user1
+            POST http://localhost:8080/api/follow?myMemberId=1
                         
             request :\s
             {
-              "targetLoginId": "user2"
+              "targetMemberId": 2
             }
             
-            -> user1이 user2를 팔로우 함
+            -> memberId가 1인 사용자가 memberId가 2인 사용자를 팔로우 함
             
             """,
         parameters = {
-            @Parameter(name = "myLoginId", description = "팔로우를 요청하는 자신의 로그인 ID", required = true, in = ParameterIn.QUERY)
+            @Parameter(name = "myMemberId", description = "팔로우를 요청하는 자신의 memberID", required = true, in = ParameterIn.QUERY)
         },
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "팔로우 대상 ID",
+            description = "팔로우 대상 memberId",
             required = true,
             content = @Content(schema = @Schema(implementation = FollowRequestDTO.class))
         ),
@@ -58,26 +58,26 @@ public class FollowController {
         }
     )
     @PostMapping("/api/follow")
-    public ResponseEntity<Void> follow(@RequestParam String myLoginId,  @RequestBody FollowRequestDTO request){
-        follwService.follow(myLoginId, request.getTargetLoginId());
+    public ResponseEntity<Void> follow(@RequestParam Long myMemberId,  @RequestBody FollowRequestDTO request){
+        followService.follow(myMemberId, request.getTargetMemberId());
         return ResponseEntity.ok().build();
     }
 
     //언팔로우
-    //http://localhost:8080/api/unfollow?myLoginId=user3&targetId=user1
+    //http://localhost:8080/api/unfollow?myMemberId=1&targetMemberId=2
     @Operation(
         summary = "언팔로우 요청",
         description = """
             로그인한 사용자가 다른 사용자를 언팔로우합니다.
             
-            DELETE http://localhost:8080/api/unfollow?myLoginId=user3&targetId=user1
+            DELETE http://localhost:8080/api/unfollow?myMemberId=1&targetMemberId=2
                         
-            -> user3가 user1을 언팔로우
+            -> memberId가 1인 사용자가 memberId가 2인 사용자를 언팔로우
             
             """,
         parameters = {
-            @Parameter(name = "myLoginId", description = "언팔로우를 요청하는 자신의 로그인 ID", required = true, in = ParameterIn.QUERY),
-            @Parameter(name = "targetId", description = "언팔로우 대상 로그인 ID", required = true, in = ParameterIn.QUERY)
+            @Parameter(name = "myMemberId", description = "언팔로우를 요청하는 자신의 memberId", required = true, in = ParameterIn.QUERY),
+            @Parameter(name = "targetMemberId", description = "언팔로우 대상 memberId", required = true, in = ParameterIn.QUERY)
         },
         responses = {
             @ApiResponse(responseCode = "200", description = "언팔로우 성공"),
@@ -86,27 +86,27 @@ public class FollowController {
         }
     )
     @DeleteMapping("/api/unfollow")
-    public ResponseEntity<Void> unfollow(@RequestParam String myLoginId, @RequestParam String targetId) {
-        follwService.unfollow(myLoginId, targetId);
+    public ResponseEntity<Void> unfollow(@RequestParam Long myMemberId, @RequestParam Long targetMemberId) {
+        followService.unfollow(myMemberId, targetMemberId);
         return ResponseEntity.ok().build();
     }
 
 
 
     //팔로잉한 사람들 리스트 가져오기
-    //http://localhost:8080/api/follow/following?memberLoginId=user1
+    //http://localhost:8080/api/follow/following?memberId=1
     @Operation(
         summary = "팔로잉 목록 조회",
         description = """
             특정 사용자가 팔로잉 중인 사용자 목록을 반환합니다.
             
-            GET http://localhost:8080/api/follow/following?memberLoginId=user1
+            GET http://localhost:8080/api/follow/following?memberId=1
                         
-            -> user1이 팔로잉한 사람들 리스트 가져옵니다
+            -> memberId가 1인 사용자가 팔로잉한 사람들 리스트 가져옵니다
             response 예시
             [
                 {
-                    "memberId": 1,
+                    "memberId": 2,
                     "username": "미국여행자",
                     "profileImageUrl": null
                 },
@@ -121,7 +121,7 @@ public class FollowController {
             
             """,
         parameters = {
-            @Parameter(name = "memberLoginId", description = "조회할 사용자의 로그인 ID", required = true, in = ParameterIn.QUERY)
+            @Parameter(name = "memberId", description = "조회할 사용자의 memberId", required = true, in = ParameterIn.QUERY)
         },
         responses = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
@@ -131,8 +131,8 @@ public class FollowController {
         }
     )
     @GetMapping("/api/follow/following")
-    public List<FollowResponseDTO> getFollowing(@RequestParam String memberLoginId){
-        return follwService.getFollowingList(memberLoginId);
+    public List<FollowResponseDTO> getFollowing(@RequestParam Long memberId){
+        return followService.getFollowingList(memberId);
     }
 
     //팔로우한 사람들 리스트 가져오기
@@ -141,9 +141,9 @@ public class FollowController {
         description = """
             특정 사용자를 팔로우 중인 사용자 목록을 반환합니다.
             
-            GET http://localhost:8080/api/follow/followers?memberLoginId=user1
+            GET http://localhost:8080/api/follow/followers?memberId=1
                         
-            -> user1을 팔로우한 사람들 리스트 가져옵니다
+            -> memberId가 1인 사용자를 팔로우한 사람들 리스트 가져옵니다
             response 예시
             [
                 {
@@ -160,7 +160,7 @@ public class FollowController {
             
             """,
         parameters = {
-            @Parameter(name = "memberLoginId", description = "조회할 사용자의 로그인 ID", required = true, in = ParameterIn.QUERY)
+            @Parameter(name = "memberId", description = "조회할 사용자의 memberId", required = true, in = ParameterIn.QUERY)
         },
         responses = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
@@ -170,7 +170,7 @@ public class FollowController {
         }
     )
     @GetMapping("/api/follow/followers")
-    public List<FollowResponseDTO> getFollowers(@RequestParam String memberLoginId){
-        return follwService.getFollowerList(memberLoginId);
+    public List<FollowResponseDTO> getFollowers(@RequestParam Long memberId){
+        return followService.getFollowerList(memberId);
     }
 }
