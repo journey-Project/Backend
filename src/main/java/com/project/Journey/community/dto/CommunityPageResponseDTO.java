@@ -26,8 +26,12 @@ public class CommunityPageResponseDTO {
                 .communityPostId(community.getCommunityPostId())
                 .title(community.getTitle())
                 .nickname(community.getMember().getNickname())
-                .commentCount(community.getComment_count())
                 .createdAt(community.getCreatedAt())
+                .commentCount(
+                        community.getComments() != null
+                                ? (int) community.getComments().stream().filter(c -> c.getParentComment() == null).count()
+                                : 0
+                ) // 대댓글 제외하고 루트 댓글만 카운트할 수도 있음
                 .build();
     }
 }
