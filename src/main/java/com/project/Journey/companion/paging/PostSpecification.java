@@ -2,6 +2,8 @@ package com.project.Journey.companion.paging;
 
 import com.project.Journey.companion.dto.PostSearchRequest;
 import com.project.Journey.companion.entity.Post;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -19,7 +21,8 @@ public class PostSpecification {
             }
 
             if (request.getNickname() != null && !request.getNickname().isEmpty()) {
-                predicates.add(builder.equal(root.get("user_id"), request.getNickname()));
+                Join<Object, Object> memberJoin = root.join("member", JoinType.INNER);
+                predicates.add(builder.like(memberJoin.get("nickname"), "%" + request.getNickname() + "%"));
             }
 
             if (request.getCountry() != null && !request.getCountry().isEmpty()) {
