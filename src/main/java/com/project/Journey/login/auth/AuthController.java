@@ -6,10 +6,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -84,8 +86,16 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "로그아웃 성공", content = @Content(schema = @Schema(example = "{\"message\": \"로그아웃 완료\"}")))
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
+    public ResponseEntity<?> logout(HttpSession session, HttpServletResponse response) {
         session.invalidate();
+
+        ResponseCookie deleteCookie = ResponseCookie.from("JSESSIONID", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(true)
+                .build();
+        response.addHeader("Set-Cookie", deleteCookie.toString());
+
         return ResponseEntity.ok("로그아웃 완료");
     }
 }
