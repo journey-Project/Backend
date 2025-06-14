@@ -2,14 +2,14 @@ social:
   kakao:
     client-id: "${KAKAO_CLIENT_ID}"
     client-secret: "${KAKAO_CLIENT_SECRET}"
-    redirect-uri: "http://localhost:5173/login/callback/kakao"
+    redirect-uri: "https://journeysite.site/login/callback/kakao"
 
   naver:
     client-id: "${NAVER_CLIENT_ID}"
     client-secret: "${NAVER_CLIENT_SECRET}"
-    redirect-uri: "http://localhost:5173/login/callback/naver"
+    redirect-uri: "https://journeysite.site/login/callback/naver"
 
   google:
     client-id: "${GOOGLE_CLIENT_ID}"
     client-secret: "${GOOGLE_CLIENT_SECRET}"
-    redirect-uri: "http://localhost:5173/login/callback/google"
+    redirect-uri: "https://journeysite.site/login/callback/google"
