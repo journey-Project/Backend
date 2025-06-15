@@ -21,7 +21,7 @@ public class CommunityComment {
 
     @ManyToOne(fetch = FetchType.LAZY)                       // ★ 작성자
     @JoinColumn(name = "member_id", nullable = false)
-    private Member writer;
+    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)                       // ★ 게시글
     @JoinColumn(name = "community_post_id", nullable = false)
@@ -62,12 +62,12 @@ public class CommunityComment {
 
     @Transient
     public Long getMemberId() {                       // 필요하면 DTO 변환 시 사용
-        return writer != null ? writer  .getId() : null;
+        return member != null ? member  .getId() : null;
     }
 
     @Builder
-    public CommunityComment(Member writer, Community community, CommunityComment parentComment, String content) {
-        this.writer = writer;
+    public CommunityComment(Member member, Community community, CommunityComment parentComment, String content) {
+        this.member = member;
         this.community = community;
         this.parentComment = parentComment;
         this.content = content;

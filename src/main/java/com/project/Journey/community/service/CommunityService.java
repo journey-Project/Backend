@@ -55,11 +55,11 @@ public class CommunityService {
     @Transactional
     public Long saveCommunityPost(CommunityRequestDTO communityRequestDTO, List<MultipartFile> images) throws IOException {
         Long memberId = communityRequestDTO.getMemberId();
-        Member member = memberRepository.findById(memberId)
+        Member writer = memberRepository.findById(memberId)
             .orElseThrow(() -> new EntityNotFoundException("해당 회원을 찾을 수 없습니다"));
 
         Community community = Community.builder()
-                .member(member)
+                .writer(writer)
                 .country(communityRequestDTO.getCountry())
                 .title(communityRequestDTO.getTitle())
                 .content(communityRequestDTO.getContent())
@@ -102,14 +102,14 @@ public class CommunityService {
                 .map(CommunityImage::getImageUrl)
                 .toList();
 
-        Long writerId = community.getMember().getId();
+        Long writerId = community.getWriter().getId();
 
         return CommunityResponseDTO.builder()
                 .writerId(writerId)
                 .isMine(currentMemberId != null && currentMemberId.equals(writerId))
-                .loginId(community.getMember().getLoginId())
+                .loginId(community.getWriter().getLoginId())
                 .communityPostId(community.getCommunityPostId())
-                .nickname(community.getMember().getNickname())
+                .nickname(community.getWriter().getNickname())
                 .country(community.getCountry())
                 .title(community.getTitle())
                 .content(community.getContent())
@@ -117,7 +117,7 @@ public class CommunityService {
                 .commentCount(community.getComment_count())
                 .createdAt(community.getCreatedAt())
                 .updatedAt(community.getUpdatedAt())
-                .profileImageUrl(community.getMember().getProfileImage())
+                .profileImageUrl(community.getWriter().getProfileImage())
                 .imageUrls(imageUrls)
                 .build();
     }
@@ -241,8 +241,8 @@ public class CommunityService {
         return hotPosts.stream().map(post -> CommunityMainHotPostDTO.builder()
                 .postId(post.getCommunityPostId())
                 //.user_id(post.getUser_id())
-                .nickname(post.getMember().getNickname())
-                .profileImageUrl(post.getMember().getProfileImage())
+                .nickname(post.getWriter().getNickname())
+                .profileImageUrl(post.getWriter().getProfileImage())
                 .imageUrls(post.getImages().stream()
                         .map(image -> image.getImageUrl())
                         .collect(Collectors.toList()))

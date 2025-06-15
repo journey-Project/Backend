@@ -33,7 +33,7 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다: " + postId));
 
-        Member writer = memberRepository.findById(memberId)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다: " + memberId));
 
         Comment parent = null;
@@ -48,31 +48,31 @@ public class CommentService {
         Comment saved = commentRepository.save(
                 Comment.builder()
                         .post(post)
-                        .writer(writer)
+                        .member(member)
                         .content(content)
                         .parentComment(parent)
                         .build());
 
         if (parent == null) {
-            Member receiver = post.getWriter();
-            if (!writer.getId().equals(receiver.getId())) {
+            Member receiver = post.getMember();
+            if (!member.getId().equals(receiver.getId())) {
                 notificationService.push(
                         receiver,
-                        writer,
+                        member,
                         NotificationType.COMMENT,
-                        writer.getDisplayName() + "님이 댓글을 남겼습니다.",
-                        "/companion-board/" + post.getCountry() + "/" + post.getId()
+                        member.getDisplayName() + "님이 댓글을 남겼습니다.",
+                        "/companion-board/" + post.getCountry() + "/" + post.getPostId()
                 );
             }
         } else {
-            Member receiver = parent.getWriter();
-            if (!writer.getId().equals(receiver.getId())) {
+            Member receiver = parent.getMember();
+            if (!member.getId().equals(receiver.getId())) {
                 notificationService.push(
                         receiver,
-                        writer,
+                        member,
                         NotificationType.REPLY,
-                        writer.getDisplayName() + "님이 대댓글을 남겼습니다.",
-                        "/companion-board/" + post.getCountry() + "/" + post.getId() + "?commentId=" + parent.getCommentId()
+                        member.getDisplayName() + "님이 대댓글을 남겼습니다.",
+                        "/companion-board/" + post.getCountry() + "/" + post.getPostId() + "?commentId=" + parent.getCommentId()
                 );
             }
         }
@@ -95,14 +95,14 @@ public class CommentService {
 
     private CommentResponseDTO toDtoWithChildren(Comment root, Long currentId) {
 
-        boolean mineRoot = currentId != null && root.getWriter().getId().equals(currentId);
+        boolean mineRoot = currentId != null && root.getMember().getId().equals(currentId);
 
         List<CommentResponseDTO> childDtos = commentRepository
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
                 .stream()
                 .map(child -> CommentResponseDTO.of(
                         child,
-                        currentId != null && child.getWriter().getId().equals(currentId)))
+                        currentId != null && child.getMember().getId().equals(currentId)))
                 .toList();
 
         return CommentResponseDTO.of(root, mineRoot, childDtos);   // ← replies 포함
@@ -121,7 +121,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + commentId));
 
-        if (!comment.getWriter().getId().equals(userId)) {
+        if (!comment.getMember().getId().equals(userId)) {
             throw new IllegalStateException("수정 권한이 없습니다");
         }
         if (!comment.isActive()) {

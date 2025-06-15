@@ -32,7 +32,7 @@ public class CommunityCommentService {
 
         Community community = communityRepo.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("커뮤니티 글이 없습니다"));
-        Member writer = memberRepo.findById(req.getMemberId())
+        Member member = memberRepo.findById(req.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("회원이 없습니다"));
 
         CommunityComment parent = null;
@@ -47,29 +47,29 @@ public class CommunityCommentService {
         CommunityComment saved = commentRepo.save(
                 CommunityComment.builder()
                         .community(community)
-                        .writer(writer)
+                        .member(member)
                         .content(req.getContent())
                         .parentComment(parent)
                         .build());
         if (parent == null) {
             Member receiver = community.getWriter();
-            if (!writer.getId().equals(receiver.getId())) {
+            if (!member.getId().equals(receiver.getId())) {
                 notificationService.push(
                         receiver,
-                        writer,
+                        member,
                         NotificationType.COMMENT,
-                        writer.getDisplayName() + "님 댓글을 남겼습니다.",
+                        member.getDisplayName() + "님 댓글을 남겼습니다.",
                         "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId()
                 );
             }
         } else {
             Member receiver = community.getWriter();
-            if (!writer.getId().equals(receiver.getId())) {
+            if (!member.getId().equals(receiver.getId())) {
                 notificationService.push(
                         receiver,
-                        writer,
+                        member,
                         NotificationType.REPLY,
-                        writer.getDisplayName() + "님이 대댓글을 남겼습니다.",
+                        member.getDisplayName() + "님이 대댓글을 남겼습니다.",
                         "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId() + "?commentId=" + parent.getCommentId()
                 );
             }
@@ -93,13 +93,13 @@ public class CommunityCommentService {
 
     private CommunityCommentResponseDTO toDtoWithReplies(CommunityComment root, Long currentMemberId) {
 
-        boolean rootMine = root.getWriter().getId().equals(currentMemberId);
+        boolean rootMine = root.getMember().getId().equals(currentMemberId);
 
         List<CommunityCommentResponseDTO> childDtos = commentRepo
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
                 .stream()
                 .map(child -> CommunityCommentResponseDTO.of(child,
-                        child.getWriter().getId().equals(currentMemberId)))
+                        child.getMember().getId().equals(currentMemberId)))
                 .toList();
 
         return CommunityCommentResponseDTO.of(root, rootMine, childDtos);
@@ -116,7 +116,7 @@ public class CommunityCommentService {
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
                 .stream()
                 .map(child -> CommunityCommentResponseDTO.of(child,
-                        child.getWriter().getId().equals(currentMemberId)))
+                        child.getMember().getId().equals(currentMemberId)))
                 .toList();
     }
 
