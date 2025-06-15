@@ -4,6 +4,7 @@ import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.notification.dto.NotificationDTO;
 import com.project.Journey.notification.entity.Notification;
 import com.project.Journey.notification.entity.NotificationType;
+import com.project.Journey.notification.entity.PostType;
 import com.project.Journey.notification.repository.NotificationRepository;
 
 import jakarta.persistence.EntityManager;
@@ -33,7 +34,9 @@ public class NotificationService {
                      @Nullable Member sender,
                      NotificationType type,
                      String message,
-                     String link) {
+                     String link,
+                     Long postId,
+                     PostType postType) {
         if (sender != null && sender.getId().equals(receiver.getId())) {
             return;
         }
@@ -44,6 +47,8 @@ public class NotificationService {
                 .type(type)
                 .message(message)
                 .link(link)
+                .postId(postId)
+                .postType(postType)
                 .build());
 
         simpMessagingTemplate.convertAndSend("/topic/users/" + receiver.getId() + "/notifications", NotificationDTO.from(saved));
@@ -86,6 +91,6 @@ public class NotificationService {
 
         NotificationType notificationType = NotificationType.valueOf(type.toUpperCase());
 
-        push(receiver, sender, notificationType, message, link);
+        push(receiver, sender, notificationType, message, link, 1L, PostType.COMMUNITY);
     }
 }

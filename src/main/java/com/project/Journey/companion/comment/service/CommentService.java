@@ -11,6 +11,7 @@ import com.project.Journey.companion.repository.PostRepository;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.notification.entity.NotificationType;
+import com.project.Journey.notification.entity.PostType;
 import com.project.Journey.notification.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -61,7 +62,9 @@ public class CommentService {
                         member,
                         NotificationType.COMMENT,
                         member.getDisplayName() + "님이 댓글을 남겼습니다.",
-                        "/companion-board/" + post.getCountry() + "/" + post.getPostId()
+                        "/companion-board/" + post.getCountry() + "/" + post.getPostId(),
+                        post.getPostId(),                         // postId
+                        PostType.COMPANION                        // postType
                 );
             }
         } else {
@@ -72,7 +75,9 @@ public class CommentService {
                         member,
                         NotificationType.REPLY,
                         member.getDisplayName() + "님이 대댓글을 남겼습니다.",
-                        "/companion-board/" + post.getCountry() + "/" + post.getPostId() + "?commentId=" + parent.getCommentId()
+                        "/companion-board/" + post.getCountry() + "/" + post.getPostId() + "?commentId=" + parent.getCommentId(),
+                        post.getPostId(),
+                        PostType.COMPANION
                 );
             }
         }
