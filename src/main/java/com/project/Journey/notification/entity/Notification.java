@@ -44,6 +44,13 @@ public class Notification {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    public void delete() {
+        this.isDeleted = true;
+    }
+
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();
