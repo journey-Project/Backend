@@ -85,7 +85,7 @@ public class CommunityCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("커뮤니티 글이 없습니다"));
 
         return commentRepo
-                .findByCommunityAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(community)
+                .findByCommunityAndParentCommentIsNullOrderByCreatedAtAsc(community)
                 .stream()
                 .map(c -> toDtoWithReplies(c, currentMemberId))
                 .toList();
@@ -113,7 +113,7 @@ public class CommunityCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 없습니다"));
 
         return commentRepo
-                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
+                .findByParentComment_CommentIdAndIsActiveTrueOrderByCreatedAtAsc(parentId)
                 .stream()
                 .map(child -> CommunityCommentResponseDTO.of(child,
                         child.getMember().getId().equals(currentMemberId)))
