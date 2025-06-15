@@ -44,4 +44,32 @@ public class NotificationController {
     public ResponseEntity<Long> countUnread(@AuthenticationPrincipal CustomUserDetails user) {
         return ResponseEntity.ok(notificationService.countUnread(user.getMember().getId()));
     }
+
+    @Operation(summary = "전체 알림 읽음 처리")
+    @PatchMapping("/read-all")
+    public ResponseEntity<Void> readAll(@AuthenticationPrincipal CustomUserDetails user) {
+        notificationService.markAllRead(user.getMember().getId());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "알림 삭제(soft delete)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @AuthenticationPrincipal CustomUserDetails user) {
+        notificationService.delete(id, user.getMember().getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "[테스트] 알림 푸시 전송", description = "알림 전송 테스트용 API입니다.")
+    @PostMapping("/test-push")
+    public void testPush(
+            @AuthenticationPrincipal CustomUserDetails sender,
+            @RequestParam Long receiverId,
+            @RequestParam String type,
+            @RequestParam String message,
+            @RequestParam String link
+    ) {
+        notificationService.testPush(sender.getMember(), receiverId, type, message, link);
+    }
+
 }
