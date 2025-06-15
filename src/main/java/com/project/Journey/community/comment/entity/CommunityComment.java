@@ -13,7 +13,6 @@ import java.util.List;
 @Table(name = "community_comment")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
 @AllArgsConstructor
 public class CommunityComment {
 
@@ -22,7 +21,7 @@ public class CommunityComment {
 
     @ManyToOne(fetch = FetchType.LAZY)                       // ★ 작성자
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    private Member writer;
 
     @ManyToOne(fetch = FetchType.LAZY)                       // ★ 게시글
     @JoinColumn(name = "community_post_id", nullable = false)
@@ -38,7 +37,6 @@ public class CommunityComment {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @Builder.Default                                          // 기본값 true
     @Column(nullable = false)
     private boolean isActive = true;
 
@@ -46,7 +44,6 @@ public class CommunityComment {
     private List<CommunityComment> replies = new ArrayList<>();
 
 
-    @Builder.Default
     @Column(nullable = false)
     private int replyCount = 0;
 
@@ -65,6 +62,16 @@ public class CommunityComment {
 
     @Transient
     public Long getMemberId() {                       // 필요하면 DTO 변환 시 사용
-        return member != null ? member.getId() : null;
+        return writer != null ? writer  .getId() : null;
+    }
+
+    @Builder
+    public CommunityComment(Member writer, Community community, CommunityComment parentComment, String content) {
+        this.writer = writer;
+        this.community = community;
+        this.parentComment = parentComment;
+        this.content = content;
+        this.isActive = true;
+        this.replyCount = 0;
     }
 }

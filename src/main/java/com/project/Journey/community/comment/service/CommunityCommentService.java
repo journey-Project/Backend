@@ -9,6 +9,8 @@ import com.project.Journey.community.entity.Community;
 import com.project.Journey.community.repository.CommunityRepository;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.repository.MemberRepository;
+import com.project.Journey.notification.entity.NotificationType;
+import com.project.Journey.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,13 +25,14 @@ public class CommunityCommentService {
     private final CommunityCommentRepository commentRepo;
     private final CommunityRepository        communityRepo;
     private final MemberRepository           memberRepo;
+    private final NotificationService notificationService;
 
     public CommunityCommentResponseDTO createComment(Long communityId,
                                                      CommunityCommentRequest req) {
 
         Community community = communityRepo.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("커뮤니티 글이 없습니다"));
-        Member member = memberRepo.findById(req.getMemberId())
+        Member writer = memberRepo.findById(req.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("회원이 없습니다"));
 
         CommunityComment parent = null;
@@ -44,10 +47,33 @@ public class CommunityCommentService {
         CommunityComment saved = commentRepo.save(
                 CommunityComment.builder()
                         .community(community)
-                        .member(member)
+                        .writer(writer)
                         .content(req.getContent())
                         .parentComment(parent)
                         .build());
+        if (parent == null) {
+            Member receiver = community.getWriter();
+            if (!writer.getId().equals(receiver.getId())) {
+                notificationService.push(
+                        receiver,
+                        writer,
+                        NotificationType.COMMENT,
+                        writer.getDisplayName() + "님 댓글을 남겼습니다.",
+                        "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId()
+                );
+            }
+        } else {
+            Member receiver = community.getWriter();
+            if (!writer.getId().equals(receiver.getId())) {
+                notificationService.push(
+                        receiver,
+                        writer,
+                        NotificationType.REPLY,
+                        writer.getDisplayName() + "님이 대댓글을 남겼습니다.",
+                        "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId() + "?commentId=" + parent.getCommentId()
+                );
+            }
+        }
 
         return CommunityCommentResponseDTO.from(saved);
     }
@@ -67,13 +93,13 @@ public class CommunityCommentService {
 
     private CommunityCommentResponseDTO toDtoWithReplies(CommunityComment root, Long currentMemberId) {
 
-        boolean rootMine = root.getMember().getId().equals(currentMemberId);
+        boolean rootMine = root.getWriter().getId().equals(currentMemberId);
 
         List<CommunityCommentResponseDTO> childDtos = commentRepo
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
                 .stream()
                 .map(child -> CommunityCommentResponseDTO.of(child,
-                        child.getMember().getId().equals(currentMemberId)))
+                        child.getWriter().getId().equals(currentMemberId)))
                 .toList();
 
         return CommunityCommentResponseDTO.of(root, rootMine, childDtos);
@@ -90,7 +116,7 @@ public class CommunityCommentService {
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
                 .stream()
                 .map(child -> CommunityCommentResponseDTO.of(child,
-                        child.getMember().getId().equals(currentMemberId)))
+                        child.getWriter().getId().equals(currentMemberId)))
                 .toList();
     }
 
