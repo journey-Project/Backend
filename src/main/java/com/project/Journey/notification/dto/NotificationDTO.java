@@ -4,41 +4,34 @@ import com.project.Journey.notification.entity.Notification;
 import lombok.*;
 
 import java.time.LocalDateTime;
-@Data
+
 @Builder
 @AllArgsConstructor //모든 필드를 초기화할 수 있는 생성자를 추가
 @Getter
-@Setter
 public class NotificationDTO {
 
-    private Long notification_id;
-    private String user_id; //발신자
-
-    private String recipient; // 수신자
-
-    private Long post_id;
-
+    private Long id;
+    private Long senderId;
+    private Long receiverId;
+    private String senderNickname;
     private String message;
+    private String link;
+    private String type;
+    private boolean read;
+    private LocalDateTime createdAt;
 
-    private boolean is_read;
+    public static NotificationDTO from(Notification n){
+        return NotificationDTO.builder()
+                .id(n.getId())
+                .senderId(n.getSender() != null ? n.getSender().getId() : null)
+                .receiverId(n.getReceiver().getId())
+                .senderNickname(n.getReceiver() != null ? n.getSender().getDisplayName() : "SYSTEM")
+                .message(n.getMessage())
+                .link(n.getLink())
+                .type(n.getType().name())
+                .read(n.isRead())
+                .createdAt(n.getCreatedAt())
+                .build();
 
-    private LocalDateTime created_at;
-
-    public NotificationDTO(){
-
-    }
-
-    //Notification 엔티티를 DTO로 변환
-    public static NotificationDTO fromEntity(Notification notification){
-        return new NotificationDTO(
-                notification.getNotification_id(),
-                notification.getUser_id(),
-                notification.getRecipient(),
-                notification.getPost_id(),
-                notification.getMessage(),
-                notification.is_read(),
-                notification.getCreated_at()
-
-        );
     }
 }

@@ -1,44 +1,53 @@
 package com.project.Journey.notification.entity;
 
+import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.notification.dto.NotificationDTO;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
-@Table(name = "notifications")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "notification")
 public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notification_id")
-    private Long notification_id;
+    private Long id;
 
-    //@ManyToOne
-    @Column(name = "user_id", nullable = false)
-    private String user_id; //발신자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id")
+    private Member sender;
 
-    //@ManyToOne
-    @Column(name = "recipient", nullable = false)
-    private String recipient; // 수신자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = false)
+    private Member receiver;
 
-    //@JoinColumn
-    @Column(name = "post_id", nullable = false)
-    private Long post_id;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType type;
 
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "is_read", nullable = false)
-    private boolean is_read;
+    @Column(nullable = false, length = 255)
+    private String link;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime created_at;
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean read = false;
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
+    @PrePersist
+    void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
+    public void markAsRead() { this.read = true; }
 }
