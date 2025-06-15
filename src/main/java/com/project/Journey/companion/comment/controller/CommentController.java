@@ -126,7 +126,7 @@ public class CommentController {
         return commentRepository
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
                 .stream()
-                .map(c -> CommentResponseDTO.of(c, currentMemberId != null && c.getWriter().getId().equals(currentMemberId)))
+                .map(c -> CommentResponseDTO.of(c, currentMemberId != null && c.getMember().getId().equals(currentMemberId)))
                 .toList();
     }
 

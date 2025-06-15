@@ -30,7 +30,7 @@ public class CommunityPageResponseDTO {
         return CommunityPageResponseDTO.builder()
                 .communityPostId(community.getCommunityPostId())
                 .title(community.getTitle())
-                .nickname(community.getMember().getNickname())
+                .nickname(community.getWriter().getNickname())
                 .commentCount(totalCommentCount) // ✅ 실시간 계산된 댓글 수
                 .createdAt(community.getCreatedAt())
                 .build();
