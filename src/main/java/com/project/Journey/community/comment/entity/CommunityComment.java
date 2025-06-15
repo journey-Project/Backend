@@ -40,10 +40,6 @@ public class CommunityComment {
     @Column(nullable = false)
     private boolean isActive = true;
 
-    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
-    private List<CommunityComment> replies = new ArrayList<>();
-
-
     @Column(nullable = false)
     private int replyCount = 0;
 
