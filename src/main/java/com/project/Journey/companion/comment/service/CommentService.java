@@ -10,6 +10,8 @@ import com.project.Journey.companion.entity.Post;
 import com.project.Journey.companion.repository.PostRepository;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.repository.MemberRepository;
+import com.project.Journey.notification.entity.NotificationType;
+import com.project.Journey.notification.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,17 +26,16 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
-
+    private final NotificationService notificationService;
     public Comment createComment(Long postId, Long memberId,
                                  String content, Long parentCommentId) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다: " + postId));
 
-        Member member = memberRepository.findById(memberId)
+        Member writer = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다: " + memberId));
 
-        /* 부모 댓글 검증 / replyCount 증감 로직은 그대로 */
         Comment parent = null;
         if (parentCommentId != null) {
             parent = commentRepository.findById(parentCommentId)
@@ -44,17 +45,42 @@ public class CommentService {
             parent.incrementReplyCount();
         }
 
-        Comment comment = Comment.builder()
-                .post(post)
-                .member(member)
-                .content(content)
-                .parentComment(parent)
-                .build();
+        Comment saved = commentRepository.save(
+                Comment.builder()
+                        .post(post)
+                        .writer(writer)
+                        .content(content)
+                        .parentComment(parent)
+                        .build());
 
-        return commentRepository.save(comment);
+        if (parent == null) {
+            Member receiver = post.getWriter();
+            if (!writer.getId().equals(receiver.getId())) {
+                notificationService.push(
+                        receiver,
+                        writer,
+                        NotificationType.COMMENT,
+                        writer.getDisplayName() + "님이 댓글을 남겼습니다.",
+                        "/companion-board/" + post.getCountry() + "/" + post.getId()
+                );
+            }
+        } else {
+            Member receiver = parent.getWriter();
+            if (!writer.getId().equals(receiver.getId())) {
+                notificationService.push(
+                        receiver,
+                        writer,
+                        NotificationType.REPLY,
+                        writer.getDisplayName() + "님이 대댓글을 남겼습니다.",
+                        "/companion-board/" + post.getCountry() + "/" + post.getId() + "?commentId=" + parent.getCommentId()
+                );
+            }
+        }
+
+
+        return saved;
     }
 
-    /* ---------- 댓글 목록 ---------- */
     public List<CommentResponseDTO> getCommentsByPost(Long postId, Long currentMemberId) {
 
         Post post = postRepository.findById(postId)
@@ -69,14 +95,14 @@ public class CommentService {
 
     private CommentResponseDTO toDtoWithChildren(Comment root, Long currentId) {
 
-        boolean mineRoot = currentId != null && root.getMember().getId().equals(currentId);
+        boolean mineRoot = currentId != null && root.getWriter().getId().equals(currentId);
 
         List<CommentResponseDTO> childDtos = commentRepository
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
                 .stream()
                 .map(child -> CommentResponseDTO.of(
                         child,
-                        currentId != null && child.getMember().getId().equals(currentId)))
+                        currentId != null && child.getWriter().getId().equals(currentId)))
                 .toList();
 
         return CommentResponseDTO.of(root, mineRoot, childDtos);   // ← replies 포함
@@ -90,12 +116,12 @@ public class CommentService {
                 .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent);
     }
 
-    /* ---------- 댓글 수정 ---------- */
+
     public Comment updateComment(Long commentId, String content, Long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + commentId));
 
-        if (!comment.getMember().getId().equals(userId)) {
+        if (!comment.getWriter().getId().equals(userId)) {
             throw new IllegalStateException("수정 권한이 없습니다");
         }
         if (!comment.isActive()) {
@@ -104,7 +130,7 @@ public class CommentService {
         comment.setContent(content);
         return comment;
     }
-    /* ---------- 논리 삭제 ---------- */
+
     public void deleteComment(Long commentId) {
 
         Comment comment = commentRepository.findById(commentId)
