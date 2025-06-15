@@ -47,6 +47,13 @@ public class Notification {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
+    @Column(nullable = false)
+    private Long postId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostType postType;
+
     public void delete() {
         this.isDeleted = true;
     }

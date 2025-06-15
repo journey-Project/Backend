@@ -10,6 +10,7 @@ import com.project.Journey.community.repository.CommunityRepository;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.notification.entity.NotificationType;
+import com.project.Journey.notification.entity.PostType;
 import com.project.Journey.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,9 @@ public class CommunityCommentService {
                         member,
                         NotificationType.COMMENT,
                         member.getDisplayName() + "님 댓글을 남겼습니다.",
-                        "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId()
+                        "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId(),
+                        community.getCommunityPostId(),          // postId
+                        PostType.COMMUNITY                       // postType (enum)
                 );
             }
         } else {
@@ -70,7 +73,9 @@ public class CommunityCommentService {
                         member,
                         NotificationType.REPLY,
                         member.getDisplayName() + "님이 대댓글을 남겼습니다.",
-                        "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId() + "?commentId=" + parent.getCommentId()
+                        "/community-board/" + community.getCountry() + "/" + community.getCommunityPostId() + "?commentId=" + parent.getCommentId(),
+                        community.getCommunityPostId(),
+                        PostType.COMMUNITY
                 );
             }
         }
