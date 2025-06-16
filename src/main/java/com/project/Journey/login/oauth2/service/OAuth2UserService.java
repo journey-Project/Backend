@@ -19,6 +19,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -78,13 +79,28 @@ public class OAuth2UserService {
         String socialId = userInfo.getSocialId();
         String email = userInfo.getEmail();
 
-        Optional<Member> optional = memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+        Optional<Member> existingMember = memberRepository.findByEmail(email);
+        if (existingMember.isPresent()) {
+            Member existing = existingMember.get();
+            if (!existing.getSocialType().equals(socialType)) {
+                throw new IllegalArgumentException(
+                        "이미 다른 방식(" + (existing.getSocialType() != null ? existing.getSocialType() : "일반 가입") + ")으로 가입된 이메일입니다."
+                );
+            }
+        }
+
+        List<Member> members = memberRepository.findAllBySocialTypeAndSocialId(socialType, socialId);
+        if (members.size() > 1) {
+            throw new IllegalStateException("중복된 소셜 ID로 인해 로그인할 수 없습니다.");
+        }
+
+        Optional<Member> optional = members.stream().findFirst(); // 이미 조회했으므로 재조회 생략
 
         if (optional.isPresent()) {
             log.info("[OAuth2UserService] 기존 소셜회원: {}, {}", socialType, email);
             return optional.get();
         } else {
-            // 신규 가입
+            // 4. 신규 가입
             Member newMember = Member.builder()
                     .socialType(socialType)
                     .socialId(socialId)
@@ -96,6 +112,7 @@ public class OAuth2UserService {
             log.info("[OAuth2UserService] 새 소셜회원 가입: {}, {}", socialType, email);
             return newMember;
         }
+
     }
 
     private OAuth2UserInfo getKakaoUserInfo(String code) {
