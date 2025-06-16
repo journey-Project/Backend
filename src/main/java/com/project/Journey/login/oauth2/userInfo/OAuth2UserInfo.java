@@ -13,4 +13,5 @@ public abstract class OAuth2UserInfo {
     // 소셜에서 제공받은 정보를 추출하기 위한 메서드
     public abstract String getSocialId();
     public abstract String getEmail();
+    public abstract String getName();
 }

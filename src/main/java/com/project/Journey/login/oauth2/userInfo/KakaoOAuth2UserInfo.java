@@ -27,5 +27,10 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
     public String getEmail() {
         return (String) account.get("email");   // null이면 그대로 null 반환
     }
+
+    @Override
+    public String getName() {
+        return (String) profile.get("nickname"); // nickname은 카카오 기본 제공 항목
+    }
 }
 
