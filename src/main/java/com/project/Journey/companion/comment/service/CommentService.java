@@ -92,7 +92,7 @@ public class CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없음: "+ postId));
 
         return commentRepository
-                .findByPostAndParentCommentIsNullAndIsActiveTrueOrderByCreatedAtAsc(post)
+                .findByPostAndParentCommentIsNullOrderByCreatedAtAsc(post)
                 .stream()
                 .map(c -> toDtoWithChildren(c, currentMemberId))
                 .toList();

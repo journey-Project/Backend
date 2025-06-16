@@ -63,7 +63,7 @@ public class CommunityCommentResponseDTO {
                 .isMine(isMine)
                 .displayName(c.getMember().getDisplayName())
                 .profileImage(c.getMember().getProfileImage())
-                .content(c.isActive() ? c.getContent() : "삭제된 댓글입니다.")
+                .content(c.getContent())
                 .parentCommentId(c.getParentComment() != null ? c.getParentComment().getCommentId() : null)
                 .isActive(c.isActive())
                 .createdAt(c.getCreatedAt())
