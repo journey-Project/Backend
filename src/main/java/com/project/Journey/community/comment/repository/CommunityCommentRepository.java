@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface CommunityCommentRepository extends JpaRepository<CommunityComment, Long> {
     List<CommunityComment> findByCommunityAndParentCommentIsNullOrderByCreatedAtAsc(Community community);
-    List<CommunityComment> findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(CommunityComment parent);
+    List<CommunityComment> findByParentCommentOrderByCreatedAtAsc(CommunityComment parent);
     List<CommunityComment> findByParentComment_CommentIdAndIsActiveTrueOrderByCreatedAtAsc(Long parentId);
 
 }
