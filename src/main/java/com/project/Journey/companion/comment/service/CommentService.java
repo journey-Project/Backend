@@ -103,7 +103,7 @@ public class CommentService {
         boolean mineRoot = currentId != null && root.getMember().getId().equals(currentId);
 
         List<CommentResponseDTO> childDtos = commentRepository
-                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
+                .findByParentCommentOrderByCreatedAtAsc(root)
                 .stream()
                 .map(child -> CommentResponseDTO.of(
                         child,
@@ -118,7 +118,7 @@ public class CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + parentCommentId));
 
         return commentRepository
-                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent);
+                .findByParentCommentOrderByCreatedAtAsc(parent);
     }
 
 

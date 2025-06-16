@@ -124,7 +124,7 @@ public class CommentController {
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다: " + parentCommentId));
 
         return commentRepository
-                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(parent)
+                .findByParentCommentOrderByCreatedAtAsc(parent)
                 .stream()
                 .map(c -> CommentResponseDTO.of(c, currentMemberId != null && c.getMember().getId().equals(currentMemberId)))
                 .toList();

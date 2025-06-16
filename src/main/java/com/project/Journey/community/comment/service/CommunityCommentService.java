@@ -101,7 +101,7 @@ public class CommunityCommentService {
         boolean rootMine = root.getMember().getId().equals(currentMemberId);
 
         List<CommunityCommentResponseDTO> childDtos = commentRepo
-                .findByParentCommentAndIsActiveTrueOrderByCreatedAtAsc(root)
+                .findByParentCommentOrderByCreatedAtAsc(root)
                 .stream()
                 .map(child -> CommunityCommentResponseDTO.of(child,
                         child.getMember().getId().equals(currentMemberId)))
