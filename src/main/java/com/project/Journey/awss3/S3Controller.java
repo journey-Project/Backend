@@ -68,6 +68,10 @@ public class S3Controller {
             @RequestParam("file") MultipartFile file,
             @RequestParam("role") MemberRole role
     ) {
+        if (file.getSize() > 5 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body("5MB 이하의 파일만 업로드할 수 있습니다.");
+        }
+
         String imageUrl = s3Service.uploadProfileImage(file, role);
         return ResponseEntity.ok(imageUrl);
     }
@@ -113,6 +117,10 @@ public class S3Controller {
     public ResponseEntity<String> uploadApplicationImage(
             @RequestParam("file") MultipartFile file
     ) {
+        if (file.getSize() > 5 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body("5MB 이하의 파일만 업로드할 수 있습니다.");
+        }
+
         String imageUrl = s3Service.uploadApplicationImage(file);
         return ResponseEntity.ok(imageUrl);
     }
