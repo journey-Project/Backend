@@ -217,23 +217,16 @@ public class PostService {
     }
 
     //조회 수가 높은 순서대로 조회(핫 게시글)
+    @Transactional
     public PostResponseDTO getPostByIdAndIncrementView(Long postId, Long currentUserId) {
-
-        String key = VIEW_COUNT_KEY + postId;
-        Long cnt = redisTemplate.opsForValue().increment(key, 1);
-
-        // Redis 첫 저장이면 DB 값으로 초기화
-        if (cnt != null && cnt == 1L) {
-            Post tmp = postRepository.findById(postId)
-                    .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
-            redisTemplate.opsForValue().set(key, tmp.getView_count() + 1);
-        }
-
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
-        return toDto(post, currentUserId);              // ★ isMine 적용
-    }
 
+        post.setView_count(post.getView_count() + 1);  // 바로 증가
+        // save 생략해도 트랜잭션 끝나면 dirty checking 으로 반영됨
+
+        return toDto(post, currentUserId);  // isMine 포함된 DTO 반환
+    }
 
 
 
