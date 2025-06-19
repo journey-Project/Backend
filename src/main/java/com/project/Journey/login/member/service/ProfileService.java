@@ -1,5 +1,6 @@
 package com.project.Journey.login.member.service;
 
+import com.project.Journey.awss3.S3Service;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberTag;
 import com.project.Journey.login.member.dto.ProfileImageResponseDTO;
@@ -8,9 +9,11 @@ import com.project.Journey.login.member.dto.ProfileUpdateRequestDTO;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.login.member.repository.MemberTagRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service @RequiredArgsConstructor
 @Transactional
@@ -18,6 +21,7 @@ public class ProfileService {
 
     private final MemberRepository memberRepo;
     private final MemberTagRepository tagRepo;
+    private final S3Service s3Service;
 
     @Transactional(readOnly = true)
     public ProfileResponseDTO getMyProfile(Long memberId) {
@@ -77,6 +81,21 @@ public class ProfileService {
                 .nickname(member.getDisplayName())
                 .profileImage(member.getProfileImage())
                 .build();
+    }
+
+
+    @Transactional
+    public void updateProfileImage(Long memberId, MultipartFile file) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
+
+        // 기존 이미지 삭제 (선택)
+        if (member.getProfileImage() != null) {
+            s3Service.deleteS3Image(member.getProfileImage());
+        }
+
+        String imageUrl = s3Service.uploadProfileImage(file, member.getRole());
+        member.setProfileImage(imageUrl);
     }
 
 }

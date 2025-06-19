@@ -118,4 +118,12 @@ public class Member {
         if(homepage != null) this.homepage = homepage;
         if(bio != null) this.bio = bio;
     }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updateProfileImage(String imageUrl) {
+        this.profileImage = imageUrl;
+    }
 }
