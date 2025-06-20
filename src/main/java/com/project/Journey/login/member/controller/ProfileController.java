@@ -35,19 +35,12 @@ public class ProfileController {
     }
 
     @Operation(summary = "내 프로필 수정",
-            description = """
-               전달한 필드만 업데이트합니다.  
-               · tags : 최대 3개, 각 6자 ≤  
-               """)
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "수정 완료"),
-            @ApiResponse(responseCode = "400", description = "검증 실패 (태그 3개 초과, 6자 초과 등)")
-    })
+            description = "전달된 필드만 업데이트합니다.<br>· tags: 최대 3개, 각 6자 이하")
     @PatchMapping("/{id}/profile")
-    public ResponseEntity<?> updateProfile(@PathVariable Long id,
-                                           @Valid @RequestBody ProfileUpdateRequestDTO dto) {
-        profileService.updateProfile(id, dto);
-        return ResponseEntity.ok("프로필 수정 완료");
+    public ResponseEntity<ProfileResponseDTO> updateProfile(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody ProfileUpdateRequestDTO dto) {
+        return ResponseEntity.ok(profileService.updateProfile(id, dto));
     }
 
     @Operation(summary = "여행 일정 추가")
@@ -82,27 +75,22 @@ public class ProfileController {
         return ResponseEntity.ok("삭제 완료");
     }
 
-    @Operation(
-            summary = "프로필 이미지와 닉네임 조회",
-            description = "댓글, 목록 그리고 헤더에 사용할 가벼운 전용 API입니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = ProfileImageResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "회원 없음",
-                    content = @Content(schema = @Schema(example = "회원 없음")))
-    })
+    @Operation(summary = "프로필 이미지와 닉네임 조회",
+            description = "댓글, 목록, 헤더 등에서 사용할 가벼운 전용 API")
     @GetMapping("/{id}/profile-image")
-    public ResponseEntity<ProfileImageResponseDTO> getProfileImage(@PathVariable Long id) {
-        return ResponseEntity.ok(profileService.getProfileImage(id));
+    public ProfileImageResponseDTO getProfileImage(@PathVariable Long id) {
+        return profileService.getProfileImage(id);
     }
 
     @Operation(summary = "프로필 이미지 업로드")
-    @ApiResponse(responseCode = "200", description = "업로드 성공")
-    @PostMapping("/{id}/profile-image")
-    public ResponseEntity<?> uploadProfileImage(@PathVariable Long id,
-                                                @RequestParam("image") MultipartFile file) {
-        profileService.updateProfileImage(id, file);
-        return ResponseEntity.ok("프로필 이미지 업로드 완료");
+    @PostMapping(
+            path = "/{id}/profile-image",
+            consumes = "multipart/form-data")
+    public ResponseEntity<ProfileImageResponseDTO> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("image") MultipartFile file) {
+
+        ProfileImageResponseDTO res = profileService.updateProfileImage(id, file);
+        return ResponseEntity.ok(res);           // 최신 URL 즉시 반환
     }
 }
