@@ -1,6 +1,7 @@
 package com.project.Journey.login.member.service;
 
 import com.project.Journey.awss3.S3Service;
+import com.project.Journey.login.auth.CustomUserDetails;
 import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.domain.MemberTag;
 import com.project.Journey.login.member.dto.ProfileImageResponseDTO;
@@ -11,6 +12,8 @@ import com.project.Journey.login.member.repository.MemberTagRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,32 +48,40 @@ public class ProfileService {
 
     }
 
-    public void updateProfile(Long memberId, ProfileUpdateRequestDTO dto) {
+    @Transactional
+    public ProfileResponseDTO updateProfile(Long memberId,
+                                            ProfileUpdateRequestDTO dto) {
+
         Member m = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
-        m.updateProfile(
-                dto.getNickname(),
-                dto.getAge(),
-                dto.getGender(),
-                dto.getRegion(),
-                dto.getHomepage(),
-                dto.getBio()
-        );
+        m.updateProfile(dto.getNickname(), dto.getAge(), dto.getGender(),
+                dto.getRegion(), dto.getHomepage(), dto.getBio());
 
         tagRepo.deleteByMember(m);
         if (dto.getTags() != null && !dto.getTags().isEmpty()) {
-
             if (dto.getTags().size() > 3)
                 throw new IllegalArgumentException("태그는 최대 3개까지 가능합니다");
+            dto.getTags().forEach(tag -> tagRepo.save(new MemberTag(m, tag)));
+        }
 
-            dto.getTags().forEach(t -> {
-                if (t.length() > 6)
-                    throw new IllegalArgumentException("태그 '" + t + "' 는 6자를 초과합니다");
-                tagRepo.save(new MemberTag(m, t));
-            });
+        /* 3) (선택) 세션 principal 최신화 */
+        syncPrincipalIfPresent(memberId, m);   // 아래 유틸 참고
+
+        /* 4) 최신 DTO 반환 */
+        return toProfileDTO(m);
+    }
+
+    private void syncPrincipalIfPresent(Long memberId, Member updated) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()
+                && auth.getPrincipal() instanceof CustomUserDetails cud
+                && cud.getId().equals(memberId)) {
+
+            cud.refreshFrom(updated);   // CustomUserDetails 에 구현
         }
     }
+
 
     public ProfileImageResponseDTO getProfileImage(Long memberId) {
         Member member = memberRepo.findById(memberId)
@@ -85,17 +96,44 @@ public class ProfileService {
 
 
     @Transactional
-    public void updateProfileImage(Long memberId, MultipartFile file) {
+    public ProfileImageResponseDTO updateProfileImage(Long memberId,
+                                                      MultipartFile file) {
+
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
 
-        // 기존 이미지 삭제 (선택)
-        if (member.getProfileImage() != null) {
+        if (member.getProfileImage() != null)
             s3Service.deleteS3Image(member.getProfileImage());
-        }
 
         String imageUrl = s3Service.uploadProfileImage(file, member.getRole());
         member.setProfileImage(imageUrl);
+
+        /* 세션 principal 최신화 */
+        syncPrincipalIfPresent(memberId, member);
+
+        return ProfileImageResponseDTO.builder()
+                .memberId(member.getId())
+                .nickname(member.getDisplayName())
+                .profileImage(member.getProfileImage())
+                .build();
+    }
+
+    private ProfileResponseDTO toProfileDTO(Member m) {
+        return ProfileResponseDTO.builder()
+                .memberId(m.getId())
+                .loginId(m.getLoginId())
+                .nickname(m.getNickname())
+                .age(m.getAge())
+                .gender(m.getGender())
+                .region(m.getRegion())
+                .homepage(m.getHomepage())
+                .bio(m.getBio())
+                .profileImage(m.getProfileImage())
+                .tags(tagRepo.findByMember(m)
+                        .stream()
+                        .map(MemberTag::getTag)
+                        .toList())
+                .build();
     }
 
 }

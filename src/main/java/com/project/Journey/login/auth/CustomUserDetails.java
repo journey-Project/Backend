@@ -16,6 +16,12 @@ import java.util.Collections;
 public class CustomUserDetails implements UserDetails {
 
     private final Member member; // 연관된 Member 엔티티
+    public Long getId() {
+        return member.getId();
+    };
+    public Member getMember() {
+        return member;
+    };
 
     public CustomUserDetails(Member member) {
         this.member = member;
@@ -58,4 +64,10 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true; // 계정 활성화 여부
     }
+
+    public void refreshFrom(Member src) {
+        this.member.copyProfileFrom(src);
+    }
+
+
 }

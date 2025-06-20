@@ -126,4 +126,14 @@ public class Member {
     public void updateProfileImage(String imageUrl) {
         this.profileImage = imageUrl;
     }
+
+    public void copyProfileFrom(Member src) {
+        this.nickname     = src.nickname;
+        this.age          = src.age;
+        this.gender       = src.gender;
+        this.region       = src.region;
+        this.homepage     = src.homepage;
+        this.bio          = src.bio;
+        this.profileImage = src.profileImage;
+    }
 }
