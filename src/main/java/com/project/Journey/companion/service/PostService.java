@@ -6,6 +6,7 @@ import com.project.Journey.companion.dto.*;
 import com.project.Journey.companion.entity.Post;
 import com.project.Journey.companion.entity.PostImage;
 import com.project.Journey.companion.exception.PostException;
+import com.project.Journey.companion.mapper.PostMapper;
 import com.project.Journey.companion.paging.PostSpecification;
 import com.project.Journey.companion.repository.PostImageRepository;
 import com.project.Journey.companion.repository.PostRepository;
@@ -14,6 +15,7 @@ import com.project.Journey.login.member.domain.Member;
 import com.project.Journey.login.member.repository.MemberRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -33,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-
 public class PostService {
 
     private final PostRepository postRepository;
@@ -112,10 +113,11 @@ public class PostService {
                 .map(p -> toDto(p, currentUserId))      // ★ isMine 적용
                 .toList();
     }
+
     //게시글 수정
     @Transactional
-    public void updatePostById(Long postId,
-                               PostResponseDTO postResponseDTO,
+    public PostResponseDTO updatePostById(Long postId,
+                               PostUpdateRequestDTO dto,
                                List<MultipartFile> newImages,
                                MultipartFile newCoverImage) {
 
@@ -123,18 +125,18 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
 
         // 기본 게시글 정보 업데이트
-        post.updateTitle(postResponseDTO.getTitle());
-        post.updateContent(postResponseDTO.getContent());
-        post.updateDestination(postResponseDTO.getDestination());
-        post.updateMaxParticipants(postResponseDTO.getMax_participants());
-        post.updateStartDate(postResponseDTO.getStart_date());
-        post.updateEndDate(postResponseDTO.getEnd_date());
-        post.updateUpdateTime(postResponseDTO.getUpdated_at());
-        post.updateCountry(postResponseDTO.getCountry());
+        post.updateTitle(dto.getTitle());
+        post.updateContent(dto.getContent());
+        post.updateDestination(dto.getDestination());
+        post.updateMaxParticipants(dto.getMax_participants());
+        post.updateStartDate(dto.getStartDate());
+        post.updateEndDate(dto.getEndDate());
+        post.updateCountry(dto.getCountry());
+        post.updateUpdateTime(LocalDateTime.now());
 
         // ✅ [1] 기존 일반 이미지 처리
         List<PostImage> existingImages = postImageRepository.findByPost(post);
-        List<String> remainingUrls = postResponseDTO.getImageUrls();
+        List<String> remainingUrls = dto.getImageUrls();
 
         for (PostImage image : existingImages) {
             if (!remainingUrls.contains(image.getPostImageUrl())) {
@@ -167,9 +169,9 @@ public class PostService {
             // 새 커버 이미지 저장 및 URL 업데이트
             String newCoverImageUrl = s3Service.uploadApplicationImage(newCoverImage);
             post.updateCoverImageUrl(newCoverImageUrl);
-        } else if (postResponseDTO.getCoverImageUrl() != null && !postResponseDTO.getCoverImageUrl().isEmpty()) {
+        } else if (dto.getCoverImageUrl() != null && !dto.getCoverImageUrl().isEmpty()) {
             // 새 커버 이미지가 없지만, DTO에 기존 coverImageUrl이 있으면 유지
-            post.updateCoverImageUrl(postResponseDTO.getCoverImageUrl());
+            post.updateCoverImageUrl(dto.getCoverImageUrl());
         } else{
             // 커버 이미지를 삭제하고 싶은 경우(커버이미지가 없게)
             if(post.getCoverImageUrl() != null && !post.getCoverImageUrl().isEmpty()){
@@ -177,33 +179,11 @@ public class PostService {
                 post.updateCoverImageUrl(null); //DB에서도 NULL 처리
             }
         }
+
+        return PostMapper.toResponseDTO(post, postImageRepository.findByPost(post));
     }
 
 
-    // post_id로 게시글 조회
-    /*
-    public PostDTO getPostById(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 post_id의 게시글이 없습니다"));
-
-        return PostDTO.builder()
-                .title(post.getTitle())
-                .content(post.getContent())
-                .destination(post.getDestination())
-                .start_date(post.getStartDate())
-                .end_date(post.getEndDate())
-                .max_participants(post.getMax_participants())
-                .view_count(post.getView_count())
-                .comment_count(post.getComment_count())
-                .created_at(post.getCreated_at())
-                .updated_at(post.getUpdated_at())
-                .user_id(post.getUser_id())
-                .coverImageUrl(post.getCoverImageUrl())
-                .country(post.getCountry())
-                .build();
-    }
-
-     */
     // 게시글 삭제
     public void deletePost(Long postId) {
         Post post = postRepository.findById(postId)
