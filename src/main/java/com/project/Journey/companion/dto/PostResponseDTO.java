@@ -8,6 +8,8 @@ import java.util.List;
 
 @Builder
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostResponseDTO {
 
     private Long postId; //게시글 id
