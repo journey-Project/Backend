@@ -111,7 +111,8 @@ public class ProfileService {
             if (member.getProfileImage() != null) {
                 s3Service.deleteS3Image(member.getProfileImage());
             }
-            member.setProfileImage(null); // DB는 null로 저장
+//            member.setProfileImage(null); // DB는 null로 저장
+            member.setProfileImage("https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png");
 
             // ✅ 응답에서 default 이미지 포함
             return buildProfileImageResponse(member);
