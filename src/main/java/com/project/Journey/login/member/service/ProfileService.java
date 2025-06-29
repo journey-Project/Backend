@@ -136,4 +136,17 @@ public class ProfileService {
                 .build();
     }
 
+
+    @Transactional
+    public void deleteProfileImage(Long memberId) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
+
+        if (member.getProfileImage() != null) {
+            s3Service.deleteS3Image(member.getProfileImage());
+            member.setProfileImage(null);
+            syncPrincipalIfPresent(memberId, member);
+        }
+    }
+
 }
