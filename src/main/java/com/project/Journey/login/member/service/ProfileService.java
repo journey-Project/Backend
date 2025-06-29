@@ -58,6 +58,7 @@ public class ProfileService {
 
         m.updateProfile(dto.getNickname(), dto.getAge(), dto.getGender(),
                 dto.getRegion(), dto.getHomepage(), dto.getBio());
+        m.setProfileImage(dto.getProfileImage());
 
         tagRepo.deleteByMember(m);
         if (dto.getTags() != null && !dto.getTags().isEmpty()) {
