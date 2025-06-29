@@ -88,13 +88,17 @@ public class ProfileService {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
 
+        String profileImage = member.getProfileImage();
+        if (profileImage == null || profileImage.isBlank()) {
+            profileImage = "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png";
+        }
+
         return ProfileImageResponseDTO.builder()
                 .memberId(member.getId())
                 .nickname(member.getDisplayName())
-                .profileImage(member.getProfileImage())
+                .profileImage(profileImage)
                 .build();
     }
-
 
     @Transactional
     public ProfileImageResponseDTO updateProfileImage(Long memberId,
