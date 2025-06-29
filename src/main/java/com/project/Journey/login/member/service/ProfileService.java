@@ -101,26 +101,29 @@ public class ProfileService {
     }
 
     @Transactional
-    public ProfileImageResponseDTO updateProfileImage(Long memberId,
-                                                      MultipartFile file) {
+    public ProfileImageResponseDTO updateProfileImage(Long memberId, MultipartFile file) {
 
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
 
-        if (member.getProfileImage() != null)
+        if (file == null || file.isEmpty()) {
+            if (member.getProfileImage() != null) {
+                s3Service.deleteS3Image(member.getProfileImage());
+            }
+            member.setProfileImage(null); // DB는 null로 저장
+
+            // ✅ 응답에서 default 이미지 포함
+            return buildProfileImageResponse(member);
+        }
+
+        if (member.getProfileImage() != null) {
             s3Service.deleteS3Image(member.getProfileImage());
+        }
 
         String imageUrl = s3Service.uploadProfileImage(file, member.getRole());
         member.setProfileImage(imageUrl);
 
-        /* 세션 principal 최신화 */
-        syncPrincipalIfPresent(memberId, member);
-
-        return ProfileImageResponseDTO.builder()
-                .memberId(member.getId())
-                .nickname(member.getDisplayName())
-                .profileImage(member.getProfileImage())
-                .build();
+        return buildProfileImageResponse(member);
     }
 
     private ProfileResponseDTO toProfileDTO(Member m) {
@@ -133,7 +136,7 @@ public class ProfileService {
                 .region(m.getRegion())
                 .homepage(m.getHomepage())
                 .bio(m.getBio())
-                .profileImage(m.getProfileImage())
+                .profileImage(resolveProfileImage(m.getProfileImage()))
                 .tags(tagRepo.findByMember(m)
                         .stream()
                         .map(MemberTag::getTag)
@@ -154,4 +157,22 @@ public class ProfileService {
         }
     }
 
+
+    private ProfileImageResponseDTO buildProfileImageResponse(Member member) {
+        String profileImage = member.getProfileImage();
+        if (profileImage == null || profileImage.isBlank()) {
+            profileImage = "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png";
+        }
+
+        return ProfileImageResponseDTO.builder()
+                .memberId(member.getId())
+                .nickname(member.getDisplayName())
+                .profileImage(profileImage)
+                .build();
+    }
+    private String resolveProfileImage(String profileImage) {
+        return (profileImage == null || profileImage.isBlank())
+                ? "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png"
+                : profileImage;
+    }
 }

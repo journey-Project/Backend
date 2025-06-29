@@ -94,7 +94,7 @@ public class ProfileController {
         return ResponseEntity.ok(res);           // 최신 URL 즉시 반환
     }
 
-    @DeleteMapping("/members/{id}/profile-image")
+    @DeleteMapping("/{id}/profile-image")
     public ResponseEntity<?> deleteProfileImage(@PathVariable Long id) {
         profileService.deleteProfileImage(id);
         return ResponseEntity.noContent().build();
