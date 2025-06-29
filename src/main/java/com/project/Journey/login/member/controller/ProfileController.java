@@ -93,4 +93,10 @@ public class ProfileController {
         ProfileImageResponseDTO res = profileService.updateProfileImage(id, file);
         return ResponseEntity.ok(res);           // 최신 URL 즉시 반환
     }
+
+    @DeleteMapping("/members/{id}/profile-image")
+    public ResponseEntity<?> deleteProfileImage(@PathVariable Long id) {
+        profileService.deleteProfileImage(id);
+        return ResponseEntity.noContent().build();
+    }
 }
