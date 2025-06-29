@@ -10,6 +10,7 @@ import com.project.Journey.login.member.dto.ProfileUpdateRequestDTO;
 import com.project.Journey.login.member.repository.MemberRepository;
 import com.project.Journey.login.member.repository.MemberTagRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -136,7 +137,7 @@ public class ProfileService {
                 .build();
     }
 
-
+    @Operation(summary = "프로필 이미지 삭제", description = "프로필 이미지를 삭제하고 DB에 null로 저장합니다.")
     @Transactional
     public void deleteProfileImage(Long memberId) {
         Member member = memberRepo.findById(memberId)
