@@ -22,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Service @RequiredArgsConstructor
 @Transactional
 public class ProfileService {
+    private static final String DEFAULT_PROFILE_IMAGE =
+            "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png";
 
     private final MemberRepository memberRepo;
     private final MemberTagRepository tagRepo;
@@ -42,11 +44,29 @@ public class ProfileService {
                 .region(m.getRegion())
                 .homepage(m.getHomepage())
                 .bio(m.getBio())
-                .profileImage((m.getProfileImage()))
+                .profileImage(resolveProfileImage(m.getProfileImage()))
                 .tags(tagRepo.findByMember(m)
                         .stream().map(MemberTag::getTag).toList())
                 .build();
 
+    }
+
+    /**
+     * 기본 이미지이거나 null 이면 true
+     */
+    private boolean isDefaultImage(String url) {
+        return url == null || url.isBlank() || url.equals(DEFAULT_PROFILE_IMAGE);
+    }
+
+    /**
+     * Member 객체의 프로필 이미지를 기본 이미지로 덮어쓴다
+     */
+    private void resetToDefault(Member member) {
+        member.setProfileImage(DEFAULT_PROFILE_IMAGE);
+    }
+
+    private boolean isNullOrBlank(String s) {
+        return s == null || s.isBlank();   // Java 11 String#isBlank()
     }
 
     @Transactional
@@ -55,10 +75,16 @@ public class ProfileService {
 
         Member m = memberRepo.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 없음"));
-
+        if (isNullOrBlank(dto.getProfileImage())) {   // null + "" 모두 리셋
+            if (!isDefaultImage(m.getProfileImage())) {
+                s3Service.deleteS3Image(m.getProfileImage());
+            }
+            resetToDefault(m);
+        } else {
+            m.setProfileImage(dto.getProfileImage());
+        }
         m.updateProfile(dto.getNickname(), dto.getAge(), dto.getGender(),
                 dto.getRegion(), dto.getHomepage(), dto.getBio());
-        m.setProfileImage(dto.getProfileImage());
 
         tagRepo.deleteByMember(m);
         if (dto.getTags() != null && !dto.getTags().isEmpty()) {
@@ -108,23 +134,22 @@ public class ProfileService {
                 .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
 
         if (file == null || file.isEmpty()) {
-            if (member.getProfileImage() != null) {
+            if (!isDefaultImage(member.getProfileImage())) {
                 s3Service.deleteS3Image(member.getProfileImage());
             }
-//            member.setProfileImage(null); // DB는 null로 저장
-            member.setProfileImage("https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png");
-
-            // ✅ 응답에서 default 이미지 포함
+            resetToDefault(member);
+            memberRepo.flush();
             return buildProfileImageResponse(member);
         }
 
-        if (member.getProfileImage() != null) {
+        // --- ② 새 파일 업로드 ---
+        if (!isDefaultImage(member.getProfileImage())) {
             s3Service.deleteS3Image(member.getProfileImage());
         }
 
         String imageUrl = s3Service.uploadProfileImage(file, member.getRole());
         member.setProfileImage(imageUrl);
-
+        memberRepo.flush();
         return buildProfileImageResponse(member);
     }
 
@@ -152,11 +177,11 @@ public class ProfileService {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
 
-        if (member.getProfileImage() != null) {
+        if (!isDefaultImage(member.getProfileImage())) {   // 기본 이미지는 지우지 말기
             s3Service.deleteS3Image(member.getProfileImage());
-            member.setProfileImage(null);
-            syncPrincipalIfPresent(memberId, member);
         }
+        resetToDefault(member);
+        syncPrincipalIfPresent(memberId, member);
     }
 
 
@@ -174,7 +199,8 @@ public class ProfileService {
     }
     private String resolveProfileImage(String profileImage) {
         return (profileImage == null || profileImage.isBlank())
-                ? "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png"
+                ? DEFAULT_PROFILE_IMAGE
                 : profileImage;
     }
 }
+
