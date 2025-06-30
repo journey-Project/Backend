@@ -39,4 +39,7 @@ public class ProfileUpdateRequestDTO {
     @Schema(description = "태그 목록(최대 3개, 각 6자 이하)", example = "[\"캠핑좋아\",\"사진기사임\"]")
     @Size(max = 3, message = "태그는 최대 3개까지만 저장할 수 있습니다")
     private List<@Size(max = 6, message = "태그 한 글자는 6자 이하") String> tags;
+
+    @Schema(description = "프로필 이미지 URL(선택)", example = "https://bucket.s3.amazonaws.com/user/uuid.png")
+    private String profileImage;
 }
