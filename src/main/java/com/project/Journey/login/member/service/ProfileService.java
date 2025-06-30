@@ -26,6 +26,13 @@ public class ProfileService {
     private final MemberTagRepository tagRepo;
     private final S3Service s3Service;
 
+    private static final String DEFAULT_PROFILE_IMAGE_URL =
+            "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png";
+
+    private String resolveProfileImage(String imageUrl) {
+        return (imageUrl == null || imageUrl.isBlank()) ? DEFAULT_PROFILE_IMAGE_URL : imageUrl;
+    }
+
     @Transactional(readOnly = true)
     public ProfileResponseDTO getMyProfile(Long memberId) {
 
@@ -41,7 +48,7 @@ public class ProfileService {
                 .region(m.getRegion())
                 .homepage(m.getHomepage())
                 .bio(m.getBio())
-                .profileImage((m.getProfileImage()))
+                .profileImage(resolveProfileImage(m.getProfileImage()))
                 .tags(tagRepo.findByMember(m)
                         .stream().map(MemberTag::getTag).toList())
                 .build();
@@ -57,6 +64,13 @@ public class ProfileService {
 
         m.updateProfile(dto.getNickname(), dto.getAge(), dto.getGender(),
                 dto.getRegion(), dto.getHomepage(), dto.getBio());
+
+        String imageUrl = dto.getProfileImage();
+        if (imageUrl == null || imageUrl.isBlank()) {
+            m.setProfileImage(DEFAULT_PROFILE_IMAGE_URL);
+        } else {
+            m.setProfileImage(imageUrl);
+        }
 
         tagRepo.deleteByMember(m);
         if (dto.getTags() != null && !dto.getTags().isEmpty()) {
@@ -90,7 +104,7 @@ public class ProfileService {
         return ProfileImageResponseDTO.builder()
                 .memberId(member.getId())
                 .nickname(member.getDisplayName())
-                .profileImage(member.getProfileImage())
+                .profileImage(resolveProfileImage(member.getProfileImage()))
                 .build();
     }
 
@@ -102,9 +116,27 @@ public class ProfileService {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("회원 없음"));
 
-        if (member.getProfileImage() != null)
-            s3Service.deleteS3Image(member.getProfileImage());
+        // 파일이 없거나 비어 있으면 → 기본 이미지로
+        if (file == null || file.isEmpty()) {
+            if (member.getProfileImage() != null && !member.getProfileImage().isBlank()) {
+                s3Service.deleteS3Image(member.getProfileImage());
+            }
 
+            // 기본 이미지로 리셋
+            member.setProfileImage(DEFAULT_PROFILE_IMAGE_URL);
+            syncPrincipalIfPresent(memberId, member);
+
+            return ProfileImageResponseDTO.builder()
+                    .memberId(member.getId())
+                    .nickname(member.getDisplayName())
+                    .profileImage(DEFAULT_PROFILE_IMAGE_URL)
+                    .build();
+        }
+
+        // 기존 이미지 삭제
+        if (member.getProfileImage() != null && !member.getProfileImage().isBlank()) {
+            s3Service.deleteS3Image(member.getProfileImage());
+        }
         String imageUrl = s3Service.uploadProfileImage(file, member.getRole());
         member.setProfileImage(imageUrl);
 
@@ -128,7 +160,7 @@ public class ProfileService {
                 .region(m.getRegion())
                 .homepage(m.getHomepage())
                 .bio(m.getBio())
-                .profileImage(m.getProfileImage())
+                .profileImage(resolveProfileImage(m.getProfileImage()))
                 .tags(tagRepo.findByMember(m)
                         .stream()
                         .map(MemberTag::getTag)
