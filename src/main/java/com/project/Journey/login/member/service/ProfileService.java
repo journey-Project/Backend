@@ -29,6 +29,10 @@ public class ProfileService {
     private static final String DEFAULT_PROFILE_IMAGE_URL =
             "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/6f262080-607e-48d5-8b04-82626a9650d8.jpeg";
 
+    private boolean isDefaultImage(String url) {
+        return url == null || url.isBlank() || url.equals(DEFAULT_PROFILE_IMAGE_URL);
+    }
+
     private String resolveProfileImage(String imageUrl) {
         return (imageUrl == null || imageUrl.isBlank()) ? DEFAULT_PROFILE_IMAGE_URL : imageUrl;
     }
@@ -67,6 +71,9 @@ public class ProfileService {
 
         String imageUrl = dto.getProfileImage();
         if (imageUrl == null || imageUrl.isBlank()) {
+            if (!isDefaultImage(m.getProfileImage())) {          // 추가
+                s3Service.deleteS3Image(m.getProfileImage());
+            }
             m.setProfileImage(DEFAULT_PROFILE_IMAGE_URL);
         } else {
             m.setProfileImage(imageUrl);
@@ -118,7 +125,7 @@ public class ProfileService {
 
         // 파일이 없거나 비어 있으면 → 기본 이미지로
         if (file == null || file.isEmpty()) {
-            if (member.getProfileImage() != null && !member.getProfileImage().isBlank()) {
+            if (!isDefaultImage(member.getProfileImage())) {     // 변경
                 s3Service.deleteS3Image(member.getProfileImage());
             }
 
@@ -134,7 +141,7 @@ public class ProfileService {
         }
 
         // 기존 이미지 삭제
-        if (member.getProfileImage() != null && !member.getProfileImage().isBlank()) {
+        if (!isDefaultImage(member.getProfileImage())) {         // 변경
             s3Service.deleteS3Image(member.getProfileImage());
         }
         String imageUrl = s3Service.uploadProfileImage(file, member.getRole());
