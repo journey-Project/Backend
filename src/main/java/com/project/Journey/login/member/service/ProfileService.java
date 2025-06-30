@@ -27,7 +27,7 @@ public class ProfileService {
     private final S3Service s3Service;
 
     private static final String DEFAULT_PROFILE_IMAGE_URL =
-            "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/0089e5c3-05c3-466b-8fd5-56c41f14acc9.png";
+            "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/6f262080-607e-48d5-8b04-82626a9650d8.jpeg";
 
     private String resolveProfileImage(String imageUrl) {
         return (imageUrl == null || imageUrl.isBlank()) ? DEFAULT_PROFILE_IMAGE_URL : imageUrl;
