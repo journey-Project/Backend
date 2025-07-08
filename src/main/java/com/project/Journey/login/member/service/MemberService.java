@@ -27,12 +27,15 @@ public class MemberService {
             throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");
         }
 
+        String defaultProfileImageUrl = "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/5c380987-c103-4ed5-ae55-0baef59574b7.jpeg";
+
         Member member = Member.builder()
                 .loginId(dto.getLoginId())
                 .name(dto.getName())
                 .nickname(dto.getName())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .email(dto.getEmail())
+                .profileImage(defaultProfileImageUrl)
                 .role(MemberRole.USER)
                 .build();
 

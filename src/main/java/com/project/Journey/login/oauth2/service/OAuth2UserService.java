@@ -53,6 +53,10 @@ public class OAuth2UserService {
     @Value("${social.google.redirect-uri}")
     private String GOOGLE_REDIRECT_URI;
 
+    private static final String DEFAULT_PROFILE_IMAGE_URL =
+            "https://journeybucket0.s3.ap-northeast-2.amazonaws.com/USER/5c380987-c103-4ed5-ae55-0baef59574b7.jpeg";
+
+
     public Member getOrCreateSocialUser(String provider, String code) {
         SocialType socialType = SocialType.valueOf(provider.toUpperCase());
         OAuth2UserInfo userInfo = getUserInfoByProvider(socialType, code);
@@ -105,6 +109,7 @@ public class OAuth2UserService {
                     .socialType(socialType)
                     .socialId(socialId)
                     .email(email)
+                    .profileImage(DEFAULT_PROFILE_IMAGE_URL)
                     .role(MemberRole.USER)
                     .build();
 
