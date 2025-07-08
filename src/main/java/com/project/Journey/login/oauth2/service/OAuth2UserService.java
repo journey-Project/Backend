@@ -108,6 +108,8 @@ public class OAuth2UserService {
             Member newMember = Member.builder()
                     .socialType(socialType)
                     .socialId(socialId)
+                    .name(userInfo.getName())
+                    .nickname(userInfo.getName())
                     .email(email)
                     .profileImage(DEFAULT_PROFILE_IMAGE_URL)
                     .role(MemberRole.USER)
